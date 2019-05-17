@@ -36,3 +36,7 @@ upload:
   picture:
     path: C:\nginx\html\upload\storeimg
     url: https://freelycar.com/upload/storeimg/
+
+router:
+  init:
+    enable: false
