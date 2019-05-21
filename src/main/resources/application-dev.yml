@@ -26,3 +26,13 @@ logging:
 
 swagger:
   enable: true
+
+# 自定义的上传路径和映射路径参数
+upload:
+  picture:
+    path: /Users/tangwei/Documents/temp
+    url: https://freelycar.com/upload/storeimg/
+
+router:
+  init:
+    enable: false
