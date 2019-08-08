@@ -54,14 +54,14 @@ public class WeChatPayController {
 
     @PostMapping("/payOrderByWechat")
     @LoggerManage(description = "调用智能柜微信支付接口")
-    public String payOrderByWechat(@RequestBody OrderPay orderPay, HttpServletRequest request) {
+    public ResultJsonObject payOrderByWechat(@RequestBody OrderPay orderPay, HttpServletRequest request) {
         String openId = orderPay.getOpenId();
         String orderId = orderPay.getOrderId();
         float totalPrice = orderPay.getTotalPrice();
 
         //添加参数验证
         if (StringUtils.isEmpty(openId) || StringUtils.isEmpty(orderId)) {
-            return ResultJsonObject.getErrorResult(orderPay, "传入的参数有缺失，请核实。").toString();
+            return ResultJsonObject.getErrorResult(orderPay, "传入的参数有缺失，请核实。");
         }
 
 
@@ -75,7 +75,7 @@ public class WeChatPayController {
         //判断订单
         ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
         if (null == consumerOrder) {
-            return ResultJsonObject.getErrorResult(null, "未找到id为：" + orderId + " 的单据信息").toString();
+            return ResultJsonObject.getErrorResult(null, "未找到id为：" + orderId + " 的单据信息");
         }
         map.put("body", "carService");
         map.put("out_trade_no", consumerOrder.getId());
@@ -121,19 +121,11 @@ public class WeChatPayController {
                 // 签名
                 String pagSign = WeChatSignatureUtil.getSig(payMap);
                 payMap.put("paySign", pagSign);
-                jsonObject.put(Constants.RESPONSE_CODE_KEY, ResultCode.SUCCESS.code());
-                jsonObject.put(Constants.RESPONSE_MSG_KEY, ResultCode.SUCCESS.message());
-                jsonObject.put(Constants.RESPONSE_DATA_KEY, payMap);
-            } else {
-                jsonObject.put(Constants.RESPONSE_CODE_KEY, ResultCode.ORDER_ERROR.code());
-                jsonObject.put(Constants.RESPONSE_MSG_KEY, ResultCode.ORDER_ERROR.message());
+                return ResultJsonObject.getDefaultResult(payMap);
             }
-        } else {
-            jsonObject.put(Constants.RESPONSE_CODE_KEY, ResultCode.CALL_PORT_ERROR.code());
-            jsonObject.put(Constants.RESPONSE_MSG_KEY, ResultCode.CALL_PORT_ERROR.message());
         }
-        logger.info("结果：return_code: " + jsonObject.toString());
-        return jsonObject.toString();
+        logger.error(result);
+        return ResultJsonObject.getCustomResult(result, ResultCode.CALL_PORT_ERROR.code(), ResultCode.ORDER_ERROR.message());
     }
 
 
