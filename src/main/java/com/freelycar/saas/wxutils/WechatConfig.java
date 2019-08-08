@@ -116,8 +116,8 @@ public class WechatConfig {
      * https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140842&token=&lang=zh_CN
      */
 
-    private static String getWehatUserInfoUrl(String accessToken, String openId) {
-        return WECHAT_USER_INFO + "?access_token=" + accessToken + "&openid="
+    private static String getWechatUserInfoUrl(String accessToken, String openId) {
+        return WECHAT_USER_INFO_URL + "?access_token=" + accessToken + "&openid="
                 + openId + "&lang=zh_CN";
     }
 
@@ -139,7 +139,7 @@ public class WechatConfig {
 
     //获取用户信息
     public static JSONObject getWXUserInfo(String accessToken, String openId) {
-        String wxUserInfoUrl = getWehatUserInfoUrl(accessToken, openId);
+        String wxUserInfoUrl = getWechatUserInfoUrl(accessToken, openId);
         String userInfo = HttpRequest.getCall(wxUserInfoUrl, null, null);
 
         JSONObject obj;
@@ -148,7 +148,7 @@ public class WechatConfig {
         } catch (JSONException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
-            throw new RuntimeException("WechatConfig#获取userInfo的json字符串解析失败", e);
+            throw new JSONException("获取userInfo的json字符串解析失败", e);
         }
 
         return obj;
@@ -236,26 +236,4 @@ public class WechatConfig {
         HttpRequest.userId = userId;
         return HttpRequest.getCall(downUrl, null, null);
     }
-
-    //获取用户是否关注了公众号
-    public static boolean isUserFollow(String openId) {
-        String accessToken = getAccessTokenForInteface().getString("access_token");
-        Integer subscribe;
-        String wxUserInfoUrl = WECHAT_USER_INFO_URL + "?access_token=" + accessToken + "&openid="
-                + openId + "&lang=zh_CN";
-        String userInfo = HttpRequest.getCall(wxUserInfoUrl, null, null);
-
-        JSONObject resultObject;
-        try {
-            resultObject = JSONObject.parseObject(userInfo);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            logger.error(e.getMessage(), e);
-            throw new RuntimeException("WechatConfig#获取userInfo的json字符串解析失败", e);
-        }
-
-        subscribe = resultObject.getInteger("subscribe");
-        return 1 == subscribe;
-    }
-
 }

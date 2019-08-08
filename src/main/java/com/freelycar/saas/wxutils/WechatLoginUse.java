@@ -1,6 +1,7 @@
 package com.freelycar.saas.wxutils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.freelycar.saas.exception.WeChatException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.util.StringUtils;
@@ -9,7 +10,7 @@ public class WechatLoginUse {
 
     private static Logger log = LogManager.getLogger(WechatLoginUse.class);
 
-    public static JSONObject wechatInfo(String code) {
+    public static JSONObject wechatInfo(String code) throws WeChatException {
         //返回前台
         JSONObject wechatInfo = new JSONObject();
 
@@ -17,29 +18,46 @@ public class WechatLoginUse {
         JSONObject resultJson = WechatConfig.getAccessToken(code);
         String openid = resultJson.getString("openid");
         String accessToken = resultJson.getString("access_token");
-        log.debug("获取登陆时accesstoken: " + accessToken + " ; openid: " + openid);
+        log.debug("获取登陆时access_token: " + accessToken + " ; openid: " + openid);
 
-        if (StringUtils.hasText(openid) && StringUtils.hasText(accessToken)) {
-            // 获取微信用户信息
-            JSONObject userInfoJson = WechatConfig.getWXUserInfo(accessToken, openid);
-            String name = userInfoJson.getString("nickname");
-            String head = userInfoJson.getString("headimgurl");
-            log.debug("获取微信昵称: " + name + " ; 头像: " + head);
-            if (StringUtils.hasText(name) && StringUtils.hasText(head)) {
-                wechatInfo.put("openid", openid);
-                wechatInfo.put("nickname", name);
-                wechatInfo.put("headimgurl", head);
-                wechatInfo.put("message", "success");
-                //获取是否关注了公众号
-                boolean subscribe = WechatConfig.isUserFollow(openid);
-                wechatInfo.put("subscribe", subscribe);
-            } else {
-                return resultJson;
-            }
-
-        } else {
-            return resultJson;
+        if (StringUtils.isEmpty(openid) || StringUtils.isEmpty(accessToken)) {
+            log.error(resultJson);
+            throw new WeChatException("获取access_token失败，微信接口返回信息：" + resultJson);
         }
+
+        // 获取微信用户信息
+        JSONObject userInfoJson = WechatConfig.getWXUserInfo(accessToken, openid);
+
+        //判断获取信息是否包含错误码
+        String errCode = userInfoJson.getString("errcode");
+        if (StringUtils.hasText(errCode)) throw new WeChatException("微信接口获取用户信息失败，微信接口返回信息：" + userInfoJson);
+
+        boolean subscribe = (1 == userInfoJson.getInteger("subscribe"));
+        String nickName = userInfoJson.getString("nickname");
+        String gender;
+
+        switch (userInfoJson.getInteger("sex")) {
+            case 1:
+                gender = "男";
+                break;
+            case 2:
+                gender = "女";
+                break;
+            default:
+                gender = "未知";
+        }
+
+        String headImgUrl = userInfoJson.getString("headimgurl");
+        String province = userInfoJson.getString("province");
+        String city = userInfoJson.getString("city");
+
+        wechatInfo.put("subscribe", subscribe);
+        wechatInfo.put("openId", openid);
+        wechatInfo.put("nickName", nickName);
+        wechatInfo.put("gender", gender);
+        wechatInfo.put("headImgUrl", headImgUrl);
+        wechatInfo.put("province", province);
+        wechatInfo.put("city", city);
 
         return wechatInfo;
 
