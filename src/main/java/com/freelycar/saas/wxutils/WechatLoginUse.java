@@ -32,7 +32,8 @@ public class WechatLoginUse {
         String errCode = userInfoJson.getString("errcode");
         if (StringUtils.hasText(errCode)) throw new WeChatException("微信接口获取用户信息失败，微信接口返回信息：" + userInfoJson);
 
-        boolean subscribe = (1 == userInfoJson.getInteger("subscribe"));
+        //获取是否关注了公众号
+        boolean subscribe = WechatConfig.isUserFollow(openid);
         String nickName = userInfoJson.getString("nickname");
         String gender;
 
@@ -52,10 +53,10 @@ public class WechatLoginUse {
         String city = userInfoJson.getString("city");
 
         wechatInfo.put("subscribe", subscribe);
-        wechatInfo.put("openId", openid);
-        wechatInfo.put("nickName", nickName);
+        wechatInfo.put("openid", openid);
+        wechatInfo.put("nickname", nickName);
         wechatInfo.put("gender", gender);
-        wechatInfo.put("headImgUrl", headImgUrl);
+        wechatInfo.put("headimgurl", headImgUrl);
         wechatInfo.put("province", province);
         wechatInfo.put("city", city);
 

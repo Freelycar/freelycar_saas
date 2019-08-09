@@ -117,7 +117,7 @@ public class WechatConfig {
      */
 
     private static String getWechatUserInfoUrl(String accessToken, String openId) {
-        return WECHAT_USER_INFO_URL + "?access_token=" + accessToken + "&openid="
+        return WECHAT_USER_INFO + "?access_token=" + accessToken + "&openid="
                 + openId + "&lang=zh_CN";
     }
 
@@ -236,4 +236,26 @@ public class WechatConfig {
         HttpRequest.userId = userId;
         return HttpRequest.getCall(downUrl, null, null);
     }
+
+    //获取用户是否关注了公众号
+    public static boolean isUserFollow(String openId) {
+        String accessToken = getAccessTokenForInteface().getString("access_token");
+        Integer subscribe;
+        String wxUserInfoUrl = WECHAT_USER_INFO_URL + "?access_token=" + accessToken + "&openid="
+                + openId + "&lang=zh_CN";
+        String userInfo = HttpRequest.getCall(wxUserInfoUrl, null, null);
+
+        JSONObject resultObject;
+        try {
+            resultObject = JSONObject.parseObject(userInfo);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            logger.error(e.getMessage(), e);
+            throw new JSONException("WechatConfig#获取userInfo的json字符串解析失败", e);
+        }
+
+        subscribe = resultObject.getInteger("subscribe");
+        return 1 == subscribe;
+    }
+
 }
