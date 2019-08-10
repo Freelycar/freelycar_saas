@@ -9,10 +9,13 @@ import com.freelycar.saas.project.model.OrderObject;
 import com.freelycar.saas.project.service.ArkService;
 import com.freelycar.saas.project.service.ConsumerOrderService;
 import com.freelycar.saas.project.service.ProjectService;
+import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author tangwei - Toby
@@ -36,7 +39,14 @@ public class WeChatArkController {
 
     @GetMapping("/getActiveOrder")
     public ResultJsonObject getActiveOrder(@RequestParam String clientId) {
-        return consumerOrderService.getActiveOrder(clientId);
+        try {
+            List<BaseOrderInfo> res = consumerOrderService.findAllOrdersByClientId(clientId, "ark");
+            return ResultJsonObject.getDefaultResult(res);
+        } catch (IllegalArgumentException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
     }
 
     @PostMapping("/orderService")

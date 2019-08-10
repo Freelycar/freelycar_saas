@@ -899,7 +899,7 @@ public class ConsumerOrderService {
         consumerOrder.setStoreId(clientInfo.getStoreId());
 
         //设置order的其他信息
-//        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
         consumerOrder.setOrderType(Constants.OrderType.ARK.getValue());
         consumerOrder.setPayState(Constants.PayState.NOT_PAY.getValue());
         //设置订单状态为“预约”
@@ -945,6 +945,7 @@ public class ConsumerOrderService {
         ClientOrderImg clientOrderImg = orderObject.getClientOrderImg();
         if (null != clientOrderImg) {
             clientOrderImg.setOrderId(orderId);
+            clientOrderImg.setCreateTime(currentTime);
             clientOrderImgRepository.save(clientOrderImg);
         }
 
