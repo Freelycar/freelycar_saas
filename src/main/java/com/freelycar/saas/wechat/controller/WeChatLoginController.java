@@ -60,7 +60,7 @@ public class WeChatLoginController {
         }
 
         if (StringUtils.hasText(json.getString("error"))) {
-            return ResultJsonObject.getErrorResult(json, json.getString("message"));
+            return ResultJsonObject.getErrorResult(json, json.getString("error"));
         }
         return ResultJsonObject.getDefaultResult(json);
     }
@@ -99,7 +99,7 @@ public class WeChatLoginController {
         JSONObject json = this.verifySmsCode(phone, smscode);
         if (StringUtils.hasText(json.getString("error"))) {
             log.error(phone + ";code:" + smscode + " 验证失败。。。");
-            return ResultJsonObject.getErrorResult(json, json.getString("message"));
+            return ResultJsonObject.getErrorResult(json, json.getString("error"));
         } else {
             return wxUserInfoService.wechatLogin(phone, openId, headimgurl, nickName);
         }
@@ -111,7 +111,7 @@ public class WeChatLoginController {
         JSONObject json = this.verifySmsCode(phone, smsCode);
         if (StringUtils.hasText(json.getString("error"))) {
             log.debug(phone + ";code:" + smsCode + " 验证失败。。。");
-            return ResultJsonObject.getErrorResult(json, json.getString("message"));
+            return ResultJsonObject.getErrorResult(json, json.getString("error"));
         } else {
             return wxUserInfoService.changePhone(phone, id);
         }
