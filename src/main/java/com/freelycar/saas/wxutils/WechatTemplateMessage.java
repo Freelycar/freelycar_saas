@@ -199,7 +199,7 @@ public class WechatTemplateMessage {
         JSONObject data = new JSONObject();
         params.put("touser", openId);
         params.put("template_id", ORDER_CHANGED_FOR_CLIENT_ID);
-        params.put("url", WechatConfig.APP_DOMAIN + "#/shop/servicesorder?id=" + consumerOrder.getId());
+        params.put("url", WechatConfig.APP_DOMAIN + "payOrder?orderId=" + consumerOrder.getId());
         data.put("first", keywordFactory(first, "#173177"));
         data.put("OrderSn", keywordFactory(consumerOrder.getId(), "#173177"));
         data.put("OrderStatus", keywordFactory(stateString, "#173177"));
