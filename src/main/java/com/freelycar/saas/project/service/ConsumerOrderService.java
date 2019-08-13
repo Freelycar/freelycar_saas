@@ -101,6 +101,9 @@ public class ConsumerOrderService {
     @Autowired
     private StaffOrderImgRepository staffOrderImgRepository;
 
+    @Autowired
+    private StoreRepository storeRepository;
+
     /**
      * 保存和修改
      *
@@ -376,6 +379,13 @@ public class ConsumerOrderService {
         String staffId = consumerOrder.getPickCarStaffId();
         if (StringUtils.hasText(staffId)) {
             orderObject.setStaffInfo(staffService.findStaffInfoForOrderByStaffId(staffId));
+        }
+
+        //返回订单所属门店消息
+        String storeId = consumerOrder.getStoreId();
+        if (StringUtils.hasText(storeId)) {
+            Store store = storeRepository.findById(storeId).orElse(null);
+            orderObject.setStore(store);
         }
 
 

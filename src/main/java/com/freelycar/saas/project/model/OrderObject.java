@@ -29,6 +29,8 @@ public class OrderObject {
 
     private StaffInfo staffInfo;
 
+    private Store store;
+
     public OrderObject() {
     }
 
@@ -104,6 +106,14 @@ public class OrderObject {
         this.staffInfo = staffInfo;
     }
 
+    public Store getStore() {
+        return store;
+    }
+
+    public void setStore(Store store) {
+        this.store = store;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
@@ -125,6 +135,8 @@ public class OrderObject {
                 .append(staffOrderImg);
         sb.append(",\"staffInfo\":")
                 .append(staffInfo);
+        sb.append(",\"store\":")
+                .append(store);
         sb.append('}');
         return sb.toString();
     }
