@@ -97,6 +97,9 @@ public class WxUserInfo implements Serializable {
     @Column
     private String defaultClientId;
 
+    @Column
+    private String defaultStoreName;
+
     public WxUserInfo() {
     }
 
@@ -127,6 +130,8 @@ public class WxUserInfo implements Serializable {
                 .append(defaultStoreId).append('\"');
         sb.append(",\"defaultClientId\":\"")
                 .append(defaultClientId).append('\"');
+        sb.append(",\"defaultStoreName\":\"")
+                .append(defaultStoreName).append('\"');
         sb.append('}');
         return sb.toString();
     }
@@ -225,5 +230,13 @@ public class WxUserInfo implements Serializable {
 
     public void setDefaultClientId(String defaultClientId) {
         this.defaultClientId = defaultClientId;
+    }
+
+    public String getDefaultStoreName() {
+        return defaultStoreName;
+    }
+
+    public void setDefaultStoreName(String defaultStoreName) {
+        this.defaultStoreName = defaultStoreName;
     }
 }

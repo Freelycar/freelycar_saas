@@ -6,11 +6,9 @@ import com.freelycar.saas.exception.CarNumberValidationException;
 import com.freelycar.saas.jwt.TokenAuthenticationUtil;
 import com.freelycar.saas.project.entity.Car;
 import com.freelycar.saas.project.entity.Client;
+import com.freelycar.saas.project.entity.Store;
 import com.freelycar.saas.project.entity.WxUserInfo;
-import com.freelycar.saas.project.repository.CarRepository;
-import com.freelycar.saas.project.repository.CardRepository;
-import com.freelycar.saas.project.repository.ClientRepository;
-import com.freelycar.saas.project.repository.WxUserInfoRepository;
+import com.freelycar.saas.project.repository.*;
 import com.freelycar.saas.util.NicknameFilter;
 import com.freelycar.saas.util.RoundTool;
 import com.freelycar.saas.util.UpdateTool;
@@ -56,6 +54,9 @@ public class WxUserInfoService {
 
     @Autowired
     private ClientService clientService;
+
+    @Autowired
+    private StoreRepository storeRepository;
 
     @Autowired
     private ConsumerOrderService consumerOrderService;
@@ -133,6 +134,11 @@ public class WxUserInfoService {
         String wxUserId = wxUserInfo.getId();
         String defaultStoreId = wxUserInfo.getDefaultStoreId();
 
+        Store store = storeRepository.findById(defaultStoreId).orElse(null);
+        if (null == store) {
+            return ResultJsonObject.getErrorResult(null, "未找到门店表中，id为：" + defaultStoreId + "的数据");
+        }
+
         //查找对应的wxUserInfo对象
         Optional<WxUserInfo> optionalWxUserInfo = wxUserInfoRepository.findById(wxUserId);
         if (!optionalWxUserInfo.isPresent()) {
@@ -183,11 +189,13 @@ public class WxUserInfoService {
 
         String clientId = client.getId();
         wxUserInfo.setDefaultClientId(clientId);
+        wxUserInfo.setDefaultStoreName(store.getName());
 
         WxUserInfo res = this.modify(wxUserInfo);
         if (null == res) {
             return ResultJsonObject.getErrorResult(null);
         }
+
         return ResultJsonObject.getDefaultResult(res);
     }
 
