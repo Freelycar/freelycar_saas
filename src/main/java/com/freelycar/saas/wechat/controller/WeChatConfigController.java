@@ -8,6 +8,7 @@ import com.freelycar.saas.wxutils.WechatConfig;
 import com.freelycar.saas.wxutils.WechatLoginUse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,15 +33,28 @@ public class WeChatConfigController {
      * @return
      */
     @GetMapping(value = "/getJSSDKConfig")
-    public ResultJsonObject getJsSDKConfig() {
+    public ResultJsonObject getJsSDKConfig(@RequestParam(required = false) String targetUrl) {
+        logger.debug("JSSDK Url:" + targetUrl);
+        String errorMsg = null;
+        if (StringUtils.isEmpty(targetUrl)) {
+            errorMsg = "当前url为空，将采用默认url签名（注意，可能会提示 config:invalid signature）";
+            logger.error(errorMsg);
+            targetUrl = WechatConfig.APP_DOMAIN;
+        }
+
         String noncestr = UUID.randomUUID().toString();
         JSONObject ticketJson = WechatConfig.getJsApiTicketByWX();
         String ticket = ticketJson.getString("ticket");
         String timestamp = String.valueOf(System.currentTimeMillis());
 
+        int index = targetUrl.indexOf("#");
+        if (index > 0) {
+            targetUrl = targetUrl.substring(0, index);
+        }
+
         // 对给定字符串key手动排序
         String param = "jsapi_ticket=" + ticket + "&noncestr=" + noncestr
-                + "&timestamp=" + timestamp + "&url=" + WechatConfig.APP_DOMAIN;
+                + "&timestamp=" + timestamp + "&url=" + targetUrl;
 
         String signature = MD5.encode("SHA1", param);
 
@@ -50,6 +64,9 @@ public class WeChatConfigController {
         jsSDKConfig.put("nonceStr", noncestr);
         jsSDKConfig.put("timestamp", timestamp);
         jsSDKConfig.put("signature", signature);
+        if (StringUtils.hasText(errorMsg)) {
+            ResultJsonObject.getDefaultResult(jsSDKConfig, errorMsg);
+        }
         return ResultJsonObject.getDefaultResult(jsSDKConfig);
     }
 
