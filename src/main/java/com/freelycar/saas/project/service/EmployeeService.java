@@ -53,30 +53,56 @@ public class EmployeeService {
         return employeeRepository.saveAndFlush(employee);
     }
 
-    public ResultJsonObject selectStore(Employee employee) {
+    public ResultJsonObject selectStore(Employee employee) throws ArgumentMissingException, ObjectNotFoundException {
         if (null == employee) {
-            return ResultJsonObject.getErrorResult(null, "操作失败，参数对象employee为空");
+            throw new ArgumentMissingException("操作失败，参数对象employee为空");
         }
         String id = employee.getId();
         String defaultStoreId = employee.getDefaultStoreId();
-        String defaultStaffId = employee.getDefaultStaffId();
+//        String defaultStaffId = employee.getDefaultStaffId();
 
         if (StringUtils.isEmpty(id)) {
-            return ResultJsonObject.getErrorResult(null, "操作失败，参数对象employee中id为空");
+            throw new ArgumentMissingException("操作失败，参数对象employee中id为空");
         }
         if (StringUtils.isEmpty(defaultStoreId)) {
-            return ResultJsonObject.getErrorResult(null, "操作失败，参数对象employee中defaultStoreId为空");
+            throw new ArgumentMissingException("操作失败，参数对象employee中defaultStoreId为空");
         }
-        if (StringUtils.isEmpty(defaultStaffId)) {
-            return ResultJsonObject.getErrorResult(null, "操作失败，参数对象employee中defaultStaffId为空");
+
+        //查询employee对象，验证employee对象是否存在
+        Employee employeeObj = employeeRepository.findById(id).orElse(null);
+        if (null == employeeObj) {
+            throw new ObjectNotFoundException("操作失败，未找到id为：" + id + " 的employee对象");
         }
+
+        //拿到手机号
+        String phone = employeeObj.getPhone();
+        if (StringUtils.isEmpty(phone)) {
+            throw new ObjectNotFoundException("操作失败，未找到id为：" + id + " 的employee对象中的手机号");
+        }
+
+        //通过手机和门店ID查对应的staff对象
+        Staff staff = staffRepository.findTopByStoreIdAndPhoneAndDelStatusAndIsArk(defaultStoreId, phone, Constants.DelStatus.NORMAL.isValue(), true);
+
+        if (null == staff) {
+            throw new ObjectNotFoundException("操作失败，未找到手机号为：" + phone + " 的门店员工对象，可能该未给该店员开通智能柜权限");
+        }
+
+        //切换门店
+        employee.setDefaultStaffId(staff.getId());
+
+        Employee resultObj = null;
+
         try {
-            modify(employee);
+            resultObj = modify(employee);
         } catch (EntityNotFoundException e) {
-            logger.error(e.getMessage(), e);
-            return ResultJsonObject.getErrorResult(null, "操作失败，未找到对应id的实体对象");
+            throw new ObjectNotFoundException("操作失败，未找到id为：" + id + " 的employee对象");
         }
-        return ResultJsonObject.getDefaultResult(null);
+        if (null != resultObj) {
+            //查询门店名称
+            Employee finalResultObj = resultObj;
+            storeRepository.findById(defaultStoreId).ifPresent(storeObject -> finalResultObj.setDefaultStoreName(storeObject.getName()));
+        }
+        return ResultJsonObject.getDefaultResult(resultObj);
     }
 
     /**

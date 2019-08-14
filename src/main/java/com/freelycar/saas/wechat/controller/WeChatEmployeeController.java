@@ -44,7 +44,13 @@ public class WeChatEmployeeController {
     @PostMapping("/selectStore")
     @LoggerManage(description = "调用方法：技师选择默认门店")
     public ResultJsonObject selectStore(@RequestBody Employee employee) {
-        return employeeService.selectStore(employee);
+        try {
+            return employeeService.selectStore(employee);
+        } catch (ArgumentMissingException | ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
     }
 
     @ApiOperation(value = "查询雇员的个人信息", produces = "application/json")

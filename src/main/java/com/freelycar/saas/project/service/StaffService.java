@@ -94,6 +94,7 @@ public class StaffService {
                     staff.setAccount(account);
                     staff.setPassword(employee.getPassword());
                     staff.setIsArk(true);
+                    staff.setOpenId(employee.getOpenId());
                 }
             }
 
