@@ -229,7 +229,7 @@ public class ConsumerOrderService {
 
     public List<BaseOrderInfo> findAllOrdersByClientId(String clientId, String type) throws IllegalArgumentException {
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState FROM consumerOrder co WHERE co.delStatus = 0 ");
+        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select url from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0 order by soi.createTime desc limit 0,1) as staffOrderImgUrl FROM consumerOrder co WHERE co.delStatus = 0 ");
         if (Constants.OrderType.SERVICE.getName().equalsIgnoreCase(type)) {
             sql.append(" AND co.orderType = ").append(Constants.OrderType.SERVICE.getValue());
         } else if (Constants.OrderType.ARK.getName().equalsIgnoreCase(type)) {

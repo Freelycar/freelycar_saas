@@ -30,4 +30,5 @@ public class BaseOrderInfo {
     private Double actualPrice;
     private Double totalPrice;
     private Integer payState;
+    private String staffOrderImgUrl;
 }
