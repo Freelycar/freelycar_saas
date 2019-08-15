@@ -407,7 +407,6 @@ public class ConsumerOrderService {
         String orderId = consumerOrder.getId();
 
         consumerOrder.setPayState(Constants.PayState.FINISH_PAY.getValue());
-        consumerOrder.setState(Constants.OrderState.HAND_OVER.getValue());
 
 
 
