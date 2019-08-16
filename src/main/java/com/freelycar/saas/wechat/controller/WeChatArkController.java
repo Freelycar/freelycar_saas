@@ -71,7 +71,7 @@ public class WeChatArkController {
         String errorMessage;
         try {
             return consumerOrderService.cancelOrder(id);
-        } catch (ArgumentMissingException | OpenArkDoorFailedException | OpenArkDoorTimeOutException e) {
+        } catch (ArgumentMissingException | OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
             errorMessage = e.getMessage();
             logger.error(e.getMessage(), e);
             e.printStackTrace();

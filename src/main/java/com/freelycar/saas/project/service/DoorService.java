@@ -27,8 +27,9 @@ import java.util.Random;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class DoorService {
+    private final static long TIME_INTERVAL = 5000;
+    private final static long TIMEOUT = 50000;
     private Logger logger = LoggerFactory.getLogger(this.getClass());
-
     @Autowired
     private DoorRepository doorRepository;
 
@@ -61,6 +62,76 @@ public class DoorService {
         return emptyDoorList.get(targetIndex);
     }
 
+    //TODO 重写开门方法（所有调用开门方法的函数，都得添加到线程上面）
+    public void openDoorByDoorObject(Door door) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException, InterruptedException {
+        if (null == door) {
+            throw new ArgumentMissingException("参数doorObject为空。");
+        }
+        String deviceId = door.getArkSn();
+        int boxId = door.getDoorSn();
+
+        if (StringUtils.isEmpty(deviceId)) {
+            throw new ArgumentMissingException("参数doorObject中的arkSn值为空");
+        }
+        if (boxId < 1 || boxId > 16) {
+            throw new ArgumentMissingException("参数boxId不是有效数字，无法开柜");
+        }
+
+        //打开柜门
+        BoxCommandResponse boxCommandResponse = ArkOperation.openBox(deviceId, boxId);
+        //判断是否成功，成功就启动监控线程
+        if (null != boxCommandResponse && ArkOperation.SUCCESS_CODE == boxCommandResponse.code) {
+            logger.info("开始执行智能柜开关门-------");
+            long start = System.currentTimeMillis();
+            long end;
+            String resState = "timeout";
+            boolean startFlag = true;
+
+            while (startFlag) {
+                try {
+                    Thread.sleep(TIME_INTERVAL);
+                    //是否已经超时，超时则直接退出进程
+                    if ((System.currentTimeMillis() - start) > TIMEOUT) {
+                        logger.error(deviceId + " 柜门未关，已超时。线程终止。");
+                        startFlag = false;
+                        end = System.currentTimeMillis();
+                        logger.info("完成智能柜开关任务------，耗时：" + (end - start) + "毫秒");
+                        resState = "timeout";
+                        break;
+                    }
+                } catch (InterruptedException e) {
+                    logger.error(e.getMessage(), e);
+                    e.printStackTrace();
+                    throw new InterruptedException();
+                }
+
+                BoxCommandResponse response = ArkOperation.queryBox(deviceId, boxId);
+
+                int code = response.code;
+                boolean isOpen = response.is_open;
+                if (ArkOperation.SUCCESS_CODE == code) {
+                    if (!isOpen) {
+                        logger.info(deviceId + " 柜门关闭。正常结束进程");
+                        startFlag = false;
+                        end = System.currentTimeMillis();
+                        logger.info("完成智能柜开关任务------，耗时：" + (end - start) + "毫秒");
+                        resState = "success";
+                        break;
+                    }
+                }
+            }
+
+            //获取结果，如果不是success，说明超时
+            if (!Constants.OPEN_SUCCESS.equalsIgnoreCase(resState)) {
+                throw new OpenArkDoorTimeOutException("柜门关闭线程超时（50s）");
+            }
+
+            //如果正常到这边，不抛出异常，就说明一切正常，可以开单
+        } else {
+            throw new OpenArkDoorFailedException("打开柜门失败：从远端获取到打开柜门失败的信息。");
+        }
+    }
+
     /**
      * 打开柜门并启用监控线程
      *
@@ -69,7 +140,7 @@ public class DoorService {
      * @throws OpenArkDoorFailedException
      * @throws OpenArkDoorTimeOutException
      */
-    public void openDoorByDoorObject(Door door) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException {
+    public void openDoorByDoorObjectOld(Door door) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException {
         if (null == door) {
             throw new ArgumentMissingException("参数doorObject为空。");
         }

@@ -58,8 +58,11 @@ public class WxUserInfoService {
     @Autowired
     private StoreRepository storeRepository;
 
-    @Autowired
     private ConsumerOrderService consumerOrderService;
+
+    public void setConsumerOrderService(ConsumerOrderService consumerOrderService) {
+        this.consumerOrderService = consumerOrderService;
+    }
 
     /**
      * 查找微信用户对象
