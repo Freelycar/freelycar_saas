@@ -129,6 +129,7 @@ public class OrderIDGenerator implements ApplicationRunner {
                 orderSnCacheVariable.put(storeId, orderNumber);
             }
         }
+        logger.info("--------读取数据库中每个店的最新编号结束--------");
     }
 
 //    synchronized public String generate(String storeId, int orderType) throws Exception {
