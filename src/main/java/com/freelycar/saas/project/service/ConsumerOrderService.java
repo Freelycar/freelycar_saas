@@ -1558,7 +1558,7 @@ public class ConsumerOrderService {
     public BigDecimal sumOrderParticularsTotalAccount(String storeId, String startTime, String endTime) {
 
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT cast( sum( co.actualPrice ) AS DECIMAL ( 15, 2 ) ) AS result FROM consumerorder co WHERE co.delStatus = 0 AND payState = 2 ");
+        sql.append(" SELECT IFNULL(cast( sum( co.actualPrice ) AS DECIMAL ( 15, 2 ) ),0) AS result FROM consumerorder co WHERE co.delStatus = 0 AND payState = 2 ");
         if (StringUtils.hasText(storeId)) {
             sql.append(" AND co.storeId = '").append(storeId).append("' ");
         }
