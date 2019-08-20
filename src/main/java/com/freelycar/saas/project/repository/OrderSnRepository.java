@@ -10,9 +10,11 @@ import org.springframework.data.jpa.repository.Query;
  * @email toby911115@gmail.com
  */
 public interface OrderSnRepository extends JpaRepository<OrderSn, Long> {
-    OrderSn findTopByStoreIdAndAndDateNumberOrderByCreateTimeDesc(String orderId, String dateNumber);
+    OrderSn findTopByStoreIdAndDateNumberOrderByCreateTimeDesc(String storeId, String dateNumber);
 
-    OrderSn findTopByStoreIdOrderByCreateTimeDesc(String orderId);
+    OrderSn findTopByStoreIdOrderByCreateTimeDesc(String storeId);
+
+    OrderSn findTopByStoreIdOrderByIdDesc(String storeId);
 
     @Query(value = "select max(storeSn)+1 as storeSn from ordersn", nativeQuery = true)
     int generateStoreSn();

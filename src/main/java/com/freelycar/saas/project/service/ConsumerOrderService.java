@@ -105,8 +105,6 @@ public class ConsumerOrderService {
     @Autowired
     private StoreRepository storeRepository;
 
-    private String newArkOrderId;
-
     /**
      * 保存和修改
      *
@@ -120,7 +118,8 @@ public class ConsumerOrderService {
         String id = consumerOrder.getId();
         if (StringUtils.isEmpty(id)) {
             //订单号生成规则：订单类型编号（1位）+ 门店（3位）+ 日期（6位）+ 每日递增（4位）
-            consumerOrder.setId(orderIDGenerator.generate(consumerOrder.getStoreId(), consumerOrder.getOrderType()));
+            String newId = orderIDGenerator.getOrderSn(consumerOrder.getStoreId(), consumerOrder.getOrderType());
+            consumerOrder.setId(newId);
             consumerOrder.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             consumerOrder.setCreateTime(new Timestamp(System.currentTimeMillis()));
             return consumerOrderRepository.saveAndFlush(consumerOrder);
