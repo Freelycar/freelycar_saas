@@ -65,7 +65,7 @@ public class OrderIDGenerator implements ApplicationRunner {
             String storeSn = storeSnCacheVariable.get(storeId);
 
             if (StringUtils.hasText(dateNumber) && StringUtils.hasText(orderSn) && StringUtils.hasText(storeSn)) {
-                String newOrderSn = Number2StringFormatter.format4Number2String(Integer.parseInt(orderSn + 1));
+                String newOrderSn = Number2StringFormatter.format4Number2String(Integer.parseInt(orderSn) + 1);
                 if (!dateNumber.equalsIgnoreCase(currentDateNumber)) {
                     dateNumberCacheVariable.put(storeId, currentDateNumber);
                     dateNumber = currentDateNumber;
@@ -81,6 +81,8 @@ public class OrderIDGenerator implements ApplicationRunner {
 
                 //递归调用，直到获取到不同的订单编号
                 if (resOrderSn.equalsIgnoreCase(lastRes)) {
+                    logger.info("lastRes：" + lastRes);
+                    logger.info("resOrderSn：" + resOrderSn);
                     this.generateOrderSnWithoutOrderType(storeId);
                 }
                 return resOrderSn;
@@ -94,6 +96,8 @@ public class OrderIDGenerator implements ApplicationRunner {
             throw new ArgumentMissingException("参数orderType超过了规则下标，无法生成单据ID");
         }
         String resOrderSn = this.generateOrderSnWithoutOrderType(storeId);
+
+        logger.info("------本次分配到的订单号是：" + resOrderSn + "------");
 
         return orderTypeSn[orderType - 1] + resOrderSn;
     }

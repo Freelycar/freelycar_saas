@@ -22,7 +22,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -858,9 +857,9 @@ public class ConsumerOrderService {
      * @param orderObject
      * @return
      */
-    @Async("taskExecutor")
+//    @Async("taskExecutor")
     public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws Exception {
-        logger.info("执行智能柜开单操作：---start---" + orderObject);
+//        logger.info("执行智能柜开单操作：---start---" + orderObject);
         String arkSn = orderObject.getArkSn();
         //获取提交过来的数据
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
@@ -975,7 +974,7 @@ public class ConsumerOrderService {
         // 推送微信公众号消息，通知用户订单生成成功
         sendWeChatMsg(consumerOrderRes);
 
-        logger.info("执行智能柜开单操作---end---：" + consumerOrderRes);
+//        logger.info("执行智能柜开单操作---end---：" + consumerOrderRes);
         return ResultJsonObject.getDefaultResult(consumerOrderRes.getId(), "订单生成成功！");
     }
 
@@ -985,7 +984,7 @@ public class ConsumerOrderService {
      * @param orderId
      * @return
      */
-    @Async("taskExecutor")
+//    @Async("taskExecutor")
     public ResultJsonObject cancelOrder(String orderId) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException, InterruptedException {
         logger.info("执行用户取消订单操作：---start---" + orderId);
         ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
@@ -1073,7 +1072,7 @@ public class ConsumerOrderService {
      * @param orderId
      * @return
      */
-    @Async("taskExecutor")
+//    @Async("taskExecutor")
     public ResultJsonObject orderFinish(String orderId) throws Exception {
         if (StringUtils.isEmpty(orderId)) {
             return ResultJsonObject.getCustomResult(orderId, ResultCode.PARAM_NOT_COMPLETE);
@@ -1113,7 +1112,7 @@ public class ConsumerOrderService {
      * @param staffId
      * @return
      */
-    @Async("taskExecutor")
+//    @Async("taskExecutor")
     public ResultJsonObject pickCar(String orderId, String staffId) throws Exception {
         if (StringUtils.isEmpty(orderId)) {
             return ResultJsonObject.getCustomResult("The param 'orderId' is null", ResultCode.PARAM_NOT_COMPLETE);
@@ -1163,7 +1162,7 @@ public class ConsumerOrderService {
      * @param orderObject
      * @return
      */
-    @Async("taskExecutor")
+//    @Async("taskExecutor")
     public ResultJsonObject finishCar(OrderObject orderObject) throws Exception {
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
         String arkSn = orderObject.getArkSn();
