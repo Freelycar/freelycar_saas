@@ -42,6 +42,22 @@ public class OrderParticulars {
     @Excel(name = "是否会员", orderNum = "7")
     private String isMember;
 
+    /**
+     * 消费门店
+     */
+    private String storeName;
+
+    /**
+     * 订单金额
+     */
+    private Double orderCost;
+
+    /**
+     * 支付方式
+     */
+    private String payMethod;
+
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
@@ -63,6 +79,12 @@ public class OrderParticulars {
                 .append(serviceTime).append('\"');
         sb.append(",\"isMember\":\"")
                 .append(isMember).append('\"');
+        sb.append(",\"storeName\":\"")
+                .append(storeName).append('\"');
+        sb.append(",\"orderCost\":")
+                .append(orderCost);
+        sb.append(",\"payMethod\":\"")
+                .append(payMethod).append('\"');
         sb.append('}');
         return sb.toString();
     }

@@ -221,6 +221,9 @@ public class ConsumerOrderController {
             @RequestParam Integer currentPage,
             @RequestParam(required = false) Integer pageSize
     ) {
+        if (null == pageSize) {
+            pageSize = 10;
+        }
 
         PaginationRJO pageResult = consumerOrderService.listPageOrderParticulars(storeId, startTime, endTime, currentPage, pageSize);
 
