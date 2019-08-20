@@ -59,31 +59,31 @@ public class OrderIDGenerator implements ApplicationRunner {
         String currentDateNumber = sdfDate.format(new Date());
         logger.debug("当前时间日期6位数：" + currentDateNumber);
 
-        synchronized (orderSnCacheVariable) {
-            synchronized (resOrderSnCacheVariable) {
-                String orderSn = orderSnCacheVariable.get(storeId);
-                String dateNumber = dateNumberCacheVariable.get(storeId);
-                String storeSn = storeSnCacheVariable.get(storeId);
+        synchronized (this) {
+            String orderSn = orderSnCacheVariable.get(storeId);
+            String dateNumber = dateNumberCacheVariable.get(storeId);
+            String storeSn = storeSnCacheVariable.get(storeId);
 
-                if (StringUtils.hasText(dateNumber) && StringUtils.hasText(orderSn) && StringUtils.hasText(storeSn)) {
-                    if (!dateNumber.equalsIgnoreCase(currentDateNumber)) {
-                        dateNumberCacheVariable.put(storeId, currentDateNumber);
-                        dateNumber = currentDateNumber;
-                    }
-                    String newOrderSn = Number2StringFormatter.format4Number2String(Integer.parseInt(orderSn + 1));
-                    orderSnCacheVariable.put(storeId, newOrderSn);
-
-
-                    String resOrderSn = storeSn + dateNumber + newOrderSn;
-                    String lastRes = resOrderSnCacheVariable.get(storeId);
-                    resOrderSnCacheVariable.put(storeId, resOrderSn);
-
-                    //递归调用，直到获取到不同的订单编号
-                    if (resOrderSn.equalsIgnoreCase(lastRes)) {
-                        this.generateOrderSnWithoutOrderType(storeId);
-                    }
-                    return resOrderSn;
+            if (StringUtils.hasText(dateNumber) && StringUtils.hasText(orderSn) && StringUtils.hasText(storeSn)) {
+                String newOrderSn = Number2StringFormatter.format4Number2String(Integer.parseInt(orderSn + 1));
+                if (!dateNumber.equalsIgnoreCase(currentDateNumber)) {
+                    dateNumberCacheVariable.put(storeId, currentDateNumber);
+                    dateNumber = currentDateNumber;
+                    newOrderSn = ORIGIN_SN;
                 }
+
+                orderSnCacheVariable.put(storeId, newOrderSn);
+
+
+                String resOrderSn = storeSn + dateNumber + newOrderSn;
+                String lastRes = resOrderSnCacheVariable.get(storeId);
+                resOrderSnCacheVariable.put(storeId, resOrderSn);
+
+                //递归调用，直到获取到不同的订单编号
+                if (resOrderSn.equalsIgnoreCase(lastRes)) {
+                    this.generateOrderSnWithoutOrderType(storeId);
+                }
+                return resOrderSn;
             }
             throw new NormalException("获取该门店订单ID失败");
         }
