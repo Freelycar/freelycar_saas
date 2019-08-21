@@ -110,14 +110,20 @@ public class ConsumerOrderService {
      * @param consumerOrder
      * @return
      */
-    public ConsumerOrder saveOrUpdate(ConsumerOrder consumerOrder) throws Exception {
+    public ConsumerOrder saveOrUpdate(ConsumerOrder consumerOrder) throws ObjectNotFoundException, ArgumentMissingException {
         if (null == consumerOrder) {
-            return null;
+            throw new ArgumentMissingException("参数consumerOrder对象为空");
         }
         String id = consumerOrder.getId();
         if (StringUtils.isEmpty(id)) {
             //订单号生成规则：订单类型编号（1位）+ 门店（3位）+ 日期（6位）+ 每日递增（4位）
-            String newId = orderIDGenerator.getOrderSn(consumerOrder.getStoreId(), consumerOrder.getOrderType());
+            String newId;
+            try {
+                newId = orderIDGenerator.getOrderSn(consumerOrder.getStoreId(), consumerOrder.getOrderType());
+            } catch (ArgumentMissingException | NumberOutOfRangeException | NormalException e) {
+                e.printStackTrace();
+                throw new ObjectNotFoundException("生成订单编号失败：" + e.getMessage());
+            }
             consumerOrder.setId(newId);
             consumerOrder.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             consumerOrder.setCreateTime(new Timestamp(System.currentTimeMillis()));
@@ -132,11 +138,11 @@ public class ConsumerOrderService {
      * @param consumerOrder
      * @return
      */
-    public ConsumerOrder updateOrder(ConsumerOrder consumerOrder) {
+    public ConsumerOrder updateOrder(ConsumerOrder consumerOrder) throws ObjectNotFoundException {
         String id = consumerOrder.getId();
         Optional<ConsumerOrder> consumerOrderOptional = consumerOrderRepository.findById(id);
         if (!consumerOrderOptional.isPresent()) {
-            return null;
+            throw new ObjectNotFoundException("更新订单失败：未找到id为：" + id + " 的订单");
         }
         ConsumerOrder source = consumerOrderOptional.get();
         UpdateTool.copyNullProperties(source, consumerOrder);
@@ -399,7 +405,7 @@ public class ConsumerOrderService {
      * @param payOrder
      * @return
      */
-    public ResultJsonObject payment(PayOrder payOrder) {
+    public ResultJsonObject payment(PayOrder payOrder) throws ObjectNotFoundException {
         ConsumerOrder consumerOrder = payOrder.getConsumerOrder();
         if (null == consumerOrder) {
             return ResultJsonObject.getErrorResult(null, "consumerOrder对象为NULL！");
@@ -479,7 +485,7 @@ public class ConsumerOrderService {
      * @param payOrder
      * @return
      */
-    public ResultJsonObject pendingOrder(PayOrder payOrder) {
+    public ResultJsonObject pendingOrder(PayOrder payOrder) throws ObjectNotFoundException {
         ConsumerOrder consumerOrder = payOrder.getConsumerOrder();
         if (null == consumerOrder) {
             return ResultJsonObject.getErrorResult(null, "consumerOrder对象为NULL！");
@@ -488,10 +494,6 @@ public class ConsumerOrderService {
         String orderId = consumerOrder.getId();
 
         consumerOrder = this.updateOrder(consumerOrder);
-        if (null == consumerOrder) {
-            return ResultJsonObject.getErrorResult(null, "挂单操作失败：数据保存错误！");
-        }
-
 
         //查询所有关联的抵用券，并将所有orderId和status初始化
         couponService.initCouponByOrderId(orderId);
@@ -785,7 +787,7 @@ public class ConsumerOrderService {
      * @param consumerOrder
      * @return
      */
-    public ResultJsonObject serviceFinish(ConsumerOrder consumerOrder) {
+    public ResultJsonObject serviceFinish(ConsumerOrder consumerOrder) throws ObjectNotFoundException {
         if (StringUtils.isEmpty(consumerOrder)) {
             return ResultJsonObject.getErrorResult(consumerOrder, "参数consumerOrder为NULL，完工操作失败");
         }
@@ -807,7 +809,7 @@ public class ConsumerOrderService {
      * @param consumerOrder
      * @return
      */
-    public ResultJsonObject handOver(ConsumerOrder consumerOrder) {
+    public ResultJsonObject handOver(ConsumerOrder consumerOrder) throws ObjectNotFoundException {
         if (StringUtils.isEmpty(consumerOrder)) {
             return ResultJsonObject.getErrorResult(consumerOrder, "参数consumerOrder为NULL，交车操作失败");
         }
@@ -857,8 +859,7 @@ public class ConsumerOrderService {
      * @param orderObject
      * @return
      */
-//    @Async("taskExecutor")
-    public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws Exception {
+    public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, NoEmptyArkException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException, UpdateDataErrorException {
 //        logger.info("执行智能柜开单操作：---start---" + orderObject);
         String arkSn = orderObject.getArkSn();
         //获取提交过来的数据
@@ -866,13 +867,11 @@ public class ConsumerOrderService {
         List<ConsumerProjectInfo> consumerProjectInfos = orderObject.getConsumerProjectInfos();
 
         if (StringUtils.isEmpty(arkSn)) {
-            logger.error("智能柜开单失败：参数中的arkSn对象为空，无法分配智能柜");
-            return ResultJsonObject.getErrorResult(null, "智能柜开单失败：参数中的arkSn对象为空，无法分配智能柜");
+            throw new ArgumentMissingException("参数中的arkSn对象为空，无法分配智能柜");
         }
 
         if (null == consumerOrder) {
-            logger.error("智能柜开单失败：参数中的consumerOrder对象为空");
-            return ResultJsonObject.getErrorResult(null, "智能柜开单失败：参数中的consumerOrder对象为空");
+            throw new ArgumentMissingException("参数中的consumerOrder对象为空");
         }
 
         String carId = consumerOrder.getCarId();
@@ -881,15 +880,15 @@ public class ConsumerOrderService {
         //获取车辆信息
         Car carInfo = carService.findById(carId);
         if (null == carInfo) {
-            logger.error("智能柜开单失败：未找到对应的车辆信息 " + carId);
-            return ResultJsonObject.getErrorResult(null, "智能柜开单失败：未找到对应的车辆信息");
+            logger.error("未找到对应的车辆信息 " + carId);
+            throw new ObjectNotFoundException("未找到对应的车辆信息");
         }
 
         //获取客户信息
         Client clientInfo = clientService.findById(clientId);
         if (null == clientInfo) {
-            logger.error("智能柜开单失败：未找到对应的车主信息 " + clientId);
-            return ResultJsonObject.getErrorResult(null, "智能柜开单失败：未找到对应的车主信息");
+            logger.error("未找到对应的车主信息 " + clientId);
+            throw new ObjectNotFoundException("未找到对应的车主信息");
         }
 
         //设置order中的车辆信息
@@ -933,13 +932,11 @@ public class ConsumerOrderService {
         ConsumerOrder consumerOrderRes;
         try {
             consumerOrderRes = this.saveOrUpdate(consumerOrder);
-        } catch (Exception e) {
+        } catch (ArgumentMissingException | ObjectNotFoundException e) {
+            doorService.takeOutDoorIdWithCache(emptyDoor);
             logger.error(e.getMessage(), e);
             e.printStackTrace();
-            return ResultJsonObject.getErrorResult(null, "智能柜开单失败！" + e.getMessage());
-        }
-        if (null == consumerOrderRes) {
-            return ResultJsonObject.getErrorResult(null, "智能柜开单失败！保存订单信息失败。如有疑问，请联系管理员！");
+            throw new UpdateDataErrorException("保存订单信息失败");
         }
 
         String orderId = consumerOrder.getId();
@@ -965,7 +962,13 @@ public class ConsumerOrderService {
         // door表数据更新，根据智能柜编号获取door对象，并更新状态为"预约状态"
         this.changeDoorState(emptyDoor, orderId, Constants.DoorState.USER_RESERVATION.getValue());
         // 数据保存完毕之后操作硬件，成功后返回成功，否则抛出异常进行回滚操作
-        doorService.openDoorByDoorObject(emptyDoor);
+        try {
+            doorService.openDoorByDoorObject(emptyDoor);
+        } catch (OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
+            throw e;
+        } finally {
+            doorService.takeOutDoorIdWithCache(emptyDoor);
+        }
 
 
         //推送微信消息给技师 需要给这个柜子相关的技师都推送
@@ -984,8 +987,7 @@ public class ConsumerOrderService {
      * @param orderId
      * @return
      */
-//    @Async("taskExecutor")
-    public ResultJsonObject cancelOrder(String orderId) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException, InterruptedException {
+    public ResultJsonObject cancelOrder(String orderId) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException, InterruptedException, ObjectNotFoundException {
         logger.info("执行用户取消订单操作：---start---" + orderId);
         ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
         if (null == consumerOrder) {
@@ -1072,7 +1074,6 @@ public class ConsumerOrderService {
      * @param orderId
      * @return
      */
-//    @Async("taskExecutor")
     public ResultJsonObject orderFinish(String orderId) throws Exception {
         if (StringUtils.isEmpty(orderId)) {
             return ResultJsonObject.getCustomResult(orderId, ResultCode.PARAM_NOT_COMPLETE);
@@ -1086,9 +1087,6 @@ public class ConsumerOrderService {
         consumerOrder.setDeliverTime(new Timestamp(System.currentTimeMillis()));
 
         ConsumerOrder res = this.updateOrder(consumerOrder);
-        if (null == res) {
-            return ResultJsonObject.getErrorResult(orderId, "单据状态更新失败，执行数据回滚");
-        }
 
 
         //获取订单对应的柜子信息
@@ -1112,7 +1110,6 @@ public class ConsumerOrderService {
      * @param staffId
      * @return
      */
-//    @Async("taskExecutor")
     public ResultJsonObject pickCar(String orderId, String staffId) throws Exception {
         if (StringUtils.isEmpty(orderId)) {
             return ResultJsonObject.getCustomResult("The param 'orderId' is null", ResultCode.PARAM_NOT_COMPLETE);
@@ -1135,10 +1132,6 @@ public class ConsumerOrderService {
         consumerOrder.setPickCarStaffId(staffId);
         consumerOrder.setPickCarStaffName(staff.getName());
         ConsumerOrder orderRes = this.updateOrder(consumerOrder);
-        if (null == orderRes) {
-            return ResultJsonObject.getErrorResult(null, "单据状态更新失败");
-        }
-
 
         //更新door表数据状态
         Door door = doorRepository.findTopByOrderId(orderId);
@@ -1162,19 +1155,16 @@ public class ConsumerOrderService {
      * @param orderObject
      * @return
      */
-//    @Async("taskExecutor")
-    public ResultJsonObject finishCar(OrderObject orderObject) throws Exception {
+    public ResultJsonObject finishCar(OrderObject orderObject) throws ArgumentMissingException, NoEmptyArkException, ObjectNotFoundException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException {
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
         String arkSn = orderObject.getArkSn();
 
         if (StringUtils.isEmpty(arkSn)) {
-            logger.error("智能柜-车辆完工 失败：参数中的arkSn对象为空，无法分配智能柜");
-            return ResultJsonObject.getErrorResult(null, "智能柜-车辆完工 失败：参数中的arkSn对象为空，无法分配智能柜");
+            throw new ArgumentMissingException("参数中的arkSn对象为空，无法分配智能柜");
         }
 
         if (null == consumerOrder) {
-            logger.error("智能柜-车辆完工 失败：参数中的consumerOrder对象为空");
-            return ResultJsonObject.getErrorResult(null, "智能柜-车辆完工 失败：参数中的consumerOrder对象为空");
+            throw new ArgumentMissingException("参数中的consumerOrder对象为空");
         }
 
         String orderId = consumerOrder.getId();
@@ -1195,10 +1185,14 @@ public class ConsumerOrderService {
         consumerOrder.setStaffKeyLocationSn(staffKeyLocationSn);
 
 
-        ConsumerOrder order = this.updateOrder(consumerOrder);
-        if (null == order) {
-            return ResultJsonObject.getErrorResult(null, "单据状态更新失败");
+        ConsumerOrder order;
+        try {
+            order = this.updateOrder(consumerOrder);
+        } catch (ObjectNotFoundException e) {
+            doorService.takeOutDoorIdWithCache(emptyDoor);
+            throw e;
         }
+
 
         //关联技师上传订单车辆图片
         StaffOrderImg staffOrderImg = orderObject.getStaffOrderImg();
@@ -1211,7 +1205,13 @@ public class ConsumerOrderService {
         // 更新door表数据状态
         this.changeDoorState(emptyDoor, orderId, Constants.DoorState.STAFF_FINISH.getValue());
         // 调用硬件接口方法打开柜门
-        doorService.openDoorByDoorObject(emptyDoor);
+        try {
+            doorService.openDoorByDoorObject(emptyDoor);
+        } catch (OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
+            throw e;
+        } finally {
+            doorService.takeOutDoorIdWithCache(emptyDoor);
+        }
 
 
         // 推送微信公众号消息，通知用户取车
@@ -1232,7 +1232,12 @@ public class ConsumerOrderService {
             String firstCharacter = orderId.substring(0, 1);
             switch (firstCharacter) {
                 case "A":
-                    return this.arkPaySuccess(orderId);
+                    try {
+                        return this.arkPaySuccess(orderId);
+                    } catch (ObjectNotFoundException e) {
+                        e.printStackTrace();
+                        return ResultJsonObject.getErrorResult(null, e.getMessage());
+                    }
                 case "C":
                     try {
                         return this.buyCardPaySuccess(orderId);
@@ -1266,7 +1271,7 @@ public class ConsumerOrderService {
      * @param orderId
      * @return
      */
-    public ResultJsonObject arkPaySuccess(String orderId) {
+    public ResultJsonObject arkPaySuccess(String orderId) throws ObjectNotFoundException {
         ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
         if (null == consumerOrder) {
             return ResultJsonObject.getCustomResult(null, ResultCode.RESULT_DATA_NONE);
@@ -1277,10 +1282,7 @@ public class ConsumerOrderService {
         consumerOrder.setFirstPayMethod(Constants.PayMethod.WECHAT_PAY.getCode());
         consumerOrder.setFirstActualPrice(consumerOrder.getActualPrice());
 
-        ConsumerOrder orderRes = updateOrder(consumerOrder);
-        if (null == orderRes) {
-            ResultJsonObject.getErrorResult(null, "单据数据更新失败");
-        }
+        updateOrder(consumerOrder);
         return ResultJsonObject.getDefaultResult(orderId);
     }
 

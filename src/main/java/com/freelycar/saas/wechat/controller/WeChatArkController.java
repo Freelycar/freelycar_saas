@@ -1,10 +1,7 @@
 package com.freelycar.saas.wechat.controller;
 
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
-import com.freelycar.saas.exception.ArgumentMissingException;
-import com.freelycar.saas.exception.NoEmptyArkException;
-import com.freelycar.saas.exception.OpenArkDoorFailedException;
-import com.freelycar.saas.exception.OpenArkDoorTimeOutException;
+import com.freelycar.saas.exception.*;
 import com.freelycar.saas.project.model.OrderObject;
 import com.freelycar.saas.project.service.ArkService;
 import com.freelycar.saas.project.service.ConsumerOrderService;
@@ -51,19 +48,13 @@ public class WeChatArkController {
 
     @PostMapping("/orderService")
     public ResultJsonObject orderService(@RequestBody OrderObject orderObject) {
-        String errorMessage;
         try {
             return consumerOrderService.arkHandleOrder(orderObject);
-        } catch (NoEmptyArkException e1) {
-            errorMessage = "没有可用的空智能柜";
-            logger.error(errorMessage, e1);
-            e1.printStackTrace();
-        } catch (Exception e) {
-            errorMessage = "用户预约-智能柜服务出现异常";
-            logger.error(errorMessage, e);
+        } catch (ArgumentMissingException | ObjectNotFoundException | NoEmptyArkException | OpenArkDoorTimeOutException | InterruptedException | OpenArkDoorFailedException | UpdateDataErrorException e) {
+            logger.error(e.getMessage(), e);
             e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, "智能柜开单失败：" + e.getMessage() + "，请稍后重试或联系门店");
         }
-        return ResultJsonObject.getErrorResult(null, errorMessage + "，请稍后重试或联系门店。");
     }
 
     @GetMapping("/cancelOrderService")
@@ -71,7 +62,7 @@ public class WeChatArkController {
         String errorMessage;
         try {
             return consumerOrderService.cancelOrder(id);
-        } catch (ArgumentMissingException | OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
+        } catch (ArgumentMissingException | OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException | ObjectNotFoundException e) {
             errorMessage = e.getMessage();
             logger.error(e.getMessage(), e);
             e.printStackTrace();

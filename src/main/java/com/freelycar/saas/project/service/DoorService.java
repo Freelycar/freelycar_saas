@@ -16,8 +16,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author tangwei - Toby
@@ -29,7 +32,12 @@ import java.util.Random;
 public class DoorService {
     private final static long TIME_INTERVAL = 5000;
     private final static long TIMEOUT = 50000;
+    /**
+     * 初始化一个存放正在操作的Door对象的缓存对象
+     */
+    private final static Map<String, List<String>> doorCacheVariable = new ConcurrentHashMap<>();
     private Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Autowired
     private DoorRepository doorRepository;
 
@@ -50,19 +58,92 @@ public class DoorService {
             logger.error("没有可分配的智能柜！");
             throw new NoEmptyArkException("没有查找到可使用的空智能柜");
         }
-        int targetIndex;
-        int emptyDoorsCount = emptyDoorList.size();
-        if (1 == emptyDoorsCount) {
-            targetIndex = 0;
-        } else {
-            //获取一个随机下标
-            Random random = new Random();
-            targetIndex = random.nextInt(emptyDoorsCount);
+
+        synchronized (doorCacheVariable) {
+            return isOperatingDoor(emptyDoorList);
         }
-        return emptyDoorList.get(targetIndex);
     }
 
-    //TODO 重写开门方法（所有调用开门方法的函数，都得添加到线程上面）
+    private Door isOperatingDoor(List<Door> emptyDoors) throws NoEmptyArkException {
+        if (null == emptyDoors || emptyDoors.isEmpty()) {
+            logger.error("没有可分配的智能柜！");
+            throw new NoEmptyArkException("没有查找到可使用的空智能柜");
+        }
+        int targetIndex;
+        int emptyDoorsCount = emptyDoors.size();
+        //获取一个随机下标
+        Random random = new Random();
+        targetIndex = random.nextInt(emptyDoorsCount);
+
+        //得到door对象，去缓存对象里去查是否是
+        Door targetDoor = emptyDoors.get(targetIndex);
+        String targetDoorId = targetDoor.getId();
+        String arkId = targetDoor.getArkId();
+
+        List<String> cacheDoors = doorCacheVariable.get(arkId);
+        if (null != cacheDoors && !cacheDoors.isEmpty()) {
+            logger.info("分配前cacheDoors:" + cacheDoors);
+            boolean isUsable = true;
+            for (String doorId : cacheDoors) {
+                if (targetDoorId.equalsIgnoreCase(doorId)) {
+                    isUsable = false;
+                    break;
+                }
+            }
+            if (isUsable) {
+//                cacheDoors.add(targetDoorId);
+//                doorCacheVariable.put(arkId, cacheDoors);
+                takeInDoorIdWithCache(targetDoor, cacheDoors);
+                return targetDoor;
+            } else {
+                emptyDoors.remove(targetIndex);
+                return isOperatingDoor(emptyDoors);
+            }
+        } else {
+            if (null == cacheDoors) {
+                cacheDoors = new ArrayList<>();
+            }
+//            cacheDoors.add(targetDoorId);
+//            doorCacheVariable.put(arkId, cacheDoors);
+            takeInDoorIdWithCache(targetDoor, cacheDoors);
+
+            logger.info("分配后cacheDoors:" + cacheDoors);
+            return targetDoor;
+        }
+    }
+
+    private void takeInDoorIdWithCache(Door door, List<String> cacheDoors) {
+        logger.info("已分配的柜子存入缓存-----");
+        cacheDoors.add(door.getId());
+        doorCacheVariable.put(door.getArkId(), cacheDoors);
+    }
+
+    public void takeOutDoorIdWithCache(Door door) {
+        logger.info("已分配的柜子从缓存中去除-----");
+        //从缓存中去掉这个Door对象
+        String arkId = door.getArkId();
+        List<String> cacheDoors = doorCacheVariable.get(arkId);
+        if (null != cacheDoors && !cacheDoors.isEmpty()) {
+            for (String cacheDoorId : cacheDoors) {
+                if (door.getId().equalsIgnoreCase(cacheDoorId)) {
+                    cacheDoors.remove(cacheDoorId);
+                    doorCacheVariable.put(arkId, cacheDoors);
+                    break;
+                }
+            }
+        }
+    }
+
+
+    /**
+     * 重写开门方法
+     *
+     * @param door
+     * @throws ArgumentMissingException
+     * @throws OpenArkDoorFailedException
+     * @throws OpenArkDoorTimeOutException
+     * @throws InterruptedException
+     */
     public void openDoorByDoorObject(Door door) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException, InterruptedException {
         if (null == door) {
             throw new ArgumentMissingException("参数doorObject为空。");

@@ -5,6 +5,7 @@ import com.freelycar.saas.aop.LoggerManage;
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.ResultCode;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
+import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.ConsumerOrder;
 import com.freelycar.saas.project.model.PayOrder;
 import com.freelycar.saas.project.repository.ConsumerOrderRepository;
@@ -182,6 +183,12 @@ public class WeChatPayController {
     @PostMapping("/payOrderByCard")
     @LoggerManage(description = "调用方法：单据结算（支付）")
     public ResultJsonObject payOrderByCard(@RequestBody PayOrder payOrder) {
-        return consumerOrderService.payment(payOrder);
+        try {
+            return consumerOrderService.payment(payOrder);
+        } catch (ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
     }
 }

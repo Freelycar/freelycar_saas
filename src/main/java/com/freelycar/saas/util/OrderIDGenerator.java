@@ -38,10 +38,10 @@ public class OrderIDGenerator implements ApplicationRunner {
     private final static String ORIGIN_SN = "0001";
     private final static String HALF_SN = "5000";
     //缓存
-    private static Map<String, String> orderSnCacheVariable = new ConcurrentHashMap<>();
-    private static Map<String, String> dateNumberCacheVariable = new ConcurrentHashMap<>();
-    private static Map<String, String> storeSnCacheVariable = new ConcurrentHashMap<>();
-    private static Map<String, String> resOrderSnCacheVariable = new ConcurrentHashMap<>();
+    private final static Map<String, String> orderSnCacheVariable = new ConcurrentHashMap<>();
+    private final static Map<String, String> dateNumberCacheVariable = new ConcurrentHashMap<>();
+    private final static Map<String, String> storeSnCacheVariable = new ConcurrentHashMap<>();
+    private final static Map<String, String> resOrderSnCacheVariable = new ConcurrentHashMap<>();
 
     private final String[] orderTypeSn = new String[]{"S", "A", "C", "R"};
     private Logger logger = LoggerFactory.getLogger(this.getClass());

@@ -81,7 +81,13 @@ public class ConsumerOrderController {
     @PostMapping("/payment")
     @LoggerManage(description = "调用方法：单据结算（支付）")
     public ResultJsonObject payment(@RequestBody PayOrder payOrder) {
-        return consumerOrderService.payment(payOrder);
+        try {
+            return consumerOrderService.payment(payOrder);
+        } catch (ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
     }
 
     /**
@@ -94,7 +100,13 @@ public class ConsumerOrderController {
     @PostMapping("/pendingOrder")
     @LoggerManage(description = "调用方法：单据挂单")
     public ResultJsonObject pendingOrder(@RequestBody PayOrder payOrder) {
-        return consumerOrderService.pendingOrder(payOrder);
+        try {
+            return consumerOrderService.pendingOrder(payOrder);
+        } catch (ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
     }
 
     @ApiOperation(value = "单据列表（分页）", produces = "application/json")
@@ -119,7 +131,13 @@ public class ConsumerOrderController {
     @PostMapping("/serviceFinish")
     @LoggerManage(description = "调用方法：设置单据完工状态")
     public ResultJsonObject serviceFinish(@RequestBody ConsumerOrder consumerOrder) {
-        return consumerOrderService.serviceFinish(consumerOrder);
+        try {
+            return consumerOrderService.serviceFinish(consumerOrder);
+        } catch (ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
     }
 
     /**
@@ -132,7 +150,13 @@ public class ConsumerOrderController {
     @PostMapping("/handOver")
     @LoggerManage(description = "调用方法：设置单据交车状态")
     public ResultJsonObject handOver(@RequestBody ConsumerOrder consumerOrder) {
-        return consumerOrderService.handOver(consumerOrder);
+        try {
+            return consumerOrderService.handOver(consumerOrder);
+        } catch (ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
     }
 
 
