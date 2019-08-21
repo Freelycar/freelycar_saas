@@ -1524,7 +1524,34 @@ public class ConsumerOrderService {
     private String generateOrderParticularsSQL(String storeId, String startTime, String endTime) {
 
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT co.id, co.carBrand, co.licensePlate, co.clientName, co.phone, ( SELECT group_concat( cpi.projectName ) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ) AS projectNames, co.actualPrice AS cost, co.createTime AS serviceTime, (case co.isMember when 1 then '是' else '否' end) as isMember FROM consumerorder co WHERE co.delStatus = 0 AND payState = 2 ");
+        sql.append(" SELECT co.id, co.carBrand, co.licensePlate, co.clientName, co.phone, IFNULL(( SELECT group_concat( cpi.projectName ) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ),'购卡/充值') AS projectNames, co.actualPrice AS cost, co.createTime AS serviceTime, (case co.isMember when 1 then '是' else '否' end) as isMember FROM consumerorder co WHERE co.delStatus = 0 AND payState = 2 ");
+        if (StringUtils.hasText(storeId)) {
+            sql.append(" AND co.storeId = '").append(storeId).append("' ");
+        }
+        if (StringUtils.hasText(startTime)) {
+            sql.append(" AND co.createTime > '").append(startTime).append(" 00:00:00' ");
+        }
+        if (StringUtils.hasText(endTime)) {
+            sql.append(" AND co.createTime <= '").append(endTime).append(" 23:59:59' ");
+        }
+        sql.append(" ORDER BY co.createTime DESC ");
+
+        return sql.toString();
+    }
+
+    /**
+     * 查询流水明细
+     * ps:因为管理端需要，这个sql返回的方法会多一些
+     *
+     * @param storeId
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    private String generateOrderParticularsDetailSQL(String storeId, String startTime, String endTime) {
+
+        StringBuilder sql = new StringBuilder();
+        sql.append(" SELECT co.id, co.carBrand, co.licensePlate, co.clientName, co.phone, IFNULL(( SELECT group_concat( cpi.projectName ) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ),'购卡/充值') AS projectNames, co.actualPrice AS cost, co.createTime AS serviceTime, ( CASE co.isMember WHEN 1 THEN '是' ELSE '否' END ) AS isMember, (SELECT s.`name` FROM store s WHERE co.storeId=s.id) AS storeName, co.totalPrice AS orderCost, CONCAT(CASE IFNULL(co.firstPayMethod,6) WHEN 0 THEN '储值卡'WHEN 1 THEN '现金'WHEN 2 THEN '微信'WHEN 3 THEN '支付宝'WHEN 4 THEN '易付宝'WHEN 5 THEN '刷卡'ELSE '未指定'END,CASE IFNULL(co.secondPayMethod,6) WHEN 0 THEN '储值卡'WHEN 1 THEN '现金'WHEN 2 THEN '微信'WHEN 3 THEN '支付宝'WHEN 4 THEN '易付宝'WHEN 5 THEN '刷卡'ELSE ''END) AS payMethod FROM consumerorder co WHERE co.delStatus = 0 AND payState = 2 ");
         if (StringUtils.hasText(storeId)) {
             sql.append(" AND co.storeId = '").append(storeId).append("' ");
         }
@@ -1543,7 +1570,7 @@ public class ConsumerOrderService {
     public BigDecimal sumOrderParticularsTotalAccount(String storeId, String startTime, String endTime) {
 
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT cast( sum( co.actualPrice ) AS DECIMAL ( 15, 2 ) ) AS result FROM consumerorder co WHERE co.delStatus = 0 AND payState = 2 ");
+        sql.append(" SELECT IFNULL(cast( sum( co.actualPrice ) AS DECIMAL ( 15, 2 ) ),0) AS result FROM consumerorder co WHERE co.delStatus = 0 AND payState = 2 ");
         if (StringUtils.hasText(storeId)) {
             sql.append(" AND co.storeId = '").append(storeId).append("' ");
         }
@@ -1608,7 +1635,7 @@ public class ConsumerOrderService {
      * @return
      */
     public PaginationRJO listPageOrderParticulars(String storeId, String startTime, String endTime, Integer currentPage, Integer pageSize) {
-        String sql = generateOrderParticularsSQL(storeId, startTime, endTime);
+        String sql = generateOrderParticularsDetailSQL(storeId, startTime, endTime);
 
         EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
         Query nativeQuery = em.createNativeQuery(sql);

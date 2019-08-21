@@ -187,6 +187,9 @@ public class CardService {
         cardOrder.setGender(client.getGender());
         cardOrder.setStoreId(client.getStoreId());
 
+        cardOrder.setFirstActualPrice(price);
+        cardOrder.setFirstPayMethod(card.getPayMethod());
+
         consumerOrderService.saveOrUpdate(cardOrder);
     }
 

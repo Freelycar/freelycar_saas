@@ -245,6 +245,9 @@ public class ConsumerOrderController {
             @RequestParam Integer currentPage,
             @RequestParam(required = false) Integer pageSize
     ) {
+        if (null == pageSize) {
+            pageSize = 10;
+        }
 
         PaginationRJO pageResult = consumerOrderService.listPageOrderParticulars(storeId, startTime, endTime, currentPage, pageSize);
 
@@ -295,7 +298,7 @@ public class ConsumerOrderController {
             }
 
             if (StringUtils.hasText(endTime)) {
-                endTime += " 00:00:00";
+                endTime += " 23:59:59";
             } else {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
                 endTime = dateFormat.format(new Date());
