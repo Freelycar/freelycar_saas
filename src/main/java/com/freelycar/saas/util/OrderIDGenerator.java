@@ -10,16 +10,16 @@ import com.freelycar.saas.project.repository.OrderSnRepository;
 import com.freelycar.saas.project.repository.StoreRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @email toby911115@gmail.com
  */
 @Component
-public class OrderIDGenerator implements ApplicationRunner {
+public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
     private static final SimpleDateFormat sdfDate = new SimpleDateFormat("yyMMdd");
 
     private final static String INIT_SN = "0000";
@@ -102,6 +102,12 @@ public class OrderIDGenerator implements ApplicationRunner {
         return orderTypeSn[orderType - 1] + resOrderSn;
     }
 
+    /**
+     * spring容器启动时，加载orderSn表中的数据，在缓存中生成数据
+     *
+     * @param args
+     * @throws Exception
+     */
     @Override
     public void run(ApplicationArguments args) throws Exception {
         logger.info("--------开始读取数据库中每个店的最新编号--------");
@@ -133,7 +139,53 @@ public class OrderIDGenerator implements ApplicationRunner {
                 orderSnCacheVariable.put(storeId, orderNumber);
             }
         }
+        logger.info(storeSnCacheVariable.toString());
+        logger.info(dateNumberCacheVariable.toString());
+        logger.info(orderSnCacheVariable.toString());
         logger.info("--------读取数据库中每个店的最新编号结束--------");
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        logger.info("-----------spring容器要销毁了，将当前订单编号信息存入OrderSn表---------------");
+        String currentDateNumber = sdfDate.format(new Date());
+        Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+        Set<String> storeIds = storeSnCacheVariable.keySet();
+        if (!storeIds.isEmpty()) {
+            List<OrderSn> targetOrderSnList = new ArrayList<>();
+            for (String storeId : storeIds) {
+                String storeSn = storeSnCacheVariable.get(storeId);
+                String dateNumber = dateNumberCacheVariable.get(storeId);
+                String orderSn = orderSnCacheVariable.get(storeId);
+                if (StringUtils.isEmpty(orderSn)) {
+                    orderSn = INIT_SN;
+                }
+                if (StringUtils.isEmpty(dateNumber) || currentDateNumber.equalsIgnoreCase(dateNumber)) {
+                    dateNumber = currentDateNumber;
+                }
+                if (StringUtils.hasText(storeSn)) {
+                    OrderSn originOrderSnObject = orderSnRepository.findTopByStoreIdAndDateNumberOrderByCreateTimeDesc(storeId, dateNumber);
+                    if (null != originOrderSnObject) {
+                        originOrderSnObject.setOrderNumber(orderSn);
+                        originOrderSnObject.setCreateTime(currentTimestamp);
+                        targetOrderSnList.add(originOrderSnObject);
+                    } else {
+                        OrderSn newOrderSnObject = new OrderSn();
+                        newOrderSnObject.setCreateTime(currentTimestamp);
+                        newOrderSnObject.setStoreId(storeId);
+                        newOrderSnObject.setStoreSn(storeSn);
+                        newOrderSnObject.setDateNumber(currentDateNumber);
+                        newOrderSnObject.setOrderNumber(orderSn);
+                        targetOrderSnList.add(newOrderSnObject);
+                    }
+                }
+            }
+            List<OrderSn> res = orderSnRepository.saveAll(targetOrderSnList);
+            logger.info("存入数据库的OrderSn对象为：" + res);
+        } else {
+            logger.error("没有查询到缓存里的storeIds，缓存信息可能出错，请手动排查问题");
+        }
+
     }
 
 //    synchronized public String generate(String storeId, int orderType) throws Exception {
