@@ -8,6 +8,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Arrays;
 
@@ -16,6 +17,7 @@ import java.util.Arrays;
  */
 @SpringBootApplication(exclude = {org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration.class})
 @EnableCaching
+@EnableScheduling
 public class BootApplication extends SpringBootServletInitializer {
 
     private static Logger logger = LoggerFactory.getLogger(BootApplication.class);
@@ -31,9 +33,6 @@ public class BootApplication extends SpringBootServletInitializer {
             logger.info(beanName);
         }
         logger.info("FreelyCar-SaaS服务启动完成。");
-
-        //JVM关闭时的hook
-//        Runtime.getRuntime().addShutdownHook(new Thread(() -> System.out.println("执行 ShutdownHook ...")));
     }
 
     @Override

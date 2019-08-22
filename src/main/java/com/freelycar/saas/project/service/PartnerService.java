@@ -21,4 +21,8 @@ public class PartnerService {
     public Partner save(Partner partner) {
         return partnerRepository.save(partner);
     }
+
+    public long countAll() {
+        return partnerRepository.count();
+    }
 }

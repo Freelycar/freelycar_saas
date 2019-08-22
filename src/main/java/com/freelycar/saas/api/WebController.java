@@ -4,16 +4,14 @@ import com.freelycar.saas.aop.LoggerManage;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.project.entity.Partner;
 import com.freelycar.saas.project.service.PartnerService;
+import com.freelycar.saas.util.PartnerNumberGenerator;
 import com.freelycar.saas.util.TimestampUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * @author tangwei - Toby
@@ -35,5 +33,12 @@ public class WebController {
     public ResultJsonObject savePartnerInfo(@RequestBody Partner partner) {
         partner.setCreateTime(TimestampUtil.getCurrentTimestamp());
         return ResultJsonObject.getDefaultResult(partnerService.save(partner));
+    }
+
+    @ApiOperation(value = "获取已登记人数", produces = "application/json")
+    @GetMapping("/getCount")
+    @LoggerManage(description = "调用方法：获取已登记人数")
+    public ResultJsonObject getCount() {
+        return ResultJsonObject.getDefaultResult(partnerService.countAll() + PartnerNumberGenerator.partnerCount);
     }
 }
