@@ -31,6 +31,9 @@ public class BootApplication extends SpringBootServletInitializer {
             logger.info(beanName);
         }
         logger.info("FreelyCar-SaaS服务启动完成。");
+
+        //JVM关闭时的hook
+//        Runtime.getRuntime().addShutdownHook(new Thread(() -> System.out.println("执行 ShutdownHook ...")));
     }
 
     @Override
