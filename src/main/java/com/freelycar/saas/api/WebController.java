@@ -28,7 +28,7 @@ public class WebController {
     @Autowired
     private PartnerService partnerService;
 
-    @ApiOperation(value = "保存加盟商信息", produces = "application/form-data")
+    @ApiOperation(value = "保存加盟商信息", produces = "application/json")
     @PostMapping("/saveInfo")
     @LoggerManage(description = "调用方法：保存加盟商信息")
     public ResultJsonObject savePartnerInfo(Partner partner) {
