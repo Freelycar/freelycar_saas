@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,7 +32,7 @@ public class WebController {
     @ApiOperation(value = "保存加盟商信息", produces = "application/json")
     @PostMapping("/saveInfo")
     @LoggerManage(description = "调用方法：保存加盟商信息")
-    public ResultJsonObject savePartnerInfo(Partner partner) {
+    public ResultJsonObject savePartnerInfo(@RequestBody Partner partner) {
         partner.setCreateTime(TimestampUtil.getCurrentTimestamp());
         return ResultJsonObject.getDefaultResult(partnerService.save(partner));
     }
