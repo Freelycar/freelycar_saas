@@ -1,6 +1,7 @@
 package com.freelycar.saas.wxutils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.project.entity.Ark;
 import com.freelycar.saas.project.entity.ConsumerOrder;
 import com.freelycar.saas.project.entity.Door;
@@ -34,117 +35,6 @@ public class WechatTemplateMessage {
         log.debug("微信模版消息结果：" + result);
         return result;
     }
-/*
-
-
-    //{{first.DATA}}
-//类型：{{keyword1.DATA}}
-//金额：{{keyword2.DATA}}
-//状态：{{keyword3.DATA}}
-//时间：{{keyword4.DATA}}
-//备注：{{keyword5.DATA}}
-//{{remark.DATA}}
-    public static void paySuccess(WXPayOrder wxPayOrder) {
-        log.debug("准备支付成功模版消息。。。");
-        SimpleDateFormat df = new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
-        JSONObject params = new JSONObject();
-        JSONObject data = new JSONObject();
-        params.put("touser", wxPayOrder.getOpenId());
-        params.put("template_id", PAY_SUCCESS_TEMPLATE_ID);
-//		params.put("url", "http://www.geariot.com/fitness/class.html");
-        data.put("first", keywordFactory("支付成功", "#173177"));
-        data.put("keyword1", keywordFactory(wxPayOrder.getProductName(), "#173177"));
-        data.put("keyword2", keywordFactory((float) (Math.round(wxPayOrder.getTotalPrice() * 100)) / 100 + "元", "#173177"));
-        data.put("keyword3", keywordFactory("成功", "#173177"));
-        data.put("keyword4", keywordFactory(df.format(wxPayOrder.getFinishDate()), "#173177"));
-        data.put("keyword5", keywordFactory(""));
-        data.put("remark", keywordFactory(""));
-        params.put("data", data);
-        String result = invokeTemplateMessage(params);
-        log.debug("微信支付成功模版消息结果：" + result);
-//		return result;
-    }
-
-    public static void paySuccess(ConsumOrder consumerOrder, String openId) {
-        log.debug("准备支付成功模版消息。。。");
-        SimpleDateFormat df = new SimpleDateFormat("yyyy年MM月dd日 HH:mm:ss");
-        JSONObject params = new JSONObject();
-        JSONObject data = new JSONObject();
-        params.put("touser", openId);
-        params.put("template_id", PAY_SUCCESS_TEMPLATE_ID);
-//		params.put("url", "http://www.geariot.com/fitness/class.html");
-        data.put("first", keywordFactory("支付成功", "#173177"));
-        data.put("keyword1", keywordFactory(getConsumOrderProductName(consumerOrder), "#173177"));
-        data.put("keyword2", keywordFactory((float) (Math.round(consumerOrder.getTotalPrice() * 100)) / 100 + "元", "#173177"));
-        data.put("keyword3", keywordFactory("成功", "#173177"));
-        data.put("keyword4", keywordFactory(df.format(consumerOrder.getFinishTime()), "#173177"));
-        data.put("keyword5", keywordFactory(""));
-        data.put("remark", keywordFactory(""));
-        params.put("data", data);
-        String result = invokeTemplateMessage(params);
-        log.debug("微信支付成功模版消息结果：" + result);
-//		return result;
-    }
-
-
-    //	{{first.DATA}}
-//	支付金额：{{keyword1.DATA}}
-//	商品信息：{{keyword2.DATA}}
-//	失败原因：{{keyword3.DATA}}
-//	{{remark.DATA}}
-    public static void errorCancel(WXPayOrder wxPayOrder) {
-        log.debug("支付成功，数据库更新失败！");
-        JSONObject params = new JSONObject();
-        JSONObject data = new JSONObject();
-        params.put("touser", wxPayOrder.getId());
-        params.put("template_id", PAY_FAIL_ID);
-
-        data.put("first", keywordFactory("支付失败", "#173177"));
-        data.put("keyword1", keywordFactory((float) (Math.round(wxPayOrder.getTotalPrice() * 100)) / 100 + "元", "#173177"));
-        data.put("keyword2", keywordFactory(wxPayOrder.getProductName(), "#173177"));
-        data.put("keyword3", keywordFactory("服务异常", "#173177"));
-        data.put("remark", keywordFactory("请妥善保存单号，联系客服人员"));
-        params.put("data", data);
-        String result = invokeTemplateMessage(params);
-        log.debug("微信支付失败结果：" + result);
-    }
-
-    public static void errorWXCancel(ConsumOrder consumerOrder, String openId) {
-        log.debug("支付成功，数据库更新失败！");
-        JSONObject params = new JSONObject();
-        JSONObject data = new JSONObject();
-        params.put("touser", openId);
-        params.put("template_id", PAY_FAIL_ID);
-        data.put("first", keywordFactory("支付失败", "#173177"));
-        data.put("keyword1", keywordFactory((float) (Math.round(consumerOrder.getTotalPrice() * 100)) / 100 + "元", "#173177"));
-        data.put("keyword2", keywordFactory(getConsumOrderProductName(consumerOrder), "#173177"));
-        data.put("keyword3", keywordFactory("服务异常", "#173177"));
-        data.put("remark", keywordFactory("请妥善保存单号，联系客服人员"));
-        params.put("data", data);
-        String result = invokeTemplateMessage(params);
-        log.debug("微信支付失败结果：" + result);
-    }
-
-    private static String getConsumOrderProductName(ConsumOrder consumerOrder) {
-        String productName = "";
-        for (ProjectInfo projectInfo : consumerOrder.getProjects())
-            productName += projectInfo.getName();
-        return productName;
-    }
-
-    private static JSONObject keywordFactory(String value) {
-        JSONObject keyword = new JSONObject();
-        keyword.put("value", value);
-        return keyword;
-    }
-
-    private static JSONObject keywordFactory(String value, String color) {
-        JSONObject keyword = keywordFactory(value);
-        keyword.put("color", color);
-        return keyword;
-    }
-
-    */
 
     /**
      * 推送通知：智能柜用户订单状态变化
@@ -164,6 +54,9 @@ public class WechatTemplateMessage {
         String remark = "";
         String remarkSuffix = "小易爱车竭诚为您服务！";
         String licensePlate = consumerOrder.getLicensePlate();
+
+        String userKeyLocationSn = consumerOrder.getUserKeyLocationSn();
+        String url = WechatConfig.APP_DOMAIN + "payOrder?orderId=" + consumerOrder.getId();
         switch (state) {
             case 0:
                 stateString = "待接车";
@@ -185,6 +78,9 @@ public class WechatTemplateMessage {
                 if (StringUtils.hasText(parkingLocation)) {
                     remark += "停车位置：" + parkingLocation + "\n";
                 }
+                if (StringUtils.hasText(userKeyLocationSn)) {
+                    url = WechatConfig.APP_DOMAIN + "role-select/" + userKeyLocationSn.split(Constants.HYPHEN)[0];
+                }
                 break;
             case 3:
                 stateString = "已交车";
@@ -199,7 +95,7 @@ public class WechatTemplateMessage {
         JSONObject data = new JSONObject();
         params.put("touser", openId);
         params.put("template_id", ORDER_CHANGED_FOR_CLIENT_ID);
-        params.put("url", WechatConfig.APP_DOMAIN + "payOrder?orderId=" + consumerOrder.getId());
+        params.put("url", url);
         data.put("first", keywordFactory(first, "#173177"));
         data.put("OrderSn", keywordFactory(consumerOrder.getId(), "#173177"));
         data.put("OrderStatus", keywordFactory(stateString, "#173177"));
