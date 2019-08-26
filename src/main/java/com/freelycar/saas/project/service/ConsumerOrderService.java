@@ -1839,7 +1839,7 @@ public class ConsumerOrderService {
 
         sql.append(" select co.id, co.licensePlate, co.carColor, co.carImageUrl, co.carBrand, case co.payState when 1 then '待支付' else '已交付' end as payState from consumerorder co where co.delStatus = 0 and co.pickCarStaffId = '").append(staffId).append("' ");
         if (StringUtils.hasText(keyword)) {
-            sql.append(" and co.licensePlate like '%").append(keyword).append("%' or co.id like '%").append(keyword).append("%' ");
+            sql.append(" and (co.licensePlate like '%").append(keyword).append("%' or co.id like '%").append(keyword).append("%') ");
         }
         sql.append(" order by co.createTime desc ");
 
