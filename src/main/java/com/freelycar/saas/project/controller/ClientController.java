@@ -123,7 +123,7 @@ public class ClientController {
         if (null != isMember) {
             params.put("isMember", isMember);
         }
-        if (StringUtils.hasText(StringUtils.trimWhitespace(phone))) {
+        if (StringUtils.hasText(StringUtils.trimWhitespace(licensePlate))) {
             params.put("licensePlate", licensePlate);
         }
         return clientService.list(storeId, currentPage, pageSize, params, false);

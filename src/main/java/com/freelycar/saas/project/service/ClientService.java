@@ -193,13 +193,10 @@ public class ClientService {
 
 
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT client.id, client.name, client.phone, p.plates, p.brands, if(client.isMember=0,'否','是') as isMember, (select count(1) from consumerOrder co where co.clientId=client.id and co.delStatus=0) as totalCount, client.lastVisit as lastVisit, round((select sum(card.balance) from card where card.clientId=client.id and card.delStatus=0),2) as totalBalance FROM client LEFT JOIN (SELECT c.id, group_concat( car.licensePlate ) as plates, GROUP_CONCAT( carBrand ) as brands FROM car LEFT JOIN client c ON c.id = car.clientId WHERE car.delStatus = 0 ");
+        sql.append(" SELECT client.id, client.name, client.phone, p.plates, p.brands, if(client.isMember=0,'否','是') as isMember, (select count(1) from consumerOrder co where co.clientId=client.id and co.delStatus=0) as totalCount, client.lastVisit as lastVisit, round((select sum(card.balance) from card where card.clientId=client.id and card.delStatus=0),2) as totalBalance FROM client LEFT JOIN (SELECT c.id, group_concat( car.licensePlate ) as plates, GROUP_CONCAT( carBrand ) as brands FROM car LEFT JOIN client c ON c.id = car.clientId WHERE car.delStatus = 0 GROUP BY c.id ) p ON p.id = client.id WHERE client.delStatus = 0 AND client.storeId = '").append(storeId).append("' ");
         if (StringUtils.hasText(licensePlate)) {
-            sql.append(" AND car.licensePlate LIKE '%").append(licensePlate).append("%' ");
+            sql.append(" AND p.plates LIKE '%").append(licensePlate).append("%' ");
         }
-        sql.append("GROUP BY c.id ) p ON p.id = client.id WHERE client.delStatus = 0 ")
-                .append(" AND client.storeId = '").append(storeId).append("' ");
-
         if (StringUtils.hasText(name)) {
             sql.append(" AND client.NAME LIKE '%").append(name).append("%' ");
         }
