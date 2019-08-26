@@ -149,7 +149,22 @@ public class StaffService {
      * @return
      */
     public ResultJsonObject getDetail(String id) {
-        return ResultJsonObject.getDefaultResult(staffRepository.findById(id).orElse(null));
+        return ResultJsonObject.getDefaultResult(this.findById(id));
+    }
+
+    /**
+     * 查询员工智能柜服务状态
+     *
+     * @param id
+     * @return
+     */
+    public boolean isArk(String id) {
+        Staff staff = this.findById(id);
+        if (null == staff) {
+            return false;
+        }
+        Boolean isArk = staff.getIsArk();
+        return isArk == null ? false : isArk;
     }
 
 

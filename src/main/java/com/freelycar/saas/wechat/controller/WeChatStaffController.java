@@ -48,4 +48,11 @@ public class WeChatStaffController {
         }
         return staffService.logout(staffId);
     }
+
+    @ApiOperation(value = "获取员工是否开通了智能柜", produces = "application/json")
+    @GetMapping(value = "/isCurrentArk")
+    @LoggerManage(description = "调用方法：获取员工是否开通了智能柜")
+    public ResultJsonObject detail(@RequestParam String staffId) {
+        return ResultJsonObject.getDefaultResult(staffService.isArk(staffId));
+    }
 }
