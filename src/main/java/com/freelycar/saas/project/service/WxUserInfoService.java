@@ -148,6 +148,9 @@ public class WxUserInfoService {
             return ResultJsonObject.getErrorResult(null, "未找到WxUserInfo表中，id为：" + wxUserId + "的数据");
         }
         WxUserInfo source = optionalWxUserInfo.get();
+
+        //获取原来的默认门店clientId
+        String sourceDefaultClientId = source.getDefaultClientId();
         //获取手机号码
         String phone = source.getPhone();
         if (StringUtils.isEmpty(phone)) {
@@ -184,6 +187,63 @@ public class WxUserInfoService {
                     } catch (CarNumberValidationException e) {
                         logger.error(e.getMessage());
                         e.printStackTrace();
+                    }
+                }
+
+            }
+        } else {
+            // 如果已经存在client数据，需要同步其车辆数据
+            // 先获取当前的defaultClientId，已这个client对象的car为标准去做添加或删除
+            //马上要切换为默认门店的client的名下的车
+            List<Car> clientCars = carService.listClientCars(client.getId());
+
+            if (StringUtils.hasText(sourceDefaultClientId)) {
+                //查找之前默认client的车辆
+                List<Car> sourceCars = carService.listClientCars(sourceDefaultClientId);
+
+                //如果之前的client名下的车比现在client名下的车数量多，说明有新增车，需要把新车插入列表
+                if (sourceCars.size() > clientCars.size()) {
+                    for (Car sCar : sourceCars) {
+                        boolean isExist = false;
+                        String sPlate = sCar.getLicensePlate();
+                        if (StringUtils.hasText(sPlate)) {
+                            for (Car cCar : clientCars) {
+                                String cPlate = cCar.getLicensePlate();
+                                if (sPlate.equalsIgnoreCase(cPlate)) {
+                                    isExist = true;
+                                    break;
+                                }
+                            }
+                            if (!isExist) {
+                                Car targetCar = carService.copyNewObjectForOtherStore(sCar, client);
+                                try {
+                                    carService.saveOrUpdate(targetCar);
+                                } catch (CarNumberValidationException e) {
+                                    logger.error(e.getMessage());
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+
+                    }
+                }
+                //如果少，说明有删除车辆，需要把当前门店下的车也删除
+                if (sourceCars.size() < clientCars.size()) {
+                    for (Car cCar : clientCars) {
+                        boolean isExist = false;
+                        String cPlate = cCar.getLicensePlate();
+                        if (StringUtils.hasText(cPlate)) {
+                            for (Car sCar : sourceCars) {
+                                String sPlate = sCar.getLicensePlate();
+                                if (cPlate.equalsIgnoreCase(sPlate)) {
+                                    isExist = true;
+                                    break;
+                                }
+                            }
+                            if (!isExist) {
+                                carService.delete(cCar.getId());
+                            }
+                        }
                     }
                 }
 

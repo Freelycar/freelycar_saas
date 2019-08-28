@@ -236,6 +236,7 @@ public class CarService {
         newCar.setDriveLicenseNumber(source.getDriveLicenseNumber());
         newCar.setDefaultDate(source.getDefaultDate());
         newCar.setColor(source.getColor());
+        newCar.setCarImageUrl(source.getCarImageUrl());
 
         return newCar;
     }
