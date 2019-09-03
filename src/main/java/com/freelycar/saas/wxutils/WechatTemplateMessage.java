@@ -164,7 +164,7 @@ public class WechatTemplateMessage {
      * 详情：{{keyword5.DATA}}
      * {{remark.DATA}}
      */
-    public static void orderCreated(ConsumerOrder consumerOrder, String openId, Door door, Ark ark) {
+    public static void orderCreated(ConsumerOrder consumerOrder, String projects, String openId, Door door, Ark ark) {
         log.info("准备订单生成成功的模版消息。");
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日 HH:mm");
@@ -189,7 +189,7 @@ public class WechatTemplateMessage {
         //需求时间
         data.put("keyword1", keywordFactory(createTime, "#173177"));
         //需求类型
-        data.put("keyword2", keywordFactory("汽车服务", "#173177"));
+        data.put("keyword2", keywordFactory(projects, "#173177"));
         //车型
         data.put("keyword3", keywordFactory(consumerOrder.getCarBrand(), "#173177"));
         //报价

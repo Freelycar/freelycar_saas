@@ -38,6 +38,9 @@ public class StaffService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @Autowired
+    private ConsumerProjectInfoService consumerProjectInfoService;
+
     /**
      * 新增/修改员工对象
      *
@@ -394,7 +397,20 @@ public class StaffService {
                     logger.info("技师openId：" + openId);
                     if (notification && StringUtils.hasText(openId)) {
                         if (state == 0) {
-                            WechatTemplateMessage.orderCreated(consumerOrder, openId, door, ark);
+                            StringBuilder projectStr = new StringBuilder();
+                            String projects = "汽车服务";
+                            //查询项目
+                            List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(consumerOrder.getId());
+                            for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+                                String projectName = consumerProjectInfo.getProjectName();
+                                if (StringUtils.hasText(projectName)) {
+                                    projectStr.append("，").append(projectName);
+                                }
+                            }
+                            if (StringUtils.hasText(projectStr)) {
+                                projects = projectStr.substring(1, projectStr.length());
+                            }
+                            WechatTemplateMessage.orderCreated(consumerOrder, projects, openId, door, ark);
                         }
                         if (state == 4) {
                             WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
