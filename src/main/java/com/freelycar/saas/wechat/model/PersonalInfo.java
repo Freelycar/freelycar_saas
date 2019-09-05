@@ -22,4 +22,6 @@ public class PersonalInfo {
     private List<Car> cars;
 
     private Float cardBalance;
+
+    private boolean newUser;
 }

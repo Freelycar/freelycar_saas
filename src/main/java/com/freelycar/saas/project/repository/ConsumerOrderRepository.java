@@ -55,4 +55,6 @@ public interface ConsumerOrderRepository extends JpaRepository<ConsumerOrder, St
     Map sumSecondIncomeForAllStoreByPayMethod(int payMethod, String startTime, String endTime);
 
     int countAllByPickCarStaffIdAndDelStatusAndOrderType(String staffId, boolean delStatus, int orderType);
+
+    int countAllByPhoneAndDelStatus(String phone, boolean delStatus);
 }

@@ -1,6 +1,7 @@
 package com.freelycar.saas.project.service;
 
 import com.freelycar.saas.basic.wrapper.*;
+import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.project.entity.Project;
 import com.freelycar.saas.project.repository.ProjectRepository;
 import com.freelycar.saas.util.UpdateTool;
@@ -19,6 +20,7 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,8 +29,8 @@ import static com.freelycar.saas.basic.wrapper.ResultCode.RESULT_DATA_NONE;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class ProjectService {
+    private final static String PREFERENTIAL_KEYWORD = "***新用户专享***";
     private Logger logger = LoggerFactory.getLogger(ProjectService.class);
-
     @Autowired
     private ProjectRepository projectRepository;
 
@@ -231,8 +233,31 @@ public class ProjectService {
         return ResultJsonObject.getDefaultResult(null);
     }
 
-    public ResultJsonObject getProjects(String storeId) {
-        return ResultJsonObject.getDefaultResult(projectRepository.findAllByStoreIdAndDelStatusAndSaleStatusOrderByCreateTime(storeId, Constants.DelStatus.NORMAL.isValue(), true));
+    private List<Project> getProjects(String storeId) throws ArgumentMissingException {
+        if (StringUtils.isEmpty(storeId)) {
+            throw new ArgumentMissingException("参数storeId值为空");
+        }
+        return projectRepository.findAllByStoreIdAndDelStatusAndSaleStatusOrderByCreateTime(storeId, Constants.DelStatus.NORMAL.isValue(), true);
+
+
+    }
+
+    public List<Project> getProjects(String storeId, boolean preferential) throws ArgumentMissingException {
+
+        if (preferential) {
+            return getProjects(storeId);
+        }
+
+        List<Project> projects = getProjects(storeId);
+        List<Project> res = new ArrayList<>();
+        for (Project project : projects) {
+            String comment = project.getComment();
+            if (!PREFERENTIAL_KEYWORD.equals(comment)) {
+                res.add(project);
+            }
+        }
+
+        return res;
     }
 
     /**

@@ -71,8 +71,18 @@ public class WeChatArkController {
     }
 
     @GetMapping("/getProjects")
-    public ResultJsonObject getProjects(@RequestParam String storeId) {
-        return projectService.getProjects(storeId);
+    public ResultJsonObject getProjects(@RequestParam String storeId, @RequestParam(required = false) Boolean newUser) {
+        if (null == newUser) {
+            newUser = false;
+        }
+
+        try {
+            return ResultJsonObject.getDefaultResult(projectService.getProjects(storeId, newUser));
+        } catch (ArgumentMissingException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null);
+        }
     }
 
     @GetMapping("/orderFinish")

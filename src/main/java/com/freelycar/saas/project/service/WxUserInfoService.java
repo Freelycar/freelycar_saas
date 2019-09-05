@@ -2,6 +2,7 @@ package com.freelycar.saas.project.service;
 
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
+import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.CarNumberValidationException;
 import com.freelycar.saas.jwt.TokenAuthenticationUtil;
 import com.freelycar.saas.project.entity.Car;
@@ -58,11 +59,12 @@ public class WxUserInfoService {
     @Autowired
     private StoreRepository storeRepository;
 
+    @Autowired
     private ConsumerOrderService consumerOrderService;
-
-    public void setConsumerOrderService(ConsumerOrderService consumerOrderService) {
-        this.consumerOrderService = consumerOrderService;
-    }
+//
+//    public void setConsumerOrderService(ConsumerOrderService consumerOrderService) {
+//        this.consumerOrderService = consumerOrderService;
+//    }
 
     /**
      * 查找微信用户对象
@@ -120,9 +122,20 @@ public class WxUserInfoService {
                 carList = carRepository.listCarsByStoreIdAndPhone(defaultStoreId, phone);
             }
         }
+
+        //查询这个用户有没有订单，如果有订单，则不享受新人优惠
+        boolean preferential = false;
+        try {
+            preferential = consumerOrderService.userHasPreferentialPolicy(phone);
+        } catch (ArgumentMissingException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+
         personalInfo.setWxUserInfo(wxUserInfo);
         personalInfo.setCars(carList);
         personalInfo.setCardBalance(carBalance);
+        personalInfo.setNewUser(preferential);
 
         return ResultJsonObject.getDefaultResult(personalInfo);
     }

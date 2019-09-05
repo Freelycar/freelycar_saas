@@ -1904,4 +1904,16 @@ public class ConsumerOrderService {
 
         return ResultJsonObject.getDefaultResult(orderId);
     }
+
+    public boolean userHasPreferentialPolicy(String phone) throws ArgumentMissingException {
+        if (StringUtils.isEmpty(phone)) {
+            throw new ArgumentMissingException("参数phone为空");
+        }
+
+        int count = consumerOrderRepository.countAllByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
+        if (count == 0) {
+            return true;
+        }
+        return false;
+    }
 }
