@@ -244,12 +244,27 @@ public class ProjectService {
 
     public List<Project> getProjects(String storeId, boolean preferential) throws ArgumentMissingException {
 
-        if (preferential) {
-            return getProjects(storeId);
-        }
 
         List<Project> projects = getProjects(storeId);
+        List<Project> actProjects = new ArrayList<>();
         List<Project> res = new ArrayList<>();
+
+
+        //将活动的项目置顶
+        if (preferential) {
+            for (Project project : projects) {
+                String comment = project.getComment();
+                if (PREFERENTIAL_KEYWORD.equals(comment)) {
+                    actProjects.add(project);
+                } else {
+                    res.add(project);
+                }
+            }
+            actProjects.addAll(res);
+            return actProjects;
+        }
+
+        //将活动项目剔除
         for (Project project : projects) {
             String comment = project.getComment();
             if (!PREFERENTIAL_KEYWORD.equals(comment)) {
