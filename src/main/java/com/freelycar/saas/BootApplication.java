@@ -25,12 +25,12 @@ public class BootApplication extends SpringBootServletInitializer {
     public static void main(String[] args) {
         ApplicationContext ctx = SpringApplication.run(BootApplication.class, args);
 
-        logger.info("通过SpringBoot来注入依赖:");
+        logger.debug("通过SpringBoot来注入依赖:");
 
         String[] beanNames = ctx.getBeanDefinitionNames();
         Arrays.sort(beanNames);
         for (String beanName : beanNames) {
-            logger.info(beanName);
+            logger.debug(beanName);
         }
         logger.info("FreelyCar-SaaS服务启动完成。");
     }
