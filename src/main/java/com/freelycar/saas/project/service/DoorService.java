@@ -8,6 +8,7 @@ import com.freelycar.saas.iotcloudcn.util.BoxCommandResponse;
 import com.freelycar.saas.project.entity.Ark;
 import com.freelycar.saas.project.entity.Door;
 import com.freelycar.saas.project.repository.DoorRepository;
+import com.freelycar.saas.util.cache.ConcurrentHashMapCacheUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -75,49 +75,29 @@ public class DoorService {
         Random random = new Random();
         targetIndex = random.nextInt(emptyDoorsCount);
 
-        //得到door对象，去缓存对象里去查是否是
+        //得到door对象，去缓存对象里去查是否是被占用的柜子
         Door targetDoor = emptyDoors.get(targetIndex);
         String targetDoorId = targetDoor.getId();
-        String arkId = targetDoor.getArkId();
+//        String arkId = targetDoor.getArkId();
 
-        List<String> cacheDoors = doorCacheVariable.get(arkId);
-        if (null != cacheDoors && !cacheDoors.isEmpty()) {
-            logger.info("分配前cacheDoors:" + cacheDoors);
-            boolean isUsable = true;
-            for (String doorId : cacheDoors) {
-                if (targetDoorId.equalsIgnoreCase(doorId)) {
-                    isUsable = false;
-                    break;
-                }
-            }
-            if (isUsable) {
-//                cacheDoors.add(targetDoorId);
-//                doorCacheVariable.put(arkId, cacheDoors);
-                takeInDoorIdWithCache(targetDoor, cacheDoors);
-                return targetDoor;
-            } else {
-                emptyDoors.remove(targetIndex);
-                return isOperatingDoor(emptyDoors);
-            }
-        } else {
-            if (null == cacheDoors) {
-                cacheDoors = new ArrayList<>();
-            }
-//            cacheDoors.add(targetDoorId);
-//            doorCacheVariable.put(arkId, cacheDoors);
-            takeInDoorIdWithCache(targetDoor, cacheDoors);
-
-            logger.info("分配后cacheDoors:" + cacheDoors);
+        //替换成封装的缓存工具类
+        Door cacheDoor = (Door) ConcurrentHashMapCacheUtils.getCache(targetDoorId);
+        if (null == cacheDoor) {
+            ConcurrentHashMapCacheUtils.setCache(targetDoorId, targetDoor, ConcurrentHashMapCacheUtils.ONE_MINUTE);
             return targetDoor;
         }
+        emptyDoors.remove(targetIndex);
+        return isOperatingDoor(emptyDoors);
     }
 
+    @Deprecated
     private void takeInDoorIdWithCache(Door door, List<String> cacheDoors) {
         logger.info("已分配的柜子存入缓存-----");
         cacheDoors.add(door.getId());
         doorCacheVariable.put(door.getArkId(), cacheDoors);
     }
 
+    @Deprecated
     public void takeOutDoorIdWithCache(Door door) {
         logger.info("已分配的柜子从缓存中去除-----");
         //从缓存中去掉这个Door对象

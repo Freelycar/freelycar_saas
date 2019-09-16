@@ -7,6 +7,7 @@ import com.freelycar.saas.project.entity.*;
 import com.freelycar.saas.project.model.*;
 import com.freelycar.saas.project.repository.*;
 import com.freelycar.saas.util.*;
+import com.freelycar.saas.util.cache.ConcurrentHashMapCacheUtils;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import com.freelycar.saas.wechat.model.FinishOrderInfo;
 import com.freelycar.saas.wechat.model.ReservationOrderInfo;
@@ -933,7 +934,7 @@ public class ConsumerOrderService {
         try {
             consumerOrderRes = this.saveOrUpdate(consumerOrder);
         } catch (ArgumentMissingException | ObjectNotFoundException e) {
-            doorService.takeOutDoorIdWithCache(emptyDoor);
+            ConcurrentHashMapCacheUtils.deleteCache(emptyDoor.getId());
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             throw new UpdateDataErrorException("保存订单信息失败");
@@ -967,7 +968,7 @@ public class ConsumerOrderService {
         } catch (OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
             throw e;
         } finally {
-            doorService.takeOutDoorIdWithCache(emptyDoor);
+            ConcurrentHashMapCacheUtils.deleteCache(emptyDoor.getId());
         }
 
 
@@ -1189,7 +1190,7 @@ public class ConsumerOrderService {
         try {
             order = this.updateOrder(consumerOrder);
         } catch (ObjectNotFoundException e) {
-            doorService.takeOutDoorIdWithCache(emptyDoor);
+            ConcurrentHashMapCacheUtils.deleteCache(emptyDoor.getId());
             throw e;
         }
 
@@ -1210,7 +1211,7 @@ public class ConsumerOrderService {
         } catch (OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
             throw e;
         } finally {
-            doorService.takeOutDoorIdWithCache(emptyDoor);
+            ConcurrentHashMapCacheUtils.deleteCache(emptyDoor.getId());
         }
 
 
