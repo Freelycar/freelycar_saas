@@ -862,13 +862,13 @@ public class ConsumerOrderService {
      */
     public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, NoEmptyArkException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException, UpdateDataErrorException {
 //        logger.info("执行智能柜开单操作：---start---" + orderObject);
-        String arkSn = orderObject.getArkSn();
+        String doorId = orderObject.getDoorId();
         //获取提交过来的数据
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
         List<ConsumerProjectInfo> consumerProjectInfos = orderObject.getConsumerProjectInfos();
 
-        if (StringUtils.isEmpty(arkSn)) {
-            throw new ArgumentMissingException("参数中的arkSn对象为空，无法分配智能柜");
+        if (StringUtils.isEmpty(doorId)) {
+            throw new ArgumentMissingException("参数中的doorId对象为空");
         }
 
         if (null == consumerOrder) {
@@ -923,7 +923,10 @@ public class ConsumerOrderService {
         consumerOrder.setActualPrice(totalPrice);
 
         // 有效柜子分配逻辑
-        Door emptyDoor = doorService.getUsefulDoor(arkSn);
+        Door emptyDoor = (Door) ConcurrentHashMapCacheUtils.getCache(doorId);
+        if (null == emptyDoor) {
+            throw new ObjectNotFoundException("未找到分配的柜门号，请稍后重试");
+        }
         // 更新用户把钥匙存放在哪个柜子的哪个门
         String userKeyLocation = emptyDoor.getArkName() + Constants.HYPHEN + emptyDoor.getDoorSn() + "号门";
         String userKeyLocationSn = emptyDoor.getArkSn() + Constants.HYPHEN + emptyDoor.getDoorSn();
@@ -934,7 +937,7 @@ public class ConsumerOrderService {
         try {
             consumerOrderRes = this.saveOrUpdate(consumerOrder);
         } catch (ArgumentMissingException | ObjectNotFoundException e) {
-            ConcurrentHashMapCacheUtils.deleteCache(emptyDoor.getId());
+            ConcurrentHashMapCacheUtils.deleteCache(doorId);
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             throw new UpdateDataErrorException("保存订单信息失败");
@@ -968,7 +971,7 @@ public class ConsumerOrderService {
         } catch (OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
             throw e;
         } finally {
-            ConcurrentHashMapCacheUtils.deleteCache(emptyDoor.getId());
+            ConcurrentHashMapCacheUtils.deleteCache(doorId);
         }
 
 
@@ -1158,10 +1161,10 @@ public class ConsumerOrderService {
      */
     public ResultJsonObject finishCar(OrderObject orderObject) throws ArgumentMissingException, NoEmptyArkException, ObjectNotFoundException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException {
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
-        String arkSn = orderObject.getArkSn();
+        String doorId = orderObject.getDoorId();
 
-        if (StringUtils.isEmpty(arkSn)) {
-            throw new ArgumentMissingException("参数中的arkSn对象为空，无法分配智能柜");
+        if (StringUtils.isEmpty(doorId)) {
+            throw new ArgumentMissingException("参数中的doorId对象为空");
         }
 
         if (null == consumerOrder) {
@@ -1178,7 +1181,10 @@ public class ConsumerOrderService {
         consumerOrder.setState(Constants.OrderState.SERVICE_FINISH.getValue());
 
         // 有效柜子分配逻辑
-        Door emptyDoor = doorService.getUsefulDoor(arkSn);
+        Door emptyDoor = (Door) ConcurrentHashMapCacheUtils.getCache(doorId);
+        if (null == emptyDoor) {
+            throw new ObjectNotFoundException("未找到分配的柜门号，请稍后重试");
+        }
         // 更新技师把钥匙存放在哪个柜子的哪个门
         String staffKeyLocation = emptyDoor.getArkName() + Constants.HYPHEN + emptyDoor.getDoorSn() + "号门";
         String staffKeyLocationSn = emptyDoor.getArkSn() + Constants.HYPHEN + emptyDoor.getDoorSn();
@@ -1190,7 +1196,7 @@ public class ConsumerOrderService {
         try {
             order = this.updateOrder(consumerOrder);
         } catch (ObjectNotFoundException e) {
-            ConcurrentHashMapCacheUtils.deleteCache(emptyDoor.getId());
+            ConcurrentHashMapCacheUtils.deleteCache(doorId);
             throw e;
         }
 
@@ -1211,7 +1217,7 @@ public class ConsumerOrderService {
         } catch (OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
             throw e;
         } finally {
-            ConcurrentHashMapCacheUtils.deleteCache(emptyDoor.getId());
+            ConcurrentHashMapCacheUtils.deleteCache(doorId);
         }
 
 

@@ -41,6 +41,17 @@ public class DoorService {
     @Autowired
     private DoorRepository doorRepository;
 
+    public Door findById(String id) throws ArgumentMissingException, ObjectNotFoundException {
+        if (StringUtils.isEmpty(id)) {
+            throw new ArgumentMissingException("参数doorId为空");
+        }
+        Door door = doorRepository.findById(id).orElse(null);
+        if (null == door) {
+            throw new ObjectNotFoundException("未找到id为：" + id + " 的door对象");
+        }
+        return door;
+    }
+
     /**
      * 获取一个随机的可使用的柜门
      *

@@ -6,6 +6,7 @@ import java.util.List;
 
 /**
  * 快速开单的JavaBean
+ *
  * @author tangwei - Toby
  * @date 2018-12-28
  * @email toby911115@gmail.com
@@ -17,7 +18,7 @@ public class OrderObject {
 
     private List<AutoParts> autoParts;
 
-    private String arkSn;
+    private String doorId;
 
     private Card card;
 
@@ -56,14 +57,6 @@ public class OrderObject {
 
     public void setAutoParts(List<AutoParts> autoParts) {
         this.autoParts = autoParts;
-    }
-
-    public String getArkSn() {
-        return arkSn;
-    }
-
-    public void setArkSn(String arkSn) {
-        this.arkSn = arkSn;
     }
 
     public Card getCard() {
@@ -114,6 +107,14 @@ public class OrderObject {
         this.store = store;
     }
 
+    public String getDoorId() {
+        return doorId;
+    }
+
+    public void setDoorId(String doorId) {
+        this.doorId = doorId;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
@@ -123,8 +124,8 @@ public class OrderObject {
                 .append(consumerProjectInfos);
         sb.append(",\"autoParts\":")
                 .append(autoParts);
-        sb.append(",\"arkSn\":\"")
-                .append(arkSn).append('\"');
+        sb.append(",\"doorId\":\"")
+                .append(doorId).append('\"');
         sb.append(",\"card\":")
                 .append(card);
         sb.append(",\"coupon\":")

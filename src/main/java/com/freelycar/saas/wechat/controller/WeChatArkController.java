@@ -5,6 +5,7 @@ import com.freelycar.saas.exception.*;
 import com.freelycar.saas.project.model.OrderObject;
 import com.freelycar.saas.project.service.ArkService;
 import com.freelycar.saas.project.service.ConsumerOrderService;
+import com.freelycar.saas.project.service.DoorService;
 import com.freelycar.saas.project.service.ProjectService;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import org.slf4j.Logger;
@@ -33,6 +34,9 @@ public class WeChatArkController {
 
     @Autowired
     private ArkService arkService;
+
+    @Autowired
+    private DoorService doorService;
 
     @GetMapping("/getActiveOrder")
     public ResultJsonObject getActiveOrder(@RequestParam String clientId) {
@@ -134,5 +138,14 @@ public class WeChatArkController {
         return arkService.getArkInfo(arkSn);
     }
 
-
+    @GetMapping("/getEmptyDoor")
+    public ResultJsonObject getEmptyDoor(@RequestParam String arkSn) {
+        try {
+            return ResultJsonObject.getDefaultResult(doorService.getUsefulDoor(arkSn));
+        } catch (NoEmptyArkException | ArgumentMissingException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
+    }
 }
