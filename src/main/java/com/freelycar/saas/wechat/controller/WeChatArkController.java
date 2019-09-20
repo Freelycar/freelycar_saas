@@ -148,4 +148,15 @@ public class WeChatArkController {
             return ResultJsonObject.getErrorResult(null, e.getMessage());
         }
     }
+
+    @GetMapping("/getStaffKeyLocation")
+    public ResultJsonObject getStaffKeyLocation(@RequestParam String orderId) {
+        try {
+            return ResultJsonObject.getDefaultResult(consumerOrderService.getStaffKeyLocation(orderId));
+        } catch (ArgumentMissingException | ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
+    }
 }

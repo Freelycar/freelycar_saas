@@ -1923,4 +1923,19 @@ public class ConsumerOrderService {
         }
         return false;
     }
+
+    public String getStaffKeyLocation(String orderId) throws ArgumentMissingException, ObjectNotFoundException {
+        if (StringUtils.isEmpty(orderId)) {
+            throw new ArgumentMissingException("参数orderId为空");
+        }
+        ConsumerOrder order = consumerOrderRepository.findById(orderId).orElse(null);
+        if (null == order) {
+            throw new ObjectNotFoundException("未找到id为：" + orderId + " 的订单");
+        }
+        String staffKeyLocation = order.getStaffKeyLocation();
+        if (StringUtils.isEmpty(staffKeyLocation)) {
+            throw new ObjectNotFoundException("未查询到订单中的柜子信息，订单数据有误，请联系管理员或稍后重试");
+        }
+        return staffKeyLocation;
+    }
 }
