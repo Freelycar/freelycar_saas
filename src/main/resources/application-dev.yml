@@ -6,7 +6,7 @@ server:
 spring:
   # 数据库连接配置
   datasource:
-    url: jdbc:mysql://192.168.0.163:3306/${project.name}?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=GMT%2B8
+    url: jdbc:mysql://192.168.0.167:3306/${project.name}?useUnicode=true&characterEncoding=utf-8&useSSL=true&serverTimezone=GMT%2B8
     username: root
     password: root
   jpa:
@@ -31,4 +31,4 @@ swagger:
 upload:
   picture:
     path: /Users/tangwei/upload
-    url: https://freelycar.com/upload
+    url: http://freelycar.cn/upload
