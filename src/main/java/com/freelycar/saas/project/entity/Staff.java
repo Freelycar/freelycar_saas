@@ -10,6 +10,7 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * @author tangwei - Toby
@@ -76,6 +77,9 @@ public class Staff implements Serializable {
     @Transient
     private String storeName;
 
+    @ManyToMany(cascade = {CascadeType.REFRESH}, fetch = FetchType.EAGER)
+    private List<Project> projects;
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
@@ -85,10 +89,10 @@ public class Staff implements Serializable {
                 .append(delStatus);
         sb.append(",\"createTime\":\"")
                 .append(createTime).append('\"');
-        sb.append(",\"storeId\":\"")
-                .append(storeId).append('\"');
         sb.append(",\"openId\":\"")
                 .append(openId).append('\"');
+        sb.append(",\"storeId\":\"")
+                .append(storeId).append('\"');
         sb.append(",\"comment\":\"")
                 .append(comment).append('\"');
         sb.append(",\"gender\":\"")
@@ -109,6 +113,10 @@ public class Staff implements Serializable {
                 .append(account).append('\"');
         sb.append(",\"password\":\"")
                 .append(password).append('\"');
+        sb.append(",\"storeName\":\"")
+                .append(storeName).append('\"');
+        sb.append(",\"projects\":")
+                .append(projects);
         sb.append('}');
         return sb.toString();
     }
