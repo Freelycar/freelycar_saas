@@ -1,10 +1,11 @@
 package com.freelycar.saas.wechat.controller;
 
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
+import com.freelycar.saas.exception.ArgumentMissingException;
+import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.service.ConsumerOrderService;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import com.freelycar.saas.wechat.model.FinishOrderInfo;
-import com.freelycar.saas.wechat.model.ReservationOrderInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,13 +53,17 @@ public class WeChatOrderController {
     @GetMapping("/listReservationOrders")
     public ResultJsonObject listReservationOrders(
             @RequestParam String licensePlate,
-            @RequestParam String storeId
+            @RequestParam String storeId,
+            @RequestParam String staffId
     ) {
-        List<ReservationOrderInfo> res = consumerOrderService.listReservationOrders(licensePlate, storeId);
-        if (null != res) {
-            return ResultJsonObject.getDefaultResult(res);
+        try {
+            return ResultJsonObject.getDefaultResult(consumerOrderService.listReservationOrders(licensePlate, storeId, staffId));
+
+        } catch (ArgumentMissingException | ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null);
         }
-        return ResultJsonObject.getErrorResult(null);
     }
 
 

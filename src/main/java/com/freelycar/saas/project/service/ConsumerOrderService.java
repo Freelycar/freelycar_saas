@@ -275,7 +275,11 @@ public class ConsumerOrderService {
      * @param licensePlate
      * @return
      */
-    public List<ReservationOrderInfo> listReservationOrders(String licensePlate, String storeId) {
+    public List<ReservationOrderInfo> listReservationOrders(String licensePlate, String storeId, String staffId) throws ArgumentMissingException, ObjectNotFoundException {
+        if (StringUtils.isEmpty(staffId)) {
+            throw new ArgumentMissingException("参数staffId为空");
+        }
+
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT co.id, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.parkingLocation AS parkingLocation, d.arkSn AS arkSn, d.doorSn AS doorSn, concat( ( SELECT ark.`name` FROM ark WHERE ark.id = d.arkId ), '-', d.doorSn, '号门' ) AS keyLocation FROM door d LEFT JOIN consumerOrder co ON co.id = d.orderId WHERE co.state = 0 ")
                 .append(" AND co.storeId = '").append(storeId).append("' ");
@@ -293,7 +297,39 @@ public class ConsumerOrderService {
         //关闭em
         em.close();
 
-        return reservationOrderInfos;
+        return reservationOrderFilter(reservationOrderInfos, staffId);
+    }
+
+    public List<ReservationOrderInfo> reservationOrderFilter(List<ReservationOrderInfo> reservationOrderInfos, String staffId) throws ObjectNotFoundException {
+        Staff staff = staffService.findById(staffId);
+        if (null == staff) {
+            throw new ObjectNotFoundException("未找到id为：" + staffId + " 的技师信息");
+        }
+
+        List<ReservationOrderInfo> resultList = new ArrayList<>();
+
+        List<String> projectIds = new ArrayList<>();
+        List<Project> projects = staff.getProjects();
+        for (Project project : projects) {
+            projectIds.add(project.getId());
+        }
+
+        for (ReservationOrderInfo reservationOrderInfo : reservationOrderInfos) {
+            boolean orderShow = false;
+            String orderId = reservationOrderInfo.getId();
+            List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(orderId);
+            for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+                if (projectIds.contains(consumerProjectInfo.getProjectId())) {
+                    orderShow = true;
+                    break;
+                }
+            }
+            if (orderShow) {
+                resultList.add(reservationOrderInfo);
+            }
+        }
+
+        return resultList;
     }
 
 
