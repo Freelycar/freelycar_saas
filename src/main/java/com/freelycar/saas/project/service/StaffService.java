@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -380,12 +381,48 @@ public class StaffService {
     public void sendWeChatMessageToStaff(ConsumerOrder consumerOrder, Door door, String exceptOpenId) {
         String storeId = consumerOrder.getStoreId();
         Integer state = consumerOrder.getState();
+
         //查询门店的地址
         Ark ark = arkRepository.findTopBySnAndDelStatus(door.getArkSn(), Constants.DelStatus.NORMAL.isValue());
-        List<Staff> staffList = this.getAllArkStaffInStore(storeId);
-        logger.info("查询到storeId为" + storeId + "的门店有" + staffList.size() + "个技师");
+        List<Staff> allStaffList = this.getAllArkStaffInStore(storeId);
+        logger.info("查询到storeId为" + storeId + "的门店有" + allStaffList.size() + "个技师");
+
+        //汽车服务项目通知特别字段
+        String projects = "汽车服务";
+        StringBuilder projectStr = new StringBuilder();
+        List<String> projectIds = new ArrayList<>();
+        //查询项目
+        List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(consumerOrder.getId());
+        for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+            String projectName = consumerProjectInfo.getProjectName();
+            if (StringUtils.hasText(projectName)) {
+                projectStr.append("，").append(projectName);
+            }
+            projectIds.add(consumerProjectInfo.getProjectId());
+        }
+        if (StringUtils.hasText(projectStr)) {
+            projects = projectStr.substring(1, projectStr.length());
+        }
+
+        // 筛选包含项目的技师
+        List<Staff> staffList = new ArrayList<>();
+        for (Staff staffObject : allStaffList) {
+            boolean carryThisProject = false;
+            List<Project> staffProjects = staffObject.getProjects();
+            for (Project project : staffProjects) {
+                if (projectIds.contains(project.getId())) {
+                    carryThisProject = true;
+                    break;
+                }
+            }
+            if (carryThisProject) {
+                staffList.add(staffObject);
+            }
+        }
+        logger.info("包含项目：" + projects + "的技师有：" + staffList.size() + "个");
+
+        // 遍历符合条件的技师，给他们发送信息
         for (Staff staff : staffList) {
-//            String openId = staff.getOpenId();
             //openId来源变更，采用employee表中的openId
             String phone = staff.getPhone();
             if (StringUtils.hasText(phone)) {
@@ -397,19 +434,6 @@ public class StaffService {
                     logger.info("技师openId：" + openId);
                     if (notification && StringUtils.hasText(openId)) {
                         if (state == 0) {
-                            StringBuilder projectStr = new StringBuilder();
-                            String projects = "汽车服务";
-                            //查询项目
-                            List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(consumerOrder.getId());
-                            for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
-                                String projectName = consumerProjectInfo.getProjectName();
-                                if (StringUtils.hasText(projectName)) {
-                                    projectStr.append("，").append(projectName);
-                                }
-                            }
-                            if (StringUtils.hasText(projectStr)) {
-                                projects = projectStr.substring(1, projectStr.length());
-                            }
                             WechatTemplateMessage.orderCreated(consumerOrder, projects, openId, door, ark);
                         }
                         if (state == 4) {
