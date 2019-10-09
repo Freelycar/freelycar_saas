@@ -2,6 +2,8 @@ package com.freelycar.saas.project.service;
 
 import com.freelycar.saas.basic.wrapper.*;
 import com.freelycar.saas.exception.ArgumentMissingException;
+import com.freelycar.saas.exception.DataIsExistException;
+import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Project;
 import com.freelycar.saas.project.repository.ProjectRepository;
 import com.freelycar.saas.util.UpdateTool;
@@ -43,34 +45,29 @@ public class ProjectService {
      * @param project
      * @return
      */
-    public ResultJsonObject modify(Project project) {
-        try {
-            //验重
-            if (this.checkRepeatName(project)) {
-                return ResultJsonObject.getErrorResult(null, "已包含名称为：“" + project.getName() + "”的数据，不能重复添加。");
-            }
-
-            //是否有ID，判断时新增还是修改
-            String id = project.getId();
-            if (StringUtils.isEmpty(id)) {
-                project.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-                project.setCreateTime(new Timestamp(System.currentTimeMillis()));
-            } else {
-                Optional<Project> optional = projectRepository.findById(id);
-                //判断数据库中是否有该对象
-                if (!optional.isPresent()) {
-                    logger.error("修改失败，原因：" + Project.class + "中不存在id为 " + id + " 的对象");
-                    return ResultJsonObject.getErrorResult(null);
-                }
-                Project source = optional.get();
-                //将目标对象（projectType）中的null值，用源对象中的值替换
-                UpdateTool.copyNullProperties(source, project);
-            }
-            //执行保存/修改
-            return ResultJsonObject.getDefaultResult(projectRepository.saveAndFlush(project));
-        } catch (Exception e) {
-            return ResultJsonObject.getErrorResult(null);
+    public Project modify(Project project) throws DataIsExistException, ObjectNotFoundException {
+        //验重
+        if (this.checkRepeatName(project)) {
+            throw new DataIsExistException("已包含名称为：“" + project.getName() + "”的数据，不能重复添加。");
         }
+
+        //是否有ID，判断时新增还是修改
+        String id = project.getId();
+        if (StringUtils.isEmpty(id)) {
+            project.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+            project.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        } else {
+            Optional<Project> optional = projectRepository.findById(id);
+            //判断数据库中是否有该对象
+            if (!optional.isPresent()) {
+                throw new ObjectNotFoundException("修改失败，原因：" + Project.class + "中不存在id为 " + id + " 的对象");
+            }
+            Project source = optional.get();
+            //将目标对象（projectType）中的null值，用源对象中的值替换
+            UpdateTool.copyNullProperties(source, project);
+        }
+        //执行保存or修改
+        return project;
     }
 
     /**

@@ -3,6 +3,8 @@ package com.freelycar.saas.project.controller;
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.aop.LoggerManage;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
+import com.freelycar.saas.exception.DataIsExistException;
+import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Project;
 import com.freelycar.saas.project.service.ProjectService;
 import io.swagger.annotations.Api;
@@ -37,7 +39,13 @@ public class ProjectController {
             logger.error(errorMsg);
             return ResultJsonObject.getErrorResult(null, errorMsg);
         }
-        return projectService.modify(project);
+        try {
+            return ResultJsonObject.getDefaultResult(projectService.modify(project));
+        } catch (DataIsExistException | ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
     }
 
     /**

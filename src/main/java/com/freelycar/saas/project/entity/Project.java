@@ -58,6 +58,11 @@ public class Project implements Serializable {
      */
     @Column(nullable = false, columnDefinition = "float default 0.0")
     private Float price;
+    /**
+     * 会员价格
+     */
+    @Column(nullable = false, columnDefinition = "float default 0.0")
+    private Float memberPrice;
 
     /**
      * 单价（冗余）
@@ -125,6 +130,8 @@ public class Project implements Serializable {
                 .append(name).append('\"');
         sb.append(",\"price\":")
                 .append(price);
+        sb.append(",\"memberPrice\":")
+                .append(memberPrice);
         sb.append(",\"pricePerUnit\":")
                 .append(pricePerUnit);
         sb.append(",\"referWorkTime\":")
