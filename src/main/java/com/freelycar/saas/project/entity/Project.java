@@ -58,6 +58,7 @@ public class Project implements Serializable {
      */
     @Column(nullable = false, columnDefinition = "float default 0.0")
     private Float price;
+
     /**
      * 会员价格
      */

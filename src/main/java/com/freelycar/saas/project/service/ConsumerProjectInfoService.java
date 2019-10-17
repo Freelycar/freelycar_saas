@@ -76,13 +76,21 @@ public class ConsumerProjectInfoService {
      * @param consumerProjectInfos
      * @return
      */
-    public double sumAllProjectPrice(List<ConsumerProjectInfo> consumerProjectInfos) {
+    public double sumAllProjectPrice(List<ConsumerProjectInfo> consumerProjectInfos, boolean memberPrice) {
         if (null == consumerProjectInfos) {
             return 0;
         }
         double totalPrice = 0;
         for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
-            Double price = consumerProjectInfo.getPrice();
+            Double price;
+            if (memberPrice) {
+                price = consumerProjectInfo.getMemberPrice();
+                if ((double) 0 == price) {
+                    price = consumerProjectInfo.getPrice();
+                }
+            } else {
+                price = consumerProjectInfo.getPrice();
+            }
             if (null == price) {
                 price = (double) 0;
             }

@@ -954,9 +954,13 @@ public class ConsumerOrderService {
         consumerOrder.setState(Constants.OrderState.RESERVATION.getValue());
 
         //计算项目金额
-        double totalPrice = consumerProjectInfoService.sumAllProjectPrice(consumerProjectInfos);
+        double totalPrice = consumerProjectInfoService.sumAllProjectPrice(consumerProjectInfos, false);
         consumerOrder.setTotalPrice(totalPrice);
         consumerOrder.setActualPrice(totalPrice);
+        //计算会员价总计金额
+        double memberPrice = consumerProjectInfoService.sumAllProjectPrice(consumerProjectInfos, true);
+        consumerOrder.setMemberPrice(memberPrice);
+
 
         // 有效柜子分配逻辑
         Door emptyDoor = (Door) ConcurrentHashMapCacheUtils.getCache(doorId);

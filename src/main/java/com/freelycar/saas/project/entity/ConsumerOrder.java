@@ -155,6 +155,12 @@ public class ConsumerOrder implements Serializable {
     private Double totalPrice;
 
     /**
+     * 会员订单总价
+     */
+    @Column(nullable = false, columnDefinition = "double default 0")
+    private Double memberPrice;
+
+    /**
      * 实付价格=第一实付价格+第二实付价格
      */
     @Column(columnDefinition = "double default 0")
@@ -250,5 +256,94 @@ public class ConsumerOrder implements Serializable {
     @Column
     private String staffKeyLocationSn;
 
-
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("\"id\":\"")
+                .append(id).append('\"');
+        sb.append(",\"delStatus\":")
+                .append(delStatus);
+        sb.append(",\"createTime\":\"")
+                .append(createTime).append('\"');
+        sb.append(",\"storeId\":\"")
+                .append(storeId).append('\"');
+        sb.append(",\"carId\":\"")
+                .append(carId).append('\"');
+        sb.append(",\"carBrand\":\"")
+                .append(carBrand).append('\"');
+        sb.append(",\"carType\":\"")
+                .append(carType).append('\"');
+        sb.append(",\"licensePlate\":\"")
+                .append(licensePlate).append('\"');
+        sb.append(",\"carColor\":\"")
+                .append(carColor).append('\"');
+        sb.append(",\"carImageUrl\":\"")
+                .append(carImageUrl).append('\"');
+        sb.append(",\"clientId\":\"")
+                .append(clientId).append('\"');
+        sb.append(",\"clientName\":\"")
+                .append(clientName).append('\"');
+        sb.append(",\"gender\":\"")
+                .append(gender).append('\"');
+        sb.append(",\"phone\":\"")
+                .append(phone).append('\"');
+        sb.append(",\"isMember\":")
+                .append(isMember);
+        sb.append(",\"deliverTime\":\"")
+                .append(deliverTime).append('\"');
+        sb.append(",\"finishTime\":\"")
+                .append(finishTime).append('\"');
+        sb.append(",\"pickTime\":\"")
+                .append(pickTime).append('\"');
+        sb.append(",\"lastMiles\":")
+                .append(lastMiles);
+        sb.append(",\"miles\":")
+                .append(miles);
+        sb.append(",\"parkingLocation\":\"")
+                .append(parkingLocation).append('\"');
+        sb.append(",\"state\":")
+                .append(state);
+        sb.append(",\"totalPrice\":")
+                .append(totalPrice);
+        sb.append(",\"memberPrice\":")
+                .append(memberPrice);
+        sb.append(",\"actualPrice\":")
+                .append(actualPrice);
+        sb.append(",\"firstPayMethod\":")
+                .append(firstPayMethod);
+        sb.append(",\"firstActualPrice\":")
+                .append(firstActualPrice);
+        sb.append(",\"firstCardId\":\"")
+                .append(firstCardId).append('\"');
+        sb.append(",\"secondPayMethod\":")
+                .append(secondPayMethod);
+        sb.append(",\"secondActualPrice\":")
+                .append(secondActualPrice);
+        sb.append(",\"secondCardId\":\"")
+                .append(secondCardId).append('\"');
+        sb.append(",\"payState\":")
+                .append(payState);
+        sb.append(",\"pickCarStaffId\":\"")
+                .append(pickCarStaffId).append('\"');
+        sb.append(",\"pickCarStaffName\":\"")
+                .append(pickCarStaffName).append('\"');
+        sb.append(",\"orderType\":")
+                .append(orderType);
+        sb.append(",\"cardOrCouponId\":\"")
+                .append(cardOrCouponId).append('\"');
+        sb.append(",\"faultDescription\":\"")
+                .append(faultDescription).append('\"');
+        sb.append(",\"cancelTime\":\"")
+                .append(cancelTime).append('\"');
+        sb.append(",\"userKeyLocation\":\"")
+                .append(userKeyLocation).append('\"');
+        sb.append(",\"userKeyLocationSn\":\"")
+                .append(userKeyLocationSn).append('\"');
+        sb.append(",\"staffKeyLocation\":\"")
+                .append(staffKeyLocation).append('\"');
+        sb.append(",\"staffKeyLocationSn\":\"")
+                .append(staffKeyLocationSn).append('\"');
+        sb.append('}');
+        return sb.toString();
+    }
 }

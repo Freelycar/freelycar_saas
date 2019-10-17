@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 
 /**
  * 订单
+ *
  * @author tangwei - Toby
  * @date 2018/10/22
  * @email toby911115@gmail.com
@@ -105,6 +106,12 @@ public class ConsumerProjectInfo implements Serializable {
     private Double price;
 
     /**
+     * 会员价格
+     */
+    @Column(nullable = false, columnDefinition = "float default 0.0")
+    private Double memberPrice;
+
+    /**
      * 工时单价
      */
     @Column
@@ -128,4 +135,48 @@ public class ConsumerProjectInfo implements Serializable {
     @Column
     private String staffName;
 
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("{");
+        sb.append("\"id\":\"")
+                .append(id).append('\"');
+        sb.append(",\"delStatus\":")
+                .append(delStatus);
+        sb.append(",\"createTime\":\"")
+                .append(createTime).append('\"');
+        sb.append(",\"consumerOrderId\":\"")
+                .append(consumerOrderId).append('\"');
+        sb.append(",\"projectId\":\"")
+                .append(projectId).append('\"');
+        sb.append(",\"projectName\":\"")
+                .append(projectName).append('\"');
+        sb.append(",\"payMethod\":\"")
+                .append(payMethod).append('\"');
+        sb.append(",\"cardId\":\"")
+                .append(cardId).append('\"');
+        sb.append(",\"cardName\":\"")
+                .append(cardName).append('\"');
+        sb.append(",\"cardNumber\":\"")
+                .append(cardNumber).append('\"');
+        sb.append(",\"payCardTimes\":")
+                .append(payCardTimes);
+        sb.append(",\"couponId\":\"")
+                .append(couponId).append('\"');
+        sb.append(",\"couponName\":\"")
+                .append(couponName).append('\"');
+        sb.append(",\"price\":")
+                .append(price);
+        sb.append(",\"memberPrice\":")
+                .append(memberPrice);
+        sb.append(",\"pricePerUnit\":")
+                .append(pricePerUnit);
+        sb.append(",\"referWorkTime\":")
+                .append(referWorkTime);
+        sb.append(",\"staffId\":\"")
+                .append(staffId).append('\"');
+        sb.append(",\"staffName\":\"")
+                .append(staffName).append('\"');
+        sb.append('}');
+        return sb.toString();
+    }
 }
