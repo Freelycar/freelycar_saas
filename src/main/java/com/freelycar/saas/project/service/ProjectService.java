@@ -67,7 +67,7 @@ public class ProjectService {
             UpdateTool.copyNullProperties(source, project);
         }
         //执行保存or修改
-        return project;
+        return projectRepository.saveAndFlush(project);
     }
 
     /**
