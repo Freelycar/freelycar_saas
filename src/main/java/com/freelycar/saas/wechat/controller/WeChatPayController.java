@@ -191,4 +191,9 @@ public class WeChatPayController {
             return ResultJsonObject.getErrorResult(null, e.getMessage());
         }
     }
+
+//    @GetMapping("/paySuccess")
+//    public ResultJsonObject paySuccess(@RequestParam String orderId) {
+//        return consumerOrderService.wechatPaySuccess(orderId);
+//    }
 }
