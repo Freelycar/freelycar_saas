@@ -2,8 +2,10 @@ package com.freelycar.saas.wxutils;
 
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
+import com.freelycar.saas.exception.WeChatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,39 +18,19 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class WechatConfig {
 
-    /**
-     * 获得 token的方法 (这个用户获取用户信息的token ，和下面的普通token不同)
-     * https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140842&token=&lang=zh_CN
-     */
-
-//	static {
-//		CERT_LOCAL_PATH = WechatConfig.class.getClassLoader().getResource("apiclient_cert.p12").getPath();
-//		logger.debug("Cert location:" + CERT_LOCAL_PATH);
-//	}
-
-    //用户缓存itoken openid 之类的变量
-    public static Map<String, JSONObject> cacheVariable = new ConcurrentHashMap<>();
-
     //自定义的token
     public static final String TOKEN = "freelycar-saas";
-
     //公众号-开发者ID
     public static final String APP_ID = "wxfd188f8284ee297b";
-
     //公众号-开发者密码
     public static final String APP_SECRET = "0e4272e26d2802a89aa54f211daf2b9a";
-
     //商户号-商户ID
     public static final String MCH_ID = "1234616002";
-
     //微信前端页面url域名
     public static final String APP_DOMAIN = "https://www.freelycar.com/wechat/";
-
     //微信后端接口url域名
     public static final String API_URL = "https://www.freelycar.com/api/";
-
     public static final String KEY = "F8B4D84CE5B3FF39A9695FA99B5BC9C3"; //签名秘钥，在微信商户平台里面设置
-
     public static final String ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
     public final static String REFUND_URL = "https://api.mch.weixin.qq.com/secapi/pay/refund";
     public final static String WECHAT_TEMPLATE_MESSAGE_URL = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=";
@@ -56,14 +38,7 @@ public class WechatConfig {
     private final static int TIME_OUT = 5400 * 1000;
     private final static String ACCESS_TOKEN_URL = "https://api.weixin.qq.com/sns/oauth2/access_token";
     private final static String WECHAT_USER_INFO = "https://api.weixin.qq.com/sns/userinfo";
-
     private final static String WECHAT_USER_INFO_URL = "https://api.weixin.qq.com/cgi-bin/user/info";
-
-
-    //暂时注释掉 证书相关
-    //public static String CERT_LOCAL_PATH = null; //证书路径
-
-    //public final static String CERT_PASSWORD = "1234616002"; //证书密码，默认与mch_id一样
     /**
      * 微信JS接口的临时票据
      * http://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421141115&token=683615784&lang=zh_CN
@@ -76,6 +51,24 @@ public class WechatConfig {
      * }
      */
     private static final String JSAPI_TICKET_URL = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?type=jsapi";
+
+
+    //暂时注释掉 证书相关
+    //public static String CERT_LOCAL_PATH = null; //证书路径
+
+    //public final static String CERT_PASSWORD = "1234616002"; //证书密码，默认与mch_id一样
+    /**
+     * 获得 token的方法 (这个用户获取用户信息的token ，和下面的普通token不同)
+     * https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140842&token=&lang=zh_CN
+     */
+
+//	static {
+//		CERT_LOCAL_PATH = WechatConfig.class.getClassLoader().getResource("apiclient_cert.p12").getPath();
+//		logger.debug("Cert location:" + CERT_LOCAL_PATH);
+//	}
+
+    //用户缓存itoken openid 之类的变量
+    public static Map<String, JSONObject> cacheVariable = new ConcurrentHashMap<>();
     private static Logger logger = LoggerFactory.getLogger(WechatConfig.class);
 
     private static String getAccessTokenUrl(String code) {
@@ -238,7 +231,7 @@ public class WechatConfig {
     }
 
     //获取用户是否关注了公众号
-    public static boolean isUserFollow(String openId) {
+    public static boolean isUserFollow(String openId) throws WeChatException {
         String accessToken = getAccessTokenForInteface().getString("access_token");
         Integer subscribe;
         String wxUserInfoUrl = WECHAT_USER_INFO_URL + "?access_token=" + accessToken + "&openid="
@@ -252,6 +245,12 @@ public class WechatConfig {
             e.printStackTrace();
             logger.error(e.getMessage(), e);
             throw new JSONException("WechatConfig#获取userInfo的json字符串解析失败", e);
+        }
+
+        //判断获取信息是否包含错误码
+        String errCode = resultObject.getString("errcode");
+        if (StringUtils.hasText(errCode)) {
+            throw new WeChatException("微信接口获取用户信息失败，微信接口返回信息：" + resultObject);
         }
 
         subscribe = resultObject.getInteger("subscribe");
