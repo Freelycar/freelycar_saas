@@ -28,7 +28,7 @@ public class TokenAuthenticationUtil {
 
     private static Logger logger = LoggerFactory.getLogger(TokenAuthenticationUtil.class);
 
-    private static final long EXPIRATIONTIME = 7776000000L;     // 4周
+    private static final long EXPIRATION_TIME = 7776000000L;     // 4周
     //        private static final long EXPIRATIONTIME = 300_000;     // 5分钟测试用
     private static final String SECRET = "FreelyC@r";            // JWT密码
     private static final String TOKEN_PREFIX = "Bearer";        // Token前缀
@@ -41,7 +41,7 @@ public class TokenAuthenticationUtil {
                 // 用户名写入标题
                 .setSubject(username)
                 // 有效期设置
-                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATIONTIME))
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
                 // 签名设置
                 .signWith(SignatureAlgorithm.HS512, SECRET)
                 .compact();
