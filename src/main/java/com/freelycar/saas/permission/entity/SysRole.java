@@ -1,37 +1,28 @@
 package com.freelycar.saas.permission.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import lombok.Data;
+
+import javax.persistence.*;
+import java.sql.Timestamp;
 
 /**
  * @author tangwei [toby911115@gmail.com]
  * @date 2018/9/27
  */
 @Entity
+@Data
 public class SysRole {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(nullable = false, columnDefinition = "bit default 0")
+    private Boolean delStatus;
+
+    @Column(nullable = false, columnDefinition = "datetime default NOW()")
+    private Timestamp createTime;
+
     private String name;
-
-    public SysRole() {
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+    private String description;
+    private String sign;
 }
