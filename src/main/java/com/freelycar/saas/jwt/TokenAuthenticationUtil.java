@@ -10,6 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -26,13 +27,12 @@ import java.util.List;
  */
 public class TokenAuthenticationUtil {
 
-    private static Logger logger = LoggerFactory.getLogger(TokenAuthenticationUtil.class);
-
     private static final long EXPIRATION_TIME = 7776000000L;     // 4周
     //        private static final long EXPIRATIONTIME = 300_000;     // 5分钟测试用
     private static final String SECRET = "FreelyC@r";            // JWT密码
     private static final String TOKEN_PREFIX = "Bearer";        // Token前缀
     private static final String HEADER_STRING = "Authorization";// 存放Token的Header Key
+    private static Logger logger = LoggerFactory.getLogger(TokenAuthenticationUtil.class);
 
     public static String generateAuthentication(String username) {
         return Jwts.builder()
@@ -47,11 +47,36 @@ public class TokenAuthenticationUtil {
                 .compact();
     }
 
+    public static String generateAuthentication(Authentication auth) {
+        StringBuilder authoritiesStr = new StringBuilder();
+        List<GrantedAuthority> authorities = (List<GrantedAuthority>) auth.getAuthorities();
+        for (GrantedAuthority authority : authorities) {
+            authoritiesStr.append(",").append(authority.getAuthority());
+        }
+        if (StringUtils.hasText(authoritiesStr)) {
+            authoritiesStr.substring(1);
+        }
+
+        return Jwts.builder()
+                // 保存权限（角色）
+                .claim("authorities", authoritiesStr.toString())
+                // 用户名写入标题
+                .setSubject(auth.getName())
+                // 有效期设置
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                // 签名设置
+                .signWith(SignatureAlgorithm.HS512, SECRET)
+                .compact();
+    }
+
     // JWT生成方法
-    static void addAuthentication(HttpServletResponse response, String username) {
+    static void addAuthentication(HttpServletResponse response, Authentication auth) {
+
+        logger.info(auth.getName());
+        logger.info(auth.getAuthorities().toString());
 
         // 生成JWT
-        String JWT = generateAuthentication(username);
+        String JWT = generateAuthentication(auth);
 
         // 将 JWT 写入 body
         try {

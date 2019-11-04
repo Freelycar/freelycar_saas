@@ -87,7 +87,7 @@ public class SysUser implements UserDetails {
         List<SysRole> roles = this.getRoles();
         if (null != roles && !roles.isEmpty()) {
             for (SysRole role : roles) {
-                auths.add(new SimpleGrantedAuthority(role.getName()));
+                auths.add(new SimpleGrantedAuthority("ROLE_" + role.getName()));
             }
         }
         return auths;

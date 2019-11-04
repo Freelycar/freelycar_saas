@@ -1,7 +1,6 @@
 package com.freelycar.saas.jwt;
 
 import com.freelycar.saas.basic.wrapper.ResultCode;
-import com.freelycar.saas.jwt.bean.GrantedAuthorityImpl;
 import com.freelycar.saas.permission.entity.SysUser;
 import com.freelycar.saas.permission.service.SysUserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,10 +39,12 @@ class CustomAuthenticationProvider implements AuthenticationProvider {
         if (null != sysUser) {
 
             // 这里设置权限和角色
-            // TODO 这里第二版需要改成从库里面去关联
-            ArrayList<GrantedAuthority> authorities = new ArrayList<>();
-            authorities.add(new GrantedAuthorityImpl("ROLE_ADMIN"));
-            authorities.add(new GrantedAuthorityImpl("AUTH_WRITE"));
+            ArrayList<GrantedAuthority> authorities = (ArrayList<GrantedAuthority>) sysUser.getAuthorities();
+
+            // 这里第二版需要改成从库里面去关联
+//            ArrayList<GrantedAuthority> authorities = new ArrayList<>();
+//            authorities.add(new GrantedAuthorityImpl("ROLE_ADMIN"));
+//            authorities.add(new GrantedAuthorityImpl("AUTH_WRITE"));
             // 生成令牌
             Authentication auth = new UsernamePasswordAuthenticationToken(name, password, authorities);
             return auth;

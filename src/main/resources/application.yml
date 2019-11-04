@@ -22,7 +22,7 @@ spring:
     properties:
       hibernate:
         show_sql: true
-        format_sql: false
+        format_sql: true
         hbm2ddl:
           auto: update
         dialect: org.hibernate.dialect.MySQL55Dialect
