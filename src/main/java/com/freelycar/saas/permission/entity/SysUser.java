@@ -9,6 +9,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tangwei [toby911115@gmail.com]
@@ -24,6 +25,9 @@ public class SysUser implements UserDetails {
 
     @ManyToMany(cascade = {CascadeType.REFRESH}, fetch = FetchType.EAGER)
     private List<SysRole> roles;
+
+    @ManyToMany(cascade = {CascadeType.REFRESH}, fetch = FetchType.EAGER)
+    private Set<SysResource> resources;
 
     /**
      * 删除标记位
@@ -187,6 +191,14 @@ public class SysUser implements UserDetails {
         this.permissions = permissions;
     }
 
+    public Set<SysResource> getResources() {
+        return resources;
+    }
+
+    public void setResources(Set<SysResource> resources) {
+        this.resources = resources;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
@@ -196,6 +208,10 @@ public class SysUser implements UserDetails {
                 .append(username).append('\"');
         sb.append(",\"password\":\"")
                 .append(password).append('\"');
+        sb.append(",\"roles\":")
+                .append(roles);
+        sb.append(",\"resources\":")
+                .append(resources);
         sb.append(",\"delStatus\":")
                 .append(delStatus);
         sb.append(",\"createTime\":\"")
