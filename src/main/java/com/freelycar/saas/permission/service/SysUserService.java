@@ -16,7 +16,6 @@ import org.springframework.util.StringUtils;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * @author tangwei - Toby
@@ -168,12 +167,7 @@ public class SysUserService {
     }
 
     public SysUser findById(Long id) throws Throwable {
-        return sysUserRepository.findById(id).orElseThrow(new Supplier<Throwable>() {
-            @Override
-            public Throwable get() {
-                return new ObjectNotFoundException("未找到id为：" + id + " 的用户信息");
-            }
-        });
+        return sysUserRepository.findById(id).orElseThrow(ObjectNotFoundException::new);
     }
 
 }
