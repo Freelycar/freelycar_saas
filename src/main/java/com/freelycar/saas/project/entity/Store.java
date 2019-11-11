@@ -1,8 +1,6 @@
 package com.freelycar.saas.project.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.GenericGenerator;
@@ -24,8 +22,6 @@ import java.sql.Timestamp;
 @DynamicInsert
 @DynamicUpdate
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class Store implements Serializable {
     private static final long serialVersionUID = 2L;
 
@@ -75,5 +71,7 @@ public class Store implements Serializable {
     @Column
     private String headUrl;
 
+    @Column
+    private String agentId;
 
 }

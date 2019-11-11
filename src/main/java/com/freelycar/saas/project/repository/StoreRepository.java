@@ -28,4 +28,6 @@ public interface StoreRepository extends JpaRepository<Store, String> {
     @Modifying(clearAutomatically = true)
     @Query(value = "update store set delStatus = 1 where id=:id", nativeQuery = true)
     int delById(String id);
+
+    List<Store> findAllByDelStatusAndAgentId(Boolean delStatus, String agentId);
 }

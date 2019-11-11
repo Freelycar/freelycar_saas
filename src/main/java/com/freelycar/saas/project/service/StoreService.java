@@ -370,4 +370,8 @@ public class StoreService {
 
         return storeInfo;
     }
+
+    public Collection<Store> findStoresByAgentId(String agentId) {
+        return storeRepository.findAllByDelStatusAndAgentId(Constants.DelStatus.NORMAL.isValue(), agentId);
+    }
 }

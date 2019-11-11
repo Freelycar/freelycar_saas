@@ -4,6 +4,7 @@ import com.freelycar.saas.basic.wrapper.*;
 import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Agent;
+import com.freelycar.saas.project.entity.Store;
 import com.freelycar.saas.project.repository.AgentRepository;
 import com.freelycar.saas.util.UpdateTool;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.util.Collection;
 
 import static com.freelycar.saas.basic.wrapper.ResultCode.RESULT_DATA_NONE;
 
@@ -26,9 +28,15 @@ public class AgentService {
     @Autowired
     private AgentRepository agentRepository;
 
+    @Autowired
+    private StoreService storeService;
+
 
     public Agent findById(String id) throws ObjectNotFoundException {
-        return agentRepository.findById(id).orElseThrow(ObjectNotFoundException::new);
+        Agent agent = agentRepository.findById(id).orElseThrow(ObjectNotFoundException::new);
+        Collection<Store> stores = storeService.findStoresByAgentId(agent.getId());
+        agent.setStores(stores);
+        return agent;
     }
 
     public Agent modify(Agent agent) throws ArgumentMissingException, ObjectNotFoundException {
