@@ -32,5 +32,9 @@ public interface SysUserRepository extends JpaRepository<SysUser, Long> {
 
     Page<SysUser> findByDelStatusAndStoreId(boolean delStatus, String storeId, Pageable pageable);
 
+    Page<SysUser> findByDelStatusAndAgentId(boolean delStatus, String agentId, Pageable pageable);
+
+    Page<SysUser> findByDelStatusAndStoreIdAndAgentId(boolean delStatus, String storeId, String agentId, Pageable pageable);
+
     Page<SysUser> findByDelStatus(boolean delStatus, Pageable pageable);
 }

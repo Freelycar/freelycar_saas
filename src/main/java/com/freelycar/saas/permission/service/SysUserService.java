@@ -158,10 +158,16 @@ public class SysUserService {
         return ResultJsonObject.getDefaultResult(null);
     }
 
-    public Page list(String storeId, Integer currentPage, Integer pageSize) {
+    public Page list(String storeId, String agentId, Integer currentPage, Integer pageSize) {
         Pageable pageable = PageableTools.basicPage(currentPage, pageSize, new SortDto("asc", "id"));
+        if (StringUtils.hasText(storeId) && StringUtils.hasText(agentId)) {
+            return sysUserRepository.findByDelStatusAndStoreIdAndAgentId(Constants.DelStatus.NORMAL.isValue(), storeId, agentId, pageable);
+        }
         if (StringUtils.hasText(storeId)) {
             return sysUserRepository.findByDelStatusAndStoreId(Constants.DelStatus.NORMAL.isValue(), storeId, pageable);
+        }
+        if (StringUtils.hasText(agentId)) {
+            return sysUserRepository.findByDelStatusAndAgentId(Constants.DelStatus.NORMAL.isValue(), agentId, pageable);
         }
         return sysUserRepository.findByDelStatus(Constants.DelStatus.NORMAL.isValue(), pageable);
     }

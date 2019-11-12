@@ -65,9 +65,10 @@ public class SysUserController {
     @GetMapping("/list")
     public ResultJsonObject list(
             @RequestParam(required = false) String storeId,
+            @RequestParam(required = false) String agentId,
             @RequestParam Integer currentPage,
             @RequestParam(required = false) Integer pageSize) {
-        return ResultJsonObject.getDefaultResult(PaginationRJO.of(sysUserService.list(storeId, currentPage, pageSize)));
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(sysUserService.list(storeId, agentId, currentPage, pageSize)));
     }
 
     @GetMapping("/getUserInfoByUserName")

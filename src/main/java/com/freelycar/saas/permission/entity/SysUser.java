@@ -47,6 +47,11 @@ public class SysUser implements UserDetails {
     private String storeId;
 
     /**
+     * 所属供应商
+     */
+    private String agentId;
+
+    /**
      * 使用者姓名
      */
     private String staffName;
@@ -199,6 +204,14 @@ public class SysUser implements UserDetails {
         this.resources = resources;
     }
 
+    public String getAgentId() {
+        return agentId;
+    }
+
+    public void setAgentId(String agentId) {
+        this.agentId = agentId;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
@@ -218,6 +231,8 @@ public class SysUser implements UserDetails {
                 .append(createTime).append('\"');
         sb.append(",\"storeId\":\"")
                 .append(storeId).append('\"');
+        sb.append(",\"agentId\":\"")
+                .append(agentId).append('\"');
         sb.append(",\"staffName\":\"")
                 .append(staffName).append('\"');
         sb.append(",\"phone\":\"")
