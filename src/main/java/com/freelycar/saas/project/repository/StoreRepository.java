@@ -20,6 +20,8 @@ public interface StoreRepository extends JpaRepository<Store, String> {
 
     Page<Store> findStoreByDelStatusAndNameContainingOrderBySortAsc(boolean delStatus, String name, Pageable pageable);
 
+    Page<Store> findStoreByDelStatusAndAgentIdAndNameContainingOrderBySortAsc(boolean delStatus, String agentId, String name, Pageable pageable);
+
     List<Store> findAllByDelStatusOrderBySortAsc(boolean delStatus);
 
     Store findTopByDelStatusAndSortIsNotNullOrderBySortDesc(boolean delStatus);

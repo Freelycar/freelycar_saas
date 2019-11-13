@@ -97,13 +97,14 @@ public class StoreController {
     @GetMapping("/list")
     @LoggerManage(description = "调用方法：获取门店列表（分页）")
     public ResultJsonObject list(
+            @RequestParam(required = false) String agentId,
             @RequestParam(required = false) String name,
             @RequestParam Integer currentPage,
             @RequestParam(required = false) Integer pageSize) {
         if (StringUtils.isEmpty(name)) {
             name = "";
         }
-        return ResultJsonObject.getDefaultResult(PaginationRJO.of(storeService.list(name, currentPage, pageSize)));
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(storeService.list(agentId, name, currentPage, pageSize)));
     }
 
     @ApiOperation(value = "修改门店信息（门店端）", produces = "application/json")

@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -168,8 +169,12 @@ public class StoreService {
      * @param pageSize
      * @return
      */
-    public Page<Store> list(String name, Integer currentPage, Integer pageSize) {
-        return storeRepository.findStoreByDelStatusAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
+    public Page<Store> list(String agentId, String name, Integer currentPage, Integer pageSize) {
+        Pageable pageable = PageableTools.basicPage(currentPage, pageSize);
+        if (StringUtils.hasText(agentId)) {
+            return storeRepository.findStoreByDelStatusAndAgentIdAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), agentId, name, pageable);
+        }
+        return storeRepository.findStoreByDelStatusAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, pageable);
     }
 
 
