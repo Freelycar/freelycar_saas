@@ -174,10 +174,16 @@ public class ArkService {
         return ResultJsonObject.getDefaultResult(sucMsg);
     }
 
-    public Page<Ark> list(String storeId, Integer currentPage, Integer pageSize, String arkSn) {
+    public Page<Ark> list(String storeId, String agentId, Integer currentPage, Integer pageSize, String arkSn) {
         Pageable pageable = PageableTools.basicPage(currentPage, pageSize, new SortDto("asc", "createTime"));
+        if (StringUtils.hasText(storeId) && StringUtils.hasText(agentId)) {
+            return arkRepository.findAllByStoreIdAndAgentIdAndSnContainingAndDelStatus(storeId, agentId, arkSn, Constants.DelStatus.NORMAL.isValue(), pageable);
+        }
         if (StringUtils.hasText(storeId)) {
             return arkRepository.findAllByStoreIdAndSnContainingAndDelStatus(storeId, arkSn, Constants.DelStatus.NORMAL.isValue(), pageable);
+        }
+        if (StringUtils.hasText(agentId)) {
+            return arkRepository.findAllByAgentIdAndSnContainingAndDelStatus(agentId, arkSn, Constants.DelStatus.NORMAL.isValue(), pageable);
         }
         return arkRepository.findAllBySnContainingAndDelStatus(arkSn, Constants.DelStatus.NORMAL.isValue(), pageable);
     }

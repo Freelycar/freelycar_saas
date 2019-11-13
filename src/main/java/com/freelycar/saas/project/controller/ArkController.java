@@ -100,12 +100,13 @@ public class ArkController {
             @RequestParam Integer currentPage,
             @RequestParam(required = false) Integer pageSize,
             @RequestParam(required = false) String storeId,
+            @RequestParam(required = false) String agentId,
             @RequestParam(required = false) String arkSn
     ) {
         if (StringUtils.isEmpty(StringUtils.trimWhitespace(arkSn))) {
             arkSn = "";
         }
-        return ResultJsonObject.getDefaultResult(PaginationRJO.of(arkService.list(storeId, currentPage, pageSize, arkSn)));
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(arkService.list(storeId, agentId, currentPage, pageSize, arkSn)));
     }
 
 }

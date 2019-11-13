@@ -15,5 +15,9 @@ public interface ArkRepository extends JpaRepository<Ark, String> {
 
     Page<Ark> findAllByStoreIdAndSnContainingAndDelStatus(String storeId, String sn, boolean delStatus, Pageable pageable);
 
+    Page<Ark> findAllByAgentIdAndSnContainingAndDelStatus(String agentId, String sn, boolean delStatus, Pageable pageable);
+
+    Page<Ark> findAllByStoreIdAndAgentIdAndSnContainingAndDelStatus(String storeId, String agentId, String sn, boolean delStatus, Pageable pageable);
+
     Page<Ark> findAllBySnContainingAndDelStatus(String sn, boolean delStatus, Pageable pageable);
 }

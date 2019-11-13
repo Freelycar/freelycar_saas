@@ -48,6 +48,8 @@ public class Ark implements Serializable {
 
     @Column
     private String storeId;
+    @Column
+    private String agentId;
 
     @Column
     private String location;
@@ -136,6 +138,14 @@ public class Ark implements Serializable {
         this.name = name;
     }
 
+    public String getAgentId() {
+        return agentId;
+    }
+
+    public void setAgentId(String agentId) {
+        this.agentId = agentId;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
@@ -149,6 +159,8 @@ public class Ark implements Serializable {
                 .append(sn).append('\"');
         sb.append(",\"storeId\":\"")
                 .append(storeId).append('\"');
+        sb.append(",\"agentId\":\"")
+                .append(agentId).append('\"');
         sb.append(",\"location\":\"")
                 .append(location).append('\"');
         sb.append(",\"doorNum\":")
