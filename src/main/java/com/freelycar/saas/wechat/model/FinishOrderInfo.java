@@ -34,4 +34,6 @@ public class FinishOrderInfo {
     private String projectNames;
 
     private Date pickTime;
+
+    private String userKeyLocationSn;
 }
