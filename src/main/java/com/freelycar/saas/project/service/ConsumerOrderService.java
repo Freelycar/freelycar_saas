@@ -127,7 +127,7 @@ public class ConsumerOrderService {
             }
             consumerOrder.setId(newId);
             consumerOrder.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            consumerOrder.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            consumerOrder.setCreateTime(TimestampUtil.getCurrentTimestamp());
             return consumerOrderRepository.saveAndFlush(consumerOrder);
         }
         return this.updateOrder(consumerOrder);
@@ -163,7 +163,7 @@ public class ConsumerOrderService {
         List<AutoParts> autoParts = orderObject.getAutoParts();
 
         //设置order的额外信息
-        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        Timestamp currentTime = TimestampUtil.getCurrentTimestamp();
         consumerOrder.setOrderType(Constants.OrderType.SERVICE.getValue());
         consumerOrder.setPayState(Constants.PayState.NOT_PAY.getValue());
         //快速开单时订单状态直接为接车状态（不需要预约）
@@ -829,7 +829,7 @@ public class ConsumerOrderService {
             return ResultJsonObject.getErrorResult(consumerOrder, "参数consumerOrder为NULL，完工操作失败");
         }
         String orderId = consumerOrder.getId();
-        Timestamp finishTime = consumerOrder.getFinishTime() == null ? new Timestamp(System.currentTimeMillis()) : consumerOrder.getFinishTime();
+        Timestamp finishTime = consumerOrder.getFinishTime() == null ? TimestampUtil.getCurrentTimestamp() : consumerOrder.getFinishTime();
         ConsumerOrder source = consumerOrderRepository.getOne(orderId);
         source.setFinishTime(finishTime);
         source.setParkingLocation(consumerOrder.getParkingLocation());
@@ -851,7 +851,7 @@ public class ConsumerOrderService {
             return ResultJsonObject.getErrorResult(consumerOrder, "参数consumerOrder为NULL，交车操作失败");
         }
         String orderId = consumerOrder.getId();
-        Timestamp deliverTime = consumerOrder.getDeliverTime() == null ? new Timestamp(System.currentTimeMillis()) : consumerOrder.getDeliverTime();
+        Timestamp deliverTime = consumerOrder.getDeliverTime() == null ? TimestampUtil.getCurrentTimestamp() : consumerOrder.getDeliverTime();
         ConsumerOrder source = consumerOrderRepository.getOne(orderId);
         source.setDeliverTime(deliverTime);
         source.setState(Constants.OrderState.HAND_OVER.getValue());
@@ -947,7 +947,7 @@ public class ConsumerOrderService {
         consumerOrder.setStoreId(clientInfo.getStoreId());
 
         //设置order的其他信息
-        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        Timestamp currentTime = TimestampUtil.getCurrentTimestamp();
         consumerOrder.setOrderType(Constants.OrderType.ARK.getValue());
         consumerOrder.setPayState(Constants.PayState.NOT_PAY.getValue());
         //设置订单状态为“预约”
@@ -1128,7 +1128,7 @@ public class ConsumerOrderService {
         }
         //设置单据状态为"已取车（交车）"
         consumerOrder.setState(Constants.OrderState.HAND_OVER.getValue());
-        consumerOrder.setDeliverTime(new Timestamp(System.currentTimeMillis()));
+        consumerOrder.setDeliverTime(TimestampUtil.getCurrentTimestamp());
 
         ConsumerOrder res = this.updateOrder(consumerOrder);
 
@@ -1171,7 +1171,7 @@ public class ConsumerOrderService {
             return ResultJsonObject.getCustomResult("Not found staff object by staffId : " + staffId, ResultCode.RESULT_DATA_NONE);
         }
 
-        consumerOrder.setPickTime(new Timestamp(System.currentTimeMillis()));
+        consumerOrder.setPickTime(TimestampUtil.getCurrentTimestamp());
         consumerOrder.setState(Constants.OrderState.RECEIVE_CAR.getValue());
         consumerOrder.setPickCarStaffId(staffId);
         consumerOrder.setPickCarStaffName(staff.getName());
@@ -1217,7 +1217,7 @@ public class ConsumerOrderService {
         }
 
 
-        consumerOrder.setFinishTime(new Timestamp(System.currentTimeMillis()));
+        consumerOrder.setFinishTime(TimestampUtil.getCurrentTimestamp());
         consumerOrder.setState(Constants.OrderState.SERVICE_FINISH.getValue());
 
         // 有效柜子分配逻辑
@@ -1360,7 +1360,7 @@ public class ConsumerOrderService {
             throw new ObjectNotFoundException("未找到卡/券的对象，无法更新卡券状态和订单状态");
         }
 
-        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        Timestamp currentTime = TimestampUtil.getCurrentTimestamp();
 
         if (null != card) {
             card.setDelStatus(Constants.DelStatus.NORMAL.isValue());

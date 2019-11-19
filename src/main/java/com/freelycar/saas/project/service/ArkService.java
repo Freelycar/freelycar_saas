@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -115,7 +114,7 @@ public class ArkService {
 
         //初始化数据
         ark.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-        ark.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        ark.setCreateTime(TimestampUtil.getCurrentTimestamp());
 
         Ark result = arkRepository.save(ark);
 

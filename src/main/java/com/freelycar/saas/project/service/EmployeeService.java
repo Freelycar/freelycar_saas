@@ -3,6 +3,7 @@ package com.freelycar.saas.project.service;
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.ArgumentMissingException;
+import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.jwt.TokenAuthenticationUtil;
 import com.freelycar.saas.project.entity.Employee;
@@ -10,6 +11,7 @@ import com.freelycar.saas.project.entity.Staff;
 import com.freelycar.saas.project.repository.EmployeeRepository;
 import com.freelycar.saas.project.repository.StaffRepository;
 import com.freelycar.saas.project.repository.StoreRepository;
+import com.freelycar.saas.util.TimestampUtil;
 import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wechat.model.EmployeeInfo;
 import com.freelycar.saas.wechat.model.WeChatEmployee;
@@ -46,14 +48,40 @@ public class EmployeeService {
     @Autowired
     private ConsumerOrderService consumerOrderService;
 
-    public Employee modify(Employee employee) throws EntityNotFoundException {
-        Employee source = employeeRepository.getOne(employee.getId());
-        //将目标对象（projectType）中的null值，用源对象中的值替换
-        UpdateTool.copyNullProperties(source, employee);
+    public Employee modify(Employee employee) throws EntityNotFoundException, ArgumentMissingException, DataIsExistException {
+        if (null == employee) {
+            throw new ArgumentMissingException("参数employee对象为null");
+        }
+        //验重
+        if (checkRepeatPhone(employee)) {
+            throw new DataIsExistException("已存在手机号码为 " + employee.getPhone() + " 的雇员信息");
+        }
+        String id = employee.getId();
+        if (StringUtils.isEmpty(id)) {
+            employee.setCreateTime(TimestampUtil.getCurrentTimestamp());
+            employee.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+        } else {
+            Employee source = employeeRepository.getOne(id);
+            //将目标对象中的null值，用源对象中的值替换
+            UpdateTool.copyNullProperties(source, employee);
+        }
         return employeeRepository.saveAndFlush(employee);
     }
 
-    public ResultJsonObject selectStore(Employee employee) throws ArgumentMissingException, ObjectNotFoundException {
+    private boolean checkRepeatPhone(Employee employee) {
+        List<Employee> employeeList;
+        String id = employee.getId();
+        String agentId = employee.getAgentId();
+        String phone = employee.getPhone();
+        if (null != id) {
+            employeeList = employeeRepository.checkRepeatPhone(id, agentId, phone);
+        } else {
+            employeeList = employeeRepository.checkRepeatPhone(agentId, phone);
+        }
+        return employeeList.size() != 0;
+    }
+
+    public ResultJsonObject selectStore(Employee employee) throws ArgumentMissingException, ObjectNotFoundException, DataIsExistException {
         if (null == employee) {
             throw new ArgumentMissingException("操作失败，参数对象employee为空");
         }
@@ -289,4 +317,13 @@ public class EmployeeService {
         return employeeOptional.get();
     }
 
+
+    public List listStaffsForAgent(String agentId) throws ArgumentMissingException {
+        if (StringUtils.isEmpty(agentId)) {
+            throw new ArgumentMissingException();
+        }
+
+
+        return null;
+    }
 }

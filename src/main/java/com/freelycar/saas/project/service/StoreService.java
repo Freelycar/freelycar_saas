@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -78,7 +77,7 @@ public class StoreService {
         String id = store.getId();
         if (StringUtils.isEmpty(id)) {
             store.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            store.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            store.setCreateTime(TimestampUtil.getCurrentTimestamp());
             store.setSort(this.generateSort());
 
             Store res = storeRepository.save(store);
@@ -101,7 +100,7 @@ public class StoreService {
         }
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyMMdd");
         OrderSn orderSn = new OrderSn();
-        orderSn.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        orderSn.setCreateTime(TimestampUtil.getCurrentTimestamp());
         orderSn.setOrderNumber("0001");
         orderSn.setStoreId(storeId);
         orderSn.setDateNumber(simpleDateFormat.format(new Date()));

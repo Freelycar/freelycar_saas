@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,7 +60,7 @@ public class CardServiceService {
             String id = cardService.getId();
             if (StringUtils.isEmpty(id)) {
                 cardService.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-                cardService.setCreateTime(new Timestamp(System.currentTimeMillis()));
+                cardService.setCreateTime(TimestampUtil.getCurrentTimestamp());
                 cardService.setBookOnline(false);
             } else {
                 Optional<CardService> optional = cardServiceRepository.findById(id);
@@ -71,7 +70,7 @@ public class CardServiceService {
                     return ResultJsonObject.getErrorResult(null);
                 }
                 CardService source = optional.get();
-                //将目标对象（projectType）中的null值，用源对象中的值替换
+                //将目标对象中的null值，用源对象中的值替换
                 UpdateTool.copyNullProperties(source, cardService);
             }
             //执行保存/修改
@@ -249,7 +248,7 @@ public class CardServiceService {
         Card card = new Card();
         card.setDelStatus(Constants.DelStatus.DELETE.isValue());
         //为字段赋默认值
-        card.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        card.setCreateTime(TimestampUtil.getCurrentTimestamp());
         card.setClientId(clientId);
         card.setBalance(cardServiceObject.getActualPrice());
         card.setActualPrice(cardServiceObject.getActualPrice());

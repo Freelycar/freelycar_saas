@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.util.Collection;
 
 import static com.freelycar.saas.basic.wrapper.ResultCode.RESULT_DATA_NONE;
@@ -46,7 +45,7 @@ public class AgentService {
         String id = agent.getId();
         if (StringUtils.isEmpty(id)) {
             agent.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            agent.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            agent.setCreateTime(TimestampUtil.getCurrentTimestamp());
         } else {
             Agent source = this.findById(id);
             UpdateTool.copyNullProperties(source, agent);

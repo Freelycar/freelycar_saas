@@ -85,7 +85,7 @@ public class CardService {
             return ResultJsonObject.getErrorResult(null, "开卡失败！未查询到登记的用户信息！如有疑问，请联系管理员！");
         }
 
-        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        Timestamp currentTime = TimestampUtil.getCurrentTimestamp();
 
         //为字段赋默认值
         card.setDelStatus(Constants.DelStatus.NORMAL.isValue());

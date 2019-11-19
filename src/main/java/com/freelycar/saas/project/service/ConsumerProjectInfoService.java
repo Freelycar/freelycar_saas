@@ -16,7 +16,6 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,7 +47,7 @@ public class ConsumerProjectInfoService {
 
         if (StringUtils.isEmpty(id)) {
             consumerProjectInfo.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            consumerProjectInfo.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            consumerProjectInfo.setCreateTime(TimestampUtil.getCurrentTimestamp());
         } else {
             Optional<ConsumerProjectInfo> optional = consumerProjectInfoRepository.findById(id);
             if (!optional.isPresent()) {

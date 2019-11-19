@@ -26,7 +26,6 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -72,7 +71,7 @@ public class CouponService {
         String id = coupon.getId();
         if (StringUtils.isEmpty(id)) {
             coupon.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            coupon.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            coupon.setCreateTime(TimestampUtil.getCurrentTimestamp());
             //计算deadline（截止日期）
             com.freelycar.saas.project.entity.CouponService couponServiceObject = couponServiceRepository.getOne(coupon.getCouponServiceId());
             if (null == couponServiceObject) {

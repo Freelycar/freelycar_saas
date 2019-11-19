@@ -7,6 +7,7 @@ import com.freelycar.saas.project.model.StaffInfo;
 import com.freelycar.saas.project.repository.ArkRepository;
 import com.freelycar.saas.project.repository.EmployeeRepository;
 import com.freelycar.saas.project.repository.StaffRepository;
+import com.freelycar.saas.util.TimestampUtil;
 import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wechat.model.WeChatStaff;
 import com.freelycar.saas.wxutils.WechatTemplateMessage;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -53,7 +53,6 @@ public class StaffService {
         if (StringUtils.isEmpty(phone)) {
             return ResultJsonObject.getErrorResult(null, "手机号必填，用于作为员工唯一编号");
         }
-        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
         try {
             //验重
             if (this.checkRepeatPhone(staff)) {
@@ -64,7 +63,7 @@ public class StaffService {
             String id = staff.getId();
             if (StringUtils.isEmpty(id)) {
                 staff.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-                staff.setCreateTime(currentTime);
+                staff.setCreateTime(TimestampUtil.getCurrentTimestamp());
             } else {
                 Optional<Staff> optional = staffRepository.findById(id);
                 //判断数据库中是否有该对象
@@ -73,35 +72,9 @@ public class StaffService {
                     return ResultJsonObject.getErrorResult(null);
                 }
                 Staff source = optional.get();
-                //将目标对象（projectType）中的null值，用源对象中的值替换
+                //将目标对象中的null值，用源对象中的值替换
                 UpdateTool.copyNullProperties(source, staff);
             }
-
-
-            //如果在employee表中查询不到手机号，则视为第一次录入员工，则员工保存成功后需要在employee表中生成一条数据
-            Employee employee = employeeRepository.findTopByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
-            if (null == employee) {
-                Employee newEmployee = new Employee();
-                newEmployee.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-                newEmployee.setTrueName(staff.getName());
-                newEmployee.setNotification(true);
-                newEmployee.setPhone(phone);
-                newEmployee.setAccount(phone);
-                newEmployee.setPassword(staff.getPassword());
-                newEmployee.setCreateTime(currentTime);
-                employeeRepository.save(newEmployee);
-            }
-            //如果已有数据，则统一其智能柜登录账户密码
-            else {
-                String account = employee.getAccount();
-                if (StringUtils.hasText(account)) {
-                    staff.setAccount(account);
-                    staff.setPassword(employee.getPassword());
-                    staff.setIsArk(true);
-                    staff.setOpenId(employee.getOpenId());
-                }
-            }
-
             //执行保存/修改
             return ResultJsonObject.getDefaultResult(staffRepository.saveAndFlush(staff));
         } catch (Exception e) {

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +36,7 @@ public class AutoPartsService {
 
         String id = autoParts.getId();
         if (StringUtils.isEmpty(id)) {
-            autoParts.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            autoParts.setCreateTime(TimestampUtil.getCurrentTimestamp());
             autoParts.setDelStatus(Constants.DelStatus.NORMAL.isValue());
         } else {
             Optional<AutoParts> optional = autoPartsRepository.findById(id);

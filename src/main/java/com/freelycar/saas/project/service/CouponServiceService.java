@@ -26,7 +26,6 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -69,7 +68,7 @@ public class CouponServiceService {
             String id = couponService.getId();
             if (StringUtils.isEmpty(id)) {
                 couponService.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-                couponService.setCreateTime(new Timestamp(System.currentTimeMillis()));
+                couponService.setCreateTime(TimestampUtil.getCurrentTimestamp());
                 // couponService.setBookOnline(false);
             } else {
                 Optional<CouponService> optional = couponServiceRepository.findById(id);
@@ -79,7 +78,7 @@ public class CouponServiceService {
                     return ResultJsonObject.getErrorResult(null);
                 }
                 CouponService source = optional.get();
-                //将目标对象（projectType）中的null值，用源对象中的值替换
+                //将目标对象中的null值，用源对象中的值替换
                 UpdateTool.copyNullProperties(source, couponService);
             }
             //执行保存/修改
@@ -265,7 +264,7 @@ public class CouponServiceService {
         //生成coupon对象（未支付前是不可用的：delStatus是1）
         Coupon coupon = new Coupon();
         coupon.setDelStatus(Constants.DelStatus.DELETE.isValue());
-        coupon.setCreateTime(new Timestamp(System.currentTimeMillis()));
+        coupon.setCreateTime(TimestampUtil.getCurrentTimestamp());
         coupon.setClientId(clientId);
         coupon.setStatus(Constants.CouponStatus.NOT_USE.getValue());
         coupon.setName(couponServiceObject.getName());

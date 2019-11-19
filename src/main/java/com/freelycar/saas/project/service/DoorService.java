@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -270,7 +269,7 @@ public class DoorService {
         for (int i = 0; i < doorNum; i++) {
             Door door = new Door();
             door.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            door.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            door.setCreateTime(TimestampUtil.getCurrentTimestamp());
             door.setState(Constants.DoorState.EMPTY.getValue());
             door.setArkId(arkId);
             door.setArkSn(arkSn);

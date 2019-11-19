@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,7 +73,7 @@ public class SysUserService {
         }
 
         if (null == id) {
-            sysUser.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            sysUser.setCreateTime(TimestampUtil.getCurrentTimestamp());
             sysUser.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             sysUser.setRoles(new ArrayList<>());
 

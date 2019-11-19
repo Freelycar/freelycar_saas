@@ -3,6 +3,7 @@ package com.freelycar.saas.wechat.controller;
 import com.freelycar.saas.aop.LoggerManage;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.ArgumentMissingException;
+import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Employee;
 import com.freelycar.saas.project.model.HistoryOrder;
@@ -46,7 +47,7 @@ public class WeChatEmployeeController {
     public ResultJsonObject selectStore(@RequestBody Employee employee) {
         try {
             return employeeService.selectStore(employee);
-        } catch (ArgumentMissingException | ObjectNotFoundException e) {
+        } catch (ArgumentMissingException | ObjectNotFoundException | DataIsExistException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());

@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -287,7 +286,7 @@ public class WxUserInfoService {
         }
         String id = wxUserInfo.getId();
         if (StringUtils.isEmpty(id)) {
-            wxUserInfo.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            wxUserInfo.setCreateTime(TimestampUtil.getCurrentTimestamp());
             wxUserInfo.setDelStatus(Constants.DelStatus.NORMAL.isValue());
         } else {
             Optional<WxUserInfo> optionalWxUserInfo = wxUserInfoRepository.findById(id);

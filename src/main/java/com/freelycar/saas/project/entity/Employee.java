@@ -39,13 +39,19 @@ public class Employee {
      * 创建时间
      */
     @Column(nullable = false, columnDefinition = "datetime default NOW()")
-    private Timestamp createTime = new Timestamp(System.currentTimeMillis());
+    private Timestamp createTime = TimestampUtil.getCurrentTimestamp();
 
     /**
      * 删除标记位
      */
     @Column(nullable = false, columnDefinition = "bit default 0")
     private Boolean delStatus = false;
+
+    /**
+     * 供应商ID
+     */
+    @Column
+    private String agentId;
 
     /**
      * 默认门店id

@@ -39,6 +39,9 @@ public class Staff implements Serializable {
     private Timestamp createTime;
 
     @Column
+    private String employeeId;
+
+    @Column
     private String openId;
 
     @Column
@@ -89,6 +92,8 @@ public class Staff implements Serializable {
                 .append(delStatus);
         sb.append(",\"createTime\":\"")
                 .append(createTime).append('\"');
+        sb.append(",\"employeeId\":\"")
+                .append(employeeId).append('\"');
         sb.append(",\"openId\":\"")
                 .append(openId).append('\"');
         sb.append(",\"storeId\":\"")

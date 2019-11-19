@@ -6,6 +6,7 @@ import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Project;
 import com.freelycar.saas.project.repository.ProjectRepository;
+import com.freelycar.saas.util.TimestampUtil;
 import com.freelycar.saas.util.UpdateTool;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.transform.Transformers;
@@ -21,7 +22,6 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -55,7 +55,7 @@ public class ProjectService {
         String id = project.getId();
         if (StringUtils.isEmpty(id)) {
             project.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            project.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            project.setCreateTime(TimestampUtil.getCurrentTimestamp());
         } else {
             Optional<Project> optional = projectRepository.findById(id);
             //判断数据库中是否有该对象
@@ -63,7 +63,7 @@ public class ProjectService {
                 throw new ObjectNotFoundException("修改失败，原因：" + Project.class + "中不存在id为 " + id + " 的对象");
             }
             Project source = optional.get();
-            //将目标对象（projectType）中的null值，用源对象中的值替换
+            //将目标对象中的null值，用源对象中的值替换
             UpdateTool.copyNullProperties(source, project);
         }
         //执行保存or修改

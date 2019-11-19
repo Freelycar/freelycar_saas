@@ -149,7 +149,7 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
     public void destroy() throws Exception {
         logger.info("-----------spring容器要销毁了，将当前订单编号信息存入OrderSn表---------------");
         String currentDateNumber = sdfDate.format(new Date());
-        Timestamp currentTimestamp = new Timestamp(System.currentTimeMillis());
+        Timestamp currentTimestamp = TimestampUtil.getCurrentTimestamp();
         Set<String> storeIds = storeSnCacheVariable.keySet();
         if (!storeIds.isEmpty()) {
             List<OrderSn> targetOrderSnList = new ArrayList<>();
@@ -226,7 +226,7 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
 //                todayOrderSnObject.setStoreId(storeId);
 //                todayOrderSnObject.setStoreSn(orderSn.getStoreSn());
 //                todayOrderSnObject.setDateNumber(currentDateNumber);
-//                todayOrderSnObject.setCreateTime(new Timestamp(System.currentTimeMillis()));
+//                todayOrderSnObject.setCreateTime(TimestampUtil.getCurrentTimestamp());
 //                todayOrderSnObject.setOrderNumber("0001");
 //                OrderSn todayOrderSnObjectRes = orderSnRepository.save(todayOrderSnObject);
 //

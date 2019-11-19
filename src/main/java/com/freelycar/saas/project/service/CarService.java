@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,7 +64,7 @@ public class CarService {
         if (StringUtils.isEmpty(id)) {
             //新增
             car.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            car.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            car.setCreateTime(TimestampUtil.getCurrentTimestamp());
             //如果没有标识是否新车，则默认为新车（也就是“不是二手车”）
             if (null == car.getNewCar()) {
                 car.setNewCar(false);

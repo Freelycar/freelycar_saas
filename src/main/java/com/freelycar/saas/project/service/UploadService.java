@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -70,7 +69,7 @@ public class UploadService {
         // 文件名与文件URL存入数据库表
         if (StringUtils.hasText(resultURL)) {
             StoreImg storeImg = new StoreImg();
-            storeImg.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            storeImg.setCreateTime(TimestampUtil.getCurrentTimestamp());
             storeImg.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             storeImg.setUrl(resultURL);
 
@@ -94,7 +93,7 @@ public class UploadService {
 
         if (StringUtils.hasText(resultURL)) {
             ClientOrderImg clientOrderImg = new ClientOrderImg();
-            clientOrderImg.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            clientOrderImg.setCreateTime(TimestampUtil.getCurrentTimestamp());
             clientOrderImg.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             clientOrderImg.setUrl(resultURL);
 
@@ -118,7 +117,7 @@ public class UploadService {
 
         if (StringUtils.hasText(resultURL)) {
             StaffOrderImg staffOrderImg = new StaffOrderImg();
-            staffOrderImg.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            staffOrderImg.setCreateTime(TimestampUtil.getCurrentTimestamp());
             staffOrderImg.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             staffOrderImg.setUrl(resultURL);
 

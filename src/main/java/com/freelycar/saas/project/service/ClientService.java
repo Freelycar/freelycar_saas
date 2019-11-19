@@ -112,7 +112,7 @@ public class ClientService {
 
         String id = client.getId();
         if (StringUtils.isEmpty(id)) {
-            client.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            client.setCreateTime(TimestampUtil.getCurrentTimestamp());
             client.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             client.setMember(false);
             client.setPoints(0);
@@ -337,7 +337,7 @@ public class ClientService {
         if (null == source || StringUtils.isEmpty(storeId)) {
             return null;
         }
-        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        Timestamp currentTime = TimestampUtil.getCurrentTimestamp();
 
         Client newClient = new Client();
         //初始化的数据项

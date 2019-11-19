@@ -36,7 +36,7 @@ public class WxUserInfo implements Serializable {
      * 创建时间
      */
     @Column(nullable = false, columnDefinition = "datetime default NOW()")
-    private Timestamp createTime = new Timestamp(System.currentTimeMillis());
+    private Timestamp createTime = TimestampUtil.getCurrentTimestamp();
 
     /**
      * 生日，从微信授权获取

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
@@ -55,7 +54,7 @@ public class ProjectTypeService {
             String id = projectType.getId();
             if (StringUtils.isEmpty(id)) {
                 projectType.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-                projectType.setCreateTime(new Timestamp(System.currentTimeMillis()));
+                projectType.setCreateTime(TimestampUtil.getCurrentTimestamp());
             } else {
                 Optional<ProjectType> optional = projectTypeRepository.findById(id);
                 //判断数据库中是否有该对象
@@ -64,7 +63,7 @@ public class ProjectTypeService {
                     return ResultJsonObject.getErrorResult(null);
                 }
                 ProjectType source = optional.get();
-                //将目标对象（projectType）中的null值，用源对象中的值替换
+                //将目标对象中的null值，用源对象中的值替换
                 UpdateTool.copyNullProperties(source, projectType);
             }
             //执行保存
