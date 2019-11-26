@@ -342,7 +342,7 @@ public class ConsumerOrderService {
      */
     public List<FinishOrderInfo> listServicingOrders(String licensePlate, String storeId) {
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT co.id, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, co.pickTime as pickTime, co.userKeyLocationSn FROM consumerOrder co WHERE co.delStatus = 0 AND co.orderType = 2 AND co.state = 1 ")
+        sql.append(" SELECT co.id, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, co.pickTime as pickTime, co.userKeyLocationSn, co.userKeyLocation FROM consumerOrder co WHERE co.delStatus = 0 AND co.orderType = 2 AND co.state = 1 ")
                 .append(" AND co.storeId = '").append(storeId).append("' ");
         if (StringUtils.hasText(licensePlate)) {
             sql.append(" and (co.licensePlate like '%").append(licensePlate).append("%' or co.id like '%").append(licensePlate).append("%') ");

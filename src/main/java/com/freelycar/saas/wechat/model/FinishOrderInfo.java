@@ -36,4 +36,6 @@ public class FinishOrderInfo {
     private Date pickTime;
 
     private String userKeyLocationSn;
+
+    private String userKeyLocation;
 }
