@@ -79,7 +79,7 @@ public class StaffService {
 
 
             //如果在employee表中查询不到手机号，则视为第一次录入员工，则员工保存成功后需要在employee表中生成一条数据
-            Employee employee = employeeRepository.findTopByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
+            Employee employee = getEmployeeByPhone(phone);
             if (null == employee) {
                 Employee newEmployee = new Employee();
                 newEmployee.setDelStatus(Constants.DelStatus.NORMAL.isValue());
@@ -429,7 +429,7 @@ public class StaffService {
             //openId来源变更，采用employee表中的openId
             String phone = staff.getPhone();
             if (StringUtils.hasText(phone)) {
-                Employee employee = employeeRepository.findTopByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
+                Employee employee = getEmployeeByPhone(phone);
                 if (null != employee) {
                     boolean notification = employee.getNotification();
                     String openId = employee.getOpenId();
@@ -473,7 +473,7 @@ public class StaffService {
                 String phone = staffObject.getPhone();
                 if (StringUtils.hasText(phone)) {
                     staffInfo.setPhone(phone);
-                    Employee employee = employeeRepository.findTopByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
+                    Employee employee = getEmployeeByPhone(phone);
                     if (null != employee) {
                         staffInfo.setEmployeeId(employee.getId());
                         staffInfo.setHeadImgUrl(employee.getHeadImgUrl());
@@ -482,5 +482,9 @@ public class StaffService {
             }
         }
         return staffInfo;
+    }
+
+    public Employee getEmployeeByPhone(String phone) {
+        return employeeRepository.findTopByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
     }
 }

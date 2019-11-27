@@ -36,7 +36,6 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
 
     private final static String INIT_SN = "0000";
     private final static String ORIGIN_SN = "0001";
-    private final static String HALF_SN = "5000";
     //缓存
     private final static Map<String, String> orderSnCacheVariable = new ConcurrentHashMap<>();
     private final static Map<String, String> dateNumberCacheVariable = new ConcurrentHashMap<>();

@@ -4,7 +4,9 @@ import com.freelycar.saas.basic.wrapper.*;
 import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
+import com.freelycar.saas.project.entity.Employee;
 import com.freelycar.saas.project.entity.Project;
+import com.freelycar.saas.project.entity.Staff;
 import com.freelycar.saas.project.repository.ProjectRepository;
 import com.freelycar.saas.util.UpdateTool;
 import org.hibernate.query.NativeQuery;
@@ -38,6 +40,9 @@ public class ProjectService {
 
     @Autowired
     private LocalContainerEntityManagerFactoryBean entityManagerFactory;
+
+    @Autowired
+    private StaffService staffService;
 
     /**
      * 新增/修改项目对象
@@ -246,6 +251,8 @@ public class ProjectService {
         List<Project> actProjects = new ArrayList<>();
         List<Project> res = new ArrayList<>();
 
+        //TODO 每个项目都需要判断是否有在接单状态的技师
+        projects = staffReadyHandler(projects, storeId);
 
         //将活动的项目置顶
         if (preferential) {
@@ -270,6 +277,47 @@ public class ProjectService {
         }
 
         return res;
+    }
+
+    private List<Project> staffReadyHandler(List<Project> projects, String storeId) throws ArgumentMissingException {
+        if (null == projects) {
+            throw new ArgumentMissingException();
+        }
+
+        List<List<Project>> allStaffProjects = new ArrayList<>();
+
+        //TODO 查找门店所有在服务的技师
+        List<Staff> staffs = staffService.getAllArkStaffInStore(storeId);
+        if (null != staffs && !staffs.isEmpty()) {
+            for (Staff staff : staffs) {
+                String phone = staff.getPhone();
+                Employee employee = staffService.getEmployeeByPhone(phone);
+                boolean notification = (null == employee.getNotification()) ? false : employee.getNotification();
+                if (notification) {
+                    //TODO 获取staff对应的Project集合，并且对比当前项目列表中是否有包含
+                    List<Project> staffProjects = staff.getProjects();
+                    allStaffProjects.add(staffProjects);
+                }
+            }
+        }
+
+        return servicingProjectsFilter(projects, allStaffProjects);
+    }
+
+    private List<Project> servicingProjectsFilter(List<Project> storeProjects, List<List<Project>> allStaffProjects) {
+        List<Project> servicingProjects = new ArrayList<>();
+        for (Project project : storeProjects) {
+            for (List<Project> staffProjects : allStaffProjects) {
+                if (staffProjects.contains(project)) {
+                    //如果有任意一个技师的服务列表中有该服务项目，则认为其在服务列表中有效
+                    project.setStaffReady(true);
+                    break;
+                }
+            }
+
+            servicingProjects.add(project);
+        }
+        return servicingProjects;
     }
 
     /**

@@ -116,6 +116,9 @@ public class Project implements Serializable {
     @Column(nullable = false, columnDefinition = "bit default 0")
     private Boolean bookOnline;
 
+    @Transient
+    private boolean staffReady = false;
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("{");
