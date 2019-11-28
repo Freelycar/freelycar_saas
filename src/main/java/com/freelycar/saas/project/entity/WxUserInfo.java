@@ -1,5 +1,6 @@
 package com.freelycar.saas.project.entity;
 
+import com.freelycar.saas.util.TimestampUtil;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.GenericGenerator;

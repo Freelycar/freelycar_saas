@@ -7,6 +7,7 @@ import com.freelycar.saas.exception.DoorUsingException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Ark;
 import com.freelycar.saas.project.repository.ArkRepository;
+import com.freelycar.saas.util.TimestampUtil;
 import com.freelycar.saas.util.UpdateTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -114,7 +115,8 @@ public class ArkService {
 
         //初始化数据
         ark.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-        ark.setCreateTime(TimestampUtil.getCurrentTimestamp());
+        ark.setCreateTime(
+                TimestampUtil.getCurrentTimestamp());
 
         Ark result = arkRepository.save(ark);
 

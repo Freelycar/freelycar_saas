@@ -8,6 +8,7 @@ import com.freelycar.saas.iotcloudcn.util.BoxCommandResponse;
 import com.freelycar.saas.project.entity.Ark;
 import com.freelycar.saas.project.entity.Door;
 import com.freelycar.saas.project.repository.DoorRepository;
+import com.freelycar.saas.util.TimestampUtil;
 import com.freelycar.saas.util.cache.ConcurrentHashMapCacheUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

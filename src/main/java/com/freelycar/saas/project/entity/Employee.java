@@ -1,5 +1,6 @@
 package com.freelycar.saas.project.entity;
 
+import com.freelycar.saas.util.TimestampUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
