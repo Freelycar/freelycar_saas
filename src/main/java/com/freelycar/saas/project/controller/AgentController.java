@@ -50,9 +50,9 @@ public class AgentController {
         }
     }
 
-    @ApiOperation(value = "获取供应商列表（分页）", produces = "application/json")
+    @ApiOperation(value = "获取代理商列表（分页）", produces = "application/json")
     @GetMapping(value = "/list")
-    @LoggerManage(description = "调用方法：获取供应商列表")
+    @LoggerManage(description = "调用方法：获取代理商列表")
     public ResultJsonObject list(
             @RequestParam Integer currentPage,
             @RequestParam(required = false) Integer pageSize,
@@ -74,9 +74,9 @@ public class AgentController {
      * @param id
      * @return
      */
-    @ApiOperation(value = "删除供应商信息", produces = "application/json")
+    @ApiOperation(value = "删除代理商信息", produces = "application/json")
     @GetMapping(value = "/delete")
-    @LoggerManage(description = "调用方法：删除供应商信息")
+    @LoggerManage(description = "调用方法：删除代理商信息")
     public ResultJsonObject delete(@RequestParam String id) {
         return agentService.delete(id);
     }
@@ -87,9 +87,9 @@ public class AgentController {
      * @param ids
      * @return
      */
-    @ApiOperation(value = "批量删除供应商信息", produces = "application/json")
+    @ApiOperation(value = "批量删除代理商信息", produces = "application/json")
     @PostMapping("/batchDelete")
-    @LoggerManage(description = "调用方法：批量删除供应商信息")
+    @LoggerManage(description = "调用方法：批量删除代理商信息")
     public ResultJsonObject batchDelete(@RequestBody JSONObject ids) {
         if (null == ids) {
             return ResultJsonObject.getErrorResult(null, "ids参数为NULL");

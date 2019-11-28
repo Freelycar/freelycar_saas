@@ -47,7 +47,7 @@ public class SysUser implements UserDetails {
     private String storeId;
 
     /**
-     * 所属供应商
+     * 所属代理商
      */
     private String agentId;
 

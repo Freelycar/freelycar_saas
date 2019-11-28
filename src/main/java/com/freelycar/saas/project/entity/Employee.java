@@ -48,7 +48,7 @@ public class Employee {
     private Boolean delStatus = false;
 
     /**
-     * 供应商ID
+     * 代理商ID
      */
     @Column
     private String agentId;
