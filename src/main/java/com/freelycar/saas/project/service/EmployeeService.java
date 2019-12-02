@@ -48,6 +48,15 @@ public class EmployeeService {
     @Autowired
     private ConsumerOrderService consumerOrderService;
 
+    /**
+     * 新增/修改雇员信息
+     *
+     * @param employee
+     * @return
+     * @throws EntityNotFoundException
+     * @throws ArgumentMissingException
+     * @throws DataIsExistException
+     */
     public Employee modify(Employee employee) throws EntityNotFoundException, ArgumentMissingException, DataIsExistException {
         if (null == employee) {
             throw new ArgumentMissingException("参数employee对象为null");
@@ -317,6 +326,14 @@ public class EmployeeService {
         return employeeOptional.get();
     }
 
+    public Employee loadEmployeeDetail(String id) throws ArgumentMissingException {
+        if (StringUtils.isEmpty(id)) {
+            throw new ArgumentMissingException();
+        }
+        Employee employee = employeeRepository.getOne(id);
+
+        return employee;
+    }
 
     public List listStaffsForAgent(String agentId) throws ArgumentMissingException {
         if (StringUtils.isEmpty(agentId)) {
