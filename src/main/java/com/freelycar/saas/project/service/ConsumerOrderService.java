@@ -1171,11 +1171,21 @@ public class ConsumerOrderService {
             return ResultJsonObject.getCustomResult("Not found staff object by staffId : " + staffId, ResultCode.RESULT_DATA_NONE);
         }
 
+        String staffName = staff.getName();
+
         consumerOrder.setPickTime(new Timestamp(System.currentTimeMillis()));
         consumerOrder.setState(Constants.OrderState.RECEIVE_CAR.getValue());
         consumerOrder.setPickCarStaffId(staffId);
-        consumerOrder.setPickCarStaffName(staff.getName());
+        consumerOrder.setPickCarStaffName(staffName);
         ConsumerOrder orderRes = this.updateOrder(consumerOrder);
+
+        // 回填服务技师的id和name
+        List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(orderId);
+        for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+            consumerProjectInfo.setStaffId(staffId);
+            consumerProjectInfo.setStaffName(staffName);
+            consumerProjectInfoService.saveOrUpdate(consumerProjectInfo);
+        }
 
         //更新door表数据状态
         Door door = doorRepository.findTopByOrderId(orderId);
