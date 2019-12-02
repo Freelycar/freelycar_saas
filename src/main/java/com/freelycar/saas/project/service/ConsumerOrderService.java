@@ -1952,12 +1952,20 @@ public class ConsumerOrderService {
         return ResultJsonObject.getDefaultResult(orderId);
     }
 
+    /**
+     * 用户是否享受第一次优惠政策
+     * 根据用户的手机号码，查询是否存在有效的智能柜（已支付）订单
+     *
+     * @param phone
+     * @return
+     * @throws ArgumentMissingException
+     */
     public boolean userHasPreferentialPolicy(String phone) throws ArgumentMissingException {
         if (StringUtils.isEmpty(phone)) {
             throw new ArgumentMissingException("参数phone为空");
         }
 
-        int count = consumerOrderRepository.countAllByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
+        int count = consumerOrderRepository.countAllByPhoneAndDelStatusAndOrderTypeAndPayState(phone, Constants.DelStatus.NORMAL.isValue(), Constants.OrderType.ARK.getValue(), Constants.PayState.FINISH_PAY.getValue());
         if (count == 0) {
             return true;
         }
