@@ -70,9 +70,10 @@ public class WeChatOrderController {
     @GetMapping("/listServicingOrders")
     public ResultJsonObject listServicingOrders(
             @RequestParam String licensePlate,
-            @RequestParam String storeId
+            @RequestParam String storeId,
+            @RequestParam String staffId
     ) {
-        List<FinishOrderInfo> res = consumerOrderService.listServicingOrders(licensePlate, storeId);
+        List<FinishOrderInfo> res = consumerOrderService.listServicingOrders(licensePlate, storeId, staffId);
         if (null != res) {
             return ResultJsonObject.getDefaultResult(res);
         }
