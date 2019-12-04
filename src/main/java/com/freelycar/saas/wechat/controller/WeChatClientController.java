@@ -8,6 +8,7 @@ import com.freelycar.saas.project.service.CarService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -51,6 +52,14 @@ public class WeChatClientController {
             logger.error(errorMsg);
             return ResultJsonObject.getErrorResult(null, errorMsg);
         }
+
+        //去除车牌号中的空白字符
+        String sourceLicensePlate = car.getLicensePlate();
+        if (StringUtils.hasLength(sourceLicensePlate)) {
+            String targetLicensePlate = sourceLicensePlate.replaceAll("\\s*", "");
+            car.setLicensePlate(targetLicensePlate);
+        }
+        //执行保存操作
         return carService.modify(car);
     }
 
