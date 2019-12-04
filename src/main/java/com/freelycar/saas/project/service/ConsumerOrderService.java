@@ -899,10 +899,14 @@ public class ConsumerOrderService {
      * @return
      */
     public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, NoEmptyArkException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException, UpdateDataErrorException {
-//        logger.info("执行智能柜开单操作：---start---" + orderObject);
+//        logger.info("执行智能柜开单操作：---start---");
         String doorId = orderObject.getDoorId();
         //获取提交过来的数据
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
+
+        logger.info("arkOrderLog:前端提交过来的柜门id：" + doorId);
+        logger.info("arkOrderLog:前端提交过来的订单表单数据对象：" + consumerOrder);
+
         List<ConsumerProjectInfo> consumerProjectInfos = orderObject.getConsumerProjectInfos();
 
         if (StringUtils.isEmpty(doorId)) {
@@ -916,6 +920,7 @@ public class ConsumerOrderService {
         String carId = consumerOrder.getCarId();
         String clientId = consumerOrder.getClientId();
 
+
         //获取车辆信息
         Car carInfo = carService.findById(carId);
         if (null == carInfo) {
@@ -923,12 +928,16 @@ public class ConsumerOrderService {
             throw new ObjectNotFoundException("未找到对应的车辆信息");
         }
 
+        logger.info("arkOrderLog:车辆carInfo：" + carInfo);
+
         //获取客户信息
         Client clientInfo = clientService.findById(clientId);
         if (null == clientInfo) {
             logger.error("未找到对应的车主信息 " + clientId);
             throw new ObjectNotFoundException("未找到对应的车主信息");
         }
+
+        logger.info("arkOrderLog:用户clientInfo：" + clientInfo);
 
         //设置order中的车辆信息
         consumerOrder.setCarId(carId);
@@ -969,6 +978,9 @@ public class ConsumerOrderService {
         if (null == emptyDoor) {
             throw new ObjectNotFoundException("未找到分配的柜门号，请稍后重试");
         }
+
+        logger.info("arkOrderLog:智能柜柜门door信息：" + emptyDoor);
+
         // 更新用户把钥匙存放在哪个柜子的哪个门
         String userKeyLocation = emptyDoor.getArkName() + Constants.HYPHEN + emptyDoor.getDoorSn() + "号门";
         String userKeyLocationSn = emptyDoor.getArkSn() + Constants.HYPHEN + emptyDoor.getDoorSn();
@@ -1023,7 +1035,7 @@ public class ConsumerOrderService {
         // 推送微信公众号消息，通知用户订单生成成功
         sendWeChatMsg(consumerOrderRes);
 
-//        logger.info("执行智能柜开单操作---end---：" + consumerOrderRes);
+        logger.info("执行智能柜开单操作---end---：" + orderId);
         return ResultJsonObject.getDefaultResult(consumerOrderRes.getId(), "订单生成成功！");
     }
 
@@ -1044,6 +1056,9 @@ public class ConsumerOrderService {
 
         //获取订单对应的柜子信息
         Door door = doorRepository.findTopByOrderId(orderId);
+
+        logger.info("arkOrderLog:智能柜柜门door信息：" + door);
+
         //更新door表数据
         this.changeDoorState(door, null, Constants.DoorState.EMPTY.getValue());
         //打开柜门
@@ -1121,6 +1136,7 @@ public class ConsumerOrderService {
      * @return
      */
     public ResultJsonObject orderFinish(String orderId) throws Exception {
+        logger.info("执行用户开柜取车操作：---start---" + orderId);
         if (StringUtils.isEmpty(orderId)) {
             return ResultJsonObject.getCustomResult(orderId, ResultCode.PARAM_NOT_COMPLETE);
         }
@@ -1137,6 +1153,9 @@ public class ConsumerOrderService {
 
         //获取订单对应的柜子信息
         Door door = doorRepository.findTopByOrderId(orderId);
+
+        logger.info("arkOrderLog:智能柜柜门door信息：" + door);
+
         //更新door表数据
         this.changeDoorState(door, null, Constants.DoorState.EMPTY.getValue());
         //打开柜门
@@ -1146,6 +1165,7 @@ public class ConsumerOrderService {
         //推送微信公众号消息，通知用户服务完全结束
         sendWeChatMsg(res);
 
+        logger.info("执行用户开柜取车操作：---end---" + orderId);
         return ResultJsonObject.getDefaultResult(orderId);
     }
 
@@ -1157,6 +1177,7 @@ public class ConsumerOrderService {
      * @return
      */
     public ResultJsonObject pickCar(String orderId, String staffId) throws Exception {
+        logger.info("执行技师接车操作：---start---" + orderId);
         if (StringUtils.isEmpty(orderId)) {
             return ResultJsonObject.getCustomResult("The param 'orderId' is null", ResultCode.PARAM_NOT_COMPLETE);
         }
@@ -1191,6 +1212,9 @@ public class ConsumerOrderService {
 
         //更新door表数据状态
         Door door = doorRepository.findTopByOrderId(orderId);
+
+        logger.info("arkOrderLog:智能柜柜门door信息：" + door);
+
         this.changeDoorState(door, null, Constants.DoorState.EMPTY.getValue());
         // 调用硬件接口方法打开柜门
         doorService.openDoorByDoorObject(door);
@@ -1202,6 +1226,7 @@ public class ConsumerOrderService {
         String staffOpenId = staff.getOpenId();
         staffService.sendWeChatMessageToStaff(orderRes, door, staffOpenId);
 
+        logger.info("执行技师接车操作：---end---" + orderId);
         return ResultJsonObject.getDefaultResult(orderId);
     }
 
@@ -1212,8 +1237,11 @@ public class ConsumerOrderService {
      * @return
      */
     public ResultJsonObject finishCar(OrderObject orderObject) throws ArgumentMissingException, NoEmptyArkException, ObjectNotFoundException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException {
+        logger.info("执行技师还车操作：---start---");
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
         String doorId = orderObject.getDoorId();
+
+        logger.info("arkOrderLog:前端传入的doorId：" + doorId);
 
         if (StringUtils.isEmpty(doorId)) {
             throw new ArgumentMissingException("参数中的doorId对象为空");
@@ -1237,6 +1265,9 @@ public class ConsumerOrderService {
         if (null == emptyDoor) {
             throw new ObjectNotFoundException("未找到分配的柜门号，请稍后重试");
         }
+
+        logger.info("arkOrderLog:智能柜柜门door信息：" + emptyDoor);
+
         // 更新技师把钥匙存放在哪个柜子的哪个门
         String staffKeyLocation = emptyDoor.getArkName() + Constants.HYPHEN + emptyDoor.getDoorSn() + "号门";
         String staffKeyLocationSn = emptyDoor.getArkSn() + Constants.HYPHEN + emptyDoor.getDoorSn();
@@ -1276,6 +1307,7 @@ public class ConsumerOrderService {
         // 推送微信公众号消息，通知用户取车
         sendWeChatMsg(order);
 
+        logger.info("执行技师还车操作：---end---" + orderId);
         return ResultJsonObject.getDefaultResult(orderId);
     }
 

@@ -153,7 +153,9 @@ public class DoorService {
         BoxCommandResponse boxCommandResponse = ArkOperation.openBox(deviceId, boxId);
         //判断是否成功，成功就启动监控线程
         if (null != boxCommandResponse && ArkOperation.SUCCESS_CODE == boxCommandResponse.code) {
-            logger.info("开始执行智能柜开关门-------");
+            logger.info("arkOrderLog:开始执行智能柜开关门----------");
+            logger.info("arkOrderLog:智能柜sn编号为：" + deviceId);
+            logger.info("arkOrderLog:执行柜门号为：" + boxId + "号门");
             long start = System.currentTimeMillis();
             long end;
             String resState = "timeout";
@@ -164,7 +166,7 @@ public class DoorService {
                     Thread.sleep(TIME_INTERVAL);
                     //是否已经超时，超时则直接退出进程
                     if ((System.currentTimeMillis() - start) > TIMEOUT) {
-                        logger.error(deviceId + " 柜门未关，已超时。线程终止。");
+                        logger.error(deviceId + " 柜" + boxId + "号门未关，已超时。线程终止。");
                         startFlag = false;
                         end = System.currentTimeMillis();
                         logger.info("完成智能柜开关任务------，耗时：" + (end - start) + "毫秒");
@@ -183,7 +185,7 @@ public class DoorService {
                 boolean isOpen = response.is_open;
                 if (ArkOperation.SUCCESS_CODE == code) {
                     if (!isOpen) {
-                        logger.info(deviceId + " 柜门关闭。正常结束进程");
+                        logger.info(deviceId + " 柜" + boxId + "号门关闭。正常结束进程");
                         startFlag = false;
                         end = System.currentTimeMillis();
                         logger.info("完成智能柜开关任务------，耗时：" + (end - start) + "毫秒");

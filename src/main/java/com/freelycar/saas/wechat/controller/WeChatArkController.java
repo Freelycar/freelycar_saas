@@ -52,6 +52,7 @@ public class WeChatArkController {
 
     @PostMapping("/orderService")
     public ResultJsonObject orderService(@RequestBody OrderObject orderObject) {
+        logger.info("arkOrderLog:生成智能柜订单接口----------");
         try {
             return consumerOrderService.arkHandleOrder(orderObject);
         } catch (ArgumentMissingException | ObjectNotFoundException | NoEmptyArkException | OpenArkDoorTimeOutException | InterruptedException | OpenArkDoorFailedException | UpdateDataErrorException e) {
@@ -63,6 +64,7 @@ public class WeChatArkController {
 
     @GetMapping("/cancelOrderService")
     public ResultJsonObject cancelOrderService(@RequestParam String id) {
+        logger.info("arkOrderLog:用户取消订单接口----------");
         String errorMessage;
         try {
             return consumerOrderService.cancelOrder(id);
@@ -91,6 +93,7 @@ public class WeChatArkController {
 
     @GetMapping("/orderFinish")
     public ResultJsonObject orderFinish(@RequestParam String id) {
+        logger.info("arkOrderLog:用户取车，订单完结接口----------");
         try {
             return consumerOrderService.orderFinish(id);
         } catch (Exception e) {
@@ -102,6 +105,7 @@ public class WeChatArkController {
 
     @GetMapping("/pickCar")
     public ResultJsonObject pickCar(@RequestParam String orderId, @RequestParam String staffId) {
+        logger.info("arkOrderLog:技师接车开始服务接口----------");
         try {
             return consumerOrderService.pickCar(orderId, staffId);
         } catch (Exception e) {
@@ -113,6 +117,7 @@ public class WeChatArkController {
 
     @PostMapping("/finishCar")
     public ResultJsonObject finishCar(@RequestBody OrderObject orderObject) {
+        logger.info("arkOrderLog:技师完工还车接口----------");
         String errorMessage;
         try {
             return consumerOrderService.finishCar(orderObject);
@@ -140,6 +145,7 @@ public class WeChatArkController {
 
     @GetMapping("/getEmptyDoor")
     public ResultJsonObject getEmptyDoor(@RequestParam String arkSn) {
+        logger.info("arkOrderLog:用户下单分配柜号接口----------");
         try {
             return ResultJsonObject.getDefaultResult(doorService.getUsefulDoor(arkSn));
         } catch (NoEmptyArkException | ArgumentMissingException e) {
