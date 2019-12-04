@@ -112,7 +112,7 @@ dependencies {
 
 task stopBootRun(type: Exec) {
     workingDir './'
-    commandLine "curl","-X","POST","http://127.0.0.1:8080/actuator/shutdown"
+    commandLine "curl", "-X", "POST", "http://127.0.0.1:8080/actuator/shutdown"
 }
 
 
@@ -144,13 +144,18 @@ pkg.dependsOn 'bootJar'
 pkg.dependsOn 'stopRemoteJar'
 bootJar.shouldRunAfter 'clean'
 task stopRemoteJar(type: Exec) {
-    workingDir './'
-    commandLine "curl","-X","POST","https://freelycar.com/api/actuator/shutdown"
+    if (remotes.deployServer.password == '') {
+        commandLine "echo", "ssh远程密码为空，不能执行操作"
+    } else {
+        commandLine "echo", "当前填写的ssh密码为：" + remotes.deployServer.password + "，将执行优雅停服操作"
+        workingDir './'
+        commandLine "curl", "-X", "POST", "https://freelycar.com/api/actuator/shutdown"
+    }
 }
 // 定义自动部署脚本
 task deploy(dependsOn: pkg) {
     doLast {
-        println("start task deploy:${now()}")
+        println("开始执行远程部署task，当前时间为:${now()}")
         ssh.run {
             session(remotes.deployServer) {
                 // 备份原有程序，首次部署mv会执行失败，忽略错误
