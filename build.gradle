@@ -150,6 +150,7 @@ task stopRemoteJar(type: Exec) {
         commandLine "echo", "当前填写的ssh密码为：" + remotes.deployServer.password + "，将执行优雅停服操作"
         workingDir './'
         commandLine "curl", "-X", "POST", "https://freelycar.com/api/actuator/shutdown"
+        commandLine "echo", "远程服务器停机任务结束..."
     }
 }
 // 定义自动部署脚本
