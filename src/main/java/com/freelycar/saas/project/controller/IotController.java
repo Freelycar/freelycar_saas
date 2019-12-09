@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @date 2019-02-12
  * @email toby911115@gmail.com
  */
+@Deprecated
 @RestController
 @RequestMapping("/iot/ark")
 public class IotController {
