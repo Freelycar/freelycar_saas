@@ -31,6 +31,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.criteria.Predicate;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.util.*;
@@ -1439,6 +1440,11 @@ public class ConsumerOrderService {
         return ResultJsonObject.getDefaultResult(orderId);
     }
 
+    /**
+     * 给用户推送微信公众号消息
+     *
+     * @param consumerOrder
+     */
     public void sendWeChatMsg(ConsumerOrder consumerOrder) {
         //推送微信公众号消息，通知用户已开始受理服务
         String phone = consumerOrder.getPhone();
@@ -2029,5 +2035,37 @@ public class ConsumerOrderService {
             throw new ObjectNotFoundException("未查询到订单中的柜子信息，订单数据有误，请联系管理员或稍后重试");
         }
         return staffKeyLocation;
+    }
+
+    /**
+     * 统计订单数量
+     */
+    public Long countArkOrder(String storeId, String refDate) throws ArgumentMissingException {
+        if (StringUtils.isEmpty(refDate)) {
+            throw new ArgumentMissingException();
+        }
+
+        StringBuilder sql = new StringBuilder();
+
+        sql.append(" select count(1) from consumerorder where delstatus=0 and orderType=2 and state<4 ")
+                .append(" and createTime>\"").append(refDate).append(" 00:00:00\" ")
+                .append(" and createTime<\"").append(refDate).append(" 23:59:59\" ");
+        if (StringUtils.hasText(storeId)) {
+            sql.append(" and storeId=\"").append(storeId).append("\" ");
+        }
+
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery = em.createNativeQuery(sql.toString());
+
+        nativeQuery.unwrap(NativeQuery.class);
+
+
+        @SuppressWarnings({"unused", "unchecked"})
+        BigInteger res = (BigInteger) nativeQuery.getSingleResult();
+
+        //关闭em
+        em.close();
+
+        return res.longValue();
     }
 }

@@ -1,5 +1,7 @@
 package com.freelycar.saas.util;
 
+import org.apache.commons.lang3.time.DateUtils;
+
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -61,13 +63,26 @@ public class TimestampUtil {
     }
 
     /**
-     * 获取当前日期
+     * 获取当前日期的string型
+     * 格式：yyyy-MM-dd
      *
      * @return
      */
     public static String getCurrentDate() {
         Date date = new Date();
         return sdfDate.format(date);
+    }
+
+    /**
+     * 获取昨天日期的string型
+     * 格式：yyyy-MM-dd
+     *
+     * @return
+     */
+    public static String getYesterday() {
+        Date date = new Date();
+        Date yesterdayDate = DateUtils.addDays(date, -1);
+        return sdfDate.format(yesterdayDate);
     }
 
     /**
