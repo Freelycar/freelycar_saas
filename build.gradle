@@ -127,7 +127,7 @@ remotes {
         host = 'freelycar.com'
         user = 'Administrator'
         // 支持password、rsa等方式登录
-        password = ''
+        password = 'Freelycar2017'
 //        identity = file("${rootDir}/id_rsa")
     }
 }
@@ -147,10 +147,10 @@ task stopRemoteJar(type: Exec) {
     if (remotes.deployServer.password == '') {
         commandLine "echo", "ssh远程密码为空，不能执行操作"
     } else {
-        commandLine "echo", "当前填写的ssh密码为：" + remotes.deployServer.password + "，将执行优雅停服操作"
+        println("当前填写的ssh密码为：${remotes.deployServer.password}，将执行优雅停服操作")
         workingDir './'
         commandLine "curl", "-X", "POST", "https://freelycar.com/api/actuator/shutdown"
-        commandLine "echo", "远程服务器停机任务结束..."
+        println("远程服务器停机任务结束...")
     }
 }
 // 定义自动部署脚本
