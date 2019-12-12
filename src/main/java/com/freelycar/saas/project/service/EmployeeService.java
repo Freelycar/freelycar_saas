@@ -340,6 +340,10 @@ public class EmployeeService {
             throw new ArgumentMissingException();
         }
 
+        List<Employee> employees = employeeRepository.findAllByAgentIdAndDelStatus(agentId, Constants.DelStatus.NORMAL.isValue());
+
+
+//        List<Staff> staffs = staffRepository.findAllByEmployeeIdAndDelStatus()
 
         return null;
     }

@@ -54,6 +54,8 @@ public interface StaffRepository extends JpaRepository<Staff,String> {
 
     Staff findTopByStoreIdAndPhoneAndDelStatusAndIsArk(String storeId, String phone, boolean delStatus, boolean isArk);
 
+    List<Staff> findAllByEmployeeIdAndDelStatus(String employeeId, boolean delStatus);
+
 
     /**
      * 验证门店中手机号唯一性（排除数据本身）

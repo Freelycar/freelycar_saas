@@ -115,7 +115,7 @@ public class Employee {
     private String openId;
 
     /**
-     * 手机号（作为与staff表数据对应的唯一凭证）
+     * 手机号（作为与staff表数据对应的凭证之一）
      */
     @Column(length = 20)
     private String phone;

@@ -16,6 +16,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 
     Employee findTopByPhoneAndDelStatus(String phone, boolean delStatus);
 
+    List<Employee> findAllByAgentIdAndDelStatus(String agentId, boolean delStatus);
+
     /**
      * 验证系统手机号唯一性（排除数据本身）
      *
