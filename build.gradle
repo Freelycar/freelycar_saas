@@ -144,14 +144,8 @@ pkg.dependsOn 'bootJar'
 pkg.dependsOn 'stopRemoteJar'
 bootJar.shouldRunAfter 'clean'
 task stopRemoteJar(type: Exec) {
-    if (remotes.deployServer.password == '') {
-        commandLine "echo", "ssh远程密码为空，不能执行操作"
-    } else {
-        println("当前填写的ssh密码为：${remotes.deployServer.password}，将执行优雅停服操作")
-        workingDir './'
-        commandLine "curl", "-X", "POST", "https://freelycar.com/api/actuator/shutdown"
-        println("远程服务器停机任务结束...")
-    }
+    workingDir './'
+    commandLine "curl", "-X", "POST", "https://freelycar.com/api/actuator/shutdown"
 }
 // 定义自动部署脚本
 task deploy(dependsOn: pkg) {
