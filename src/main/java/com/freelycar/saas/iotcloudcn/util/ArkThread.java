@@ -10,9 +10,13 @@ import org.springframework.util.StringUtils;
  */
 public class ArkThread extends Thread {
 
-    private final static long TIME_INTERVAL = 5000;
-    private final static long TIMEOUT = 50000;
+    //超时时间5min（原来为50s）
+    public final static long TIMEOUT = 300000;
+    //请求智能柜远程查看状态接口的频率 5s
+    public final static long TIME_INTERVAL = 5000;
+
     private static Logger log = LogManager.getLogger(ArkThread.class);
+
     private String deviceId = null;
     private int boxId = 0;
     private BoxCommandResponse boxCommandResponse = null;
