@@ -87,6 +87,7 @@ public class ProjectService {
         if (null != project.getId()) {
             projectList = projectRepository.checkRepeatName(project.getId(), project.getName(), project.getStoreId());
         } else {
+            logger.info(project.getName());
             projectList = projectRepository.checkRepeatName(project.getName(), project.getStoreId());
         }
         return projectList.size() != 0;

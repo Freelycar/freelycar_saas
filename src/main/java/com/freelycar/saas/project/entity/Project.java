@@ -60,6 +60,12 @@ public class Project implements Serializable {
     private Float price;
 
     /**
+     * 价格是否标准
+     */
+    @Column
+    private Byte standard;
+
+    /**
      * 会员价格
      */
     @Column(nullable = false, columnDefinition = "float default 0.0")
