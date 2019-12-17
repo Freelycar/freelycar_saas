@@ -293,7 +293,7 @@ public class ProjectService {
                 if (PREFERENTIAL_KEYWORD.equals(comment)) {
                     actProjects.add(project);
                 } else {
-                    res.add(project);
+                    res.add(addProjectType(project));
                 }
             }
             actProjects.addAll(res);
@@ -304,7 +304,7 @@ public class ProjectService {
         for (Project project : projects) {
             String comment = project.getComment();
             if (!PREFERENTIAL_KEYWORD.equals(comment)) {
-                res.add(project);
+                res.add(addProjectType(project));
             }
         }
 
