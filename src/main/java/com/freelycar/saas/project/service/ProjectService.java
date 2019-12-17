@@ -6,8 +6,10 @@ import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Employee;
 import com.freelycar.saas.project.entity.Project;
+import com.freelycar.saas.project.entity.ProjectType;
 import com.freelycar.saas.project.entity.Staff;
 import com.freelycar.saas.project.repository.ProjectRepository;
+import com.freelycar.saas.project.repository.ProjectTypeRepository;
 import com.freelycar.saas.util.UpdateTool;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.transform.Transformers;
@@ -15,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Service;
@@ -37,6 +40,8 @@ public class ProjectService {
     private Logger logger = LoggerFactory.getLogger(ProjectService.class);
     @Autowired
     private ProjectRepository projectRepository;
+    @Autowired
+    private ProjectTypeRepository projectTypeRepository;
 
     @Autowired
     private LocalContainerEntityManagerFactoryBean entityManagerFactory;
@@ -94,15 +99,29 @@ public class ProjectService {
     }
 
     /**
+     * 为项目添加项目类型
+     * @param project
+     * @return
+     */
+    private Project addProjectType(Project project){
+        if (project!=null && project.getProjectTypeId()!=null){
+            Optional<ProjectType> typeOptional = projectTypeRepository.findById(project.getProjectTypeId());
+            typeOptional.ifPresent(projectType -> project.setProjectTypeName(projectType.getName()));
+        }
+        return project;
+    }
+
+    /**
      * 获取项目详情
      *
      * @param id
      * @return
      */
     public ResultJsonObject getDetail(String id) {
-        return ResultJsonObject.getDefaultResult(projectRepository.findById(id).orElse(null));
+        Project project = projectRepository.findById(id).orElse(null);
+        project = this.addProjectType(project);
+        return ResultJsonObject.getDefaultResult(project);
     }
-
 
     /**
      * 查询项目列表
@@ -120,7 +139,19 @@ public class ProjectService {
         } else {
             projectPage = projectRepository.findAllByDelStatusAndStoreIdAndNameContainingAndProjectTypeId(Constants.DelStatus.NORMAL.isValue(), storeId, name, projectTypeId, pageable);
         }
-        return PaginationRJO.of(projectPage);
+        return addProjectTypeForPage(projectPage);
+    }
+
+    private PaginationRJO addProjectTypeForPage(Page<Project> projectPage) {
+        PaginationRJO rjo = PaginationRJO.of(projectPage);
+        List<Project> content = projectPage.getContent();
+        List<Project> result = new ArrayList<>();
+        for (Project project:
+                content) {
+            result.add(addProjectType(project));
+        }
+        rjo.setData(result);
+        return rjo;
     }
 
     /**
