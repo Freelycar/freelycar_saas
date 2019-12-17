@@ -225,25 +225,27 @@ public class StaffService {
             //开通的时候查询employee表中的数据
             Employee employee = employeeRepository.findTopByPhoneAndDelStatus(staff.getPhone(), Constants.DelStatus.NORMAL.isValue());
             if (null != employee) {
-                //如果employee中已经有对应手机号数据，且已有账号密码，则按照employee为准
-                String employeeAccount = employee.getAccount();
-                String employeePassword = employee.getPassword();
-
-                if (StringUtils.hasText(employeeAccount) && StringUtils.hasText(employeePassword)) {
-                    staff.setAccount(employee.getAccount());
-                    staff.setPassword(employee.getPassword());
-                    staff.setIsArk(true);
-                    staffResult = staffRepository.save(staff);
-                } else {
-                    staff.setAccount(account);
-                    staff.setPassword(password);
-                    staff.setIsArk(true);
-                    staffResult = staffRepository.save(staff);
-
-                    employee.setAccount(account);
-                    employee.setPassword(password);
-                    employeeRepository.save(employee);
+                //设置所有staff及其employee账号密码为这次开通的值
+                List<Staff> staffs = staffRepository.findAllByPhoneAndDelStatus(account, Constants.DelStatus.NORMAL.isValue());
+                if (null != staffs && !staffs.isEmpty()) {
+                    for (Staff s : staffs) {
+                        s.setAccount(account);
+                        s.setPassword(password);
+                    }
+                    staffRepository.saveAll(staffs);
                 }
+
+                //保存自己的数据
+                staff.setAccount(account);
+                staff.setPassword(password);
+                staff.setIsArk(true);
+                staffResult = staffRepository.save(staff);
+
+                //同步employee数据
+                employee.setAccount(account);
+                employee.setPassword(password);
+                employeeRepository.save(employee);
+
                 return ResultJsonObject.getDefaultResult(staffResult);
             } else {
                 ResultJsonObject.getErrorResult(null, "查询不到对应的employee表数据，开通失败");

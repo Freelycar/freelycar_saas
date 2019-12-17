@@ -2,6 +2,7 @@ package com.freelycar.saas.wxutils;
 
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
+import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.WeChatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -230,7 +231,13 @@ public class WechatConfig {
         return HttpRequest.getCall(downUrl, null, null);
     }
 
-    //获取用户是否关注了公众号
+    /**
+     * 获取用户是否关注了公众号
+     *
+     * @param openId
+     * @return
+     * @throws WeChatException
+     */
     public static boolean isUserFollow(String openId) throws WeChatException {
         String accessToken = getAccessTokenForInteface().getString("access_token");
         Integer subscribe;
@@ -257,4 +264,52 @@ public class WechatConfig {
         return 1 == subscribe;
     }
 
+    /**
+     * 获取公众号关注人数
+     *
+     * @param beginDate
+     * @param endDate
+     * @return
+     * @throws ArgumentMissingException
+     * @throws WeChatException
+     */
+    public static JSONObject getUserCumulate(String beginDate, String endDate) throws ArgumentMissingException, WeChatException {
+        if (StringUtils.isEmpty(beginDate)) {
+            throw new ArgumentMissingException("参数beginDate为null");
+        }
+        if (StringUtils.isEmpty(endDate)) {
+            throw new ArgumentMissingException("参数endDate为null");
+        }
+        String accessToken = getAccessTokenForInteface().getString("access_token");
+        if (StringUtils.isEmpty(accessToken)) {
+            throw new ArgumentMissingException("获取accessToken失败");
+        }
+
+        String weChatUserCumulateURL = "https://api.weixin.qq.com/datacube/getusercumulate?access_token=" + accessToken;
+
+        JSONObject param = new JSONObject();
+        param.put("begin_date", beginDate);
+        param.put("end_date", endDate);
+
+        String weChatUserCumulateInfo = HttpRequest.postCall(weChatUserCumulateURL, HttpRequest.getEntity(param), null);
+
+        logger.info("微信用户关注增减结果返回值:");
+        logger.info(weChatUserCumulateInfo);
+
+        JSONObject resultObject;
+        try {
+            resultObject = JSONObject.parseObject(weChatUserCumulateInfo);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            logger.error(e.getMessage(), e);
+            throw new JSONException("#获取用户增减统计#的json字符串解析失败", e);
+        }
+        //判断获取信息是否包含错误码
+        String errCode = resultObject.getString("errcode");
+        if (StringUtils.hasText(errCode)) {
+            throw new WeChatException("微信接口获取用户信息失败，微信接口返回信息：" + resultObject);
+        }
+
+        return resultObject;
+    }
 }

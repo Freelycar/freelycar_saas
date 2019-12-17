@@ -9,21 +9,28 @@ import com.freelycar.saas.project.entity.Car;
 import com.freelycar.saas.project.entity.Client;
 import com.freelycar.saas.project.entity.Store;
 import com.freelycar.saas.project.entity.WxUserInfo;
+import com.freelycar.saas.project.model.CumulateThree;
 import com.freelycar.saas.project.repository.*;
 import com.freelycar.saas.util.NicknameFilter;
 import com.freelycar.saas.util.RoundTool;
+import com.freelycar.saas.util.TimestampUtil;
 import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import com.freelycar.saas.wechat.model.PersonalInfo;
 import com.freelycar.saas.wechat.model.WeChatUser;
+import org.hibernate.query.NativeQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +44,9 @@ import java.util.Optional;
 public class WxUserInfoService {
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private LocalContainerEntityManagerFactoryBean entityManagerFactory;
 
     @Autowired
     private WxUserInfoRepository wxUserInfoRepository;
@@ -61,6 +71,10 @@ public class WxUserInfoService {
 
     @Autowired
     private ConsumerOrderService consumerOrderService;
+
+    @Autowired
+    private WxCumulateService wxCumulateService;
+
 //
 //    public void setConsumerOrderService(ConsumerOrderService consumerOrderService) {
 //        this.consumerOrderService = consumerOrderService;
@@ -465,4 +479,67 @@ public class WxUserInfoService {
         return wxUserInfo.getOpenId();
     }
 
+
+    public Long countRegister(String refDate) {
+        StringBuffer sql = new StringBuffer();
+        sql.append("select count(1) as num from wxuserinfo wui where wui.delStatus=0 ")
+                .append(" and wui.createTime >\"").append(refDate).append(" 00:00:00\" ")
+                .append(" and wui.createTime <\"").append(refDate).append(" 23:59:59\" ");
+
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery = em.createNativeQuery(sql.toString());
+
+        nativeQuery.unwrap(NativeQuery.class);
+
+        @SuppressWarnings({"unused", "unchecked"})
+        BigInteger res = (BigInteger) nativeQuery.getSingleResult();
+
+        em.close();
+
+        return res.longValue();
+    }
+
+
+    /**
+     * 系统三项统计查询
+     * 1.微信累计用户数（如果查询当天为当前日期，则显示上一日累计用户数）
+     * 2.注册用户数
+     * 3.有效下单数
+     *
+     * @param storeId
+     * @param refDate
+     * @return
+     * @throws ArgumentMissingException
+     */
+    public CumulateThree getCumulateThree(String storeId, String refDate) throws ArgumentMissingException {
+        if (StringUtils.isEmpty(refDate)) {
+            throw new ArgumentMissingException();
+        }
+
+        CumulateThree cumulateThree = new CumulateThree();
+        cumulateThree.setRefDate(refDate);
+
+        //获取注册人数
+        Long countRegister = this.countRegister(refDate);
+
+        cumulateThree.setRegisterUserCount(countRegister);
+
+        //获取订单数
+        Long countArkOrder = consumerOrderService.countArkOrder(storeId, refDate);
+        cumulateThree.setOrderCount(countArkOrder);
+
+
+        //获取微信关注数
+
+        if (TimestampUtil.getCurrentDate().equals(refDate)) {
+            logger.info("系统三项统计查询日期为“当天”，微信关注统计数将返回昨天的数据");
+            refDate = TimestampUtil.getYesterday();
+            cumulateThree.setYesterdayFlag(true);
+        }
+
+        Long countCumulateUser = wxCumulateService.cumulateUserByDate(refDate);
+        cumulateThree.setCumulateUserCount(countCumulateUser);
+
+        return cumulateThree;
+    }
 }

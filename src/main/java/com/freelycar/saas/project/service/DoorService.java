@@ -30,8 +30,6 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class DoorService {
-    private final static long TIME_INTERVAL = 5000;
-    private final static long TIMEOUT = 50000;
     /**
      * 初始化一个存放正在操作的Door对象的缓存对象
      */
@@ -91,13 +89,15 @@ public class DoorService {
         String targetDoorId = targetDoor.getId();
 //        String arkId = targetDoor.getArkId();
 
-        //替换成封装的缓存工具类
+        //如果缓存中没有（null），则说明柜子可用
         Door cacheDoor = (Door) ConcurrentHashMapCacheUtils.getCache(targetDoorId);
         if (null == cacheDoor) {
-            ConcurrentHashMapCacheUtils.setCache(targetDoorId, targetDoor, ConcurrentHashMapCacheUtils.ONE_MINUTE);
+            //将当前door存入缓存，过期时间与超时时间同步
+            ConcurrentHashMapCacheUtils.setCache(targetDoorId, targetDoor, ArkThread.TIMEOUT);
             return targetDoor;
         }
         emptyDoors.remove(targetIndex);
+        //否则回调，去掉待筛选door列表中的这个door，并重新分配柜子
         return isOperatingDoor(emptyDoors);
     }
 
@@ -163,9 +163,9 @@ public class DoorService {
 
             while (startFlag) {
                 try {
-                    Thread.sleep(TIME_INTERVAL);
+                    Thread.sleep(ArkThread.TIME_INTERVAL);
                     //是否已经超时，超时则直接退出进程
-                    if ((System.currentTimeMillis() - start) > TIMEOUT) {
+                    if ((System.currentTimeMillis() - start) > ArkThread.TIMEOUT) {
                         logger.error(deviceId + " 柜" + boxId + "号门未关，已超时。线程终止。");
                         startFlag = false;
                         end = System.currentTimeMillis();
@@ -197,7 +197,7 @@ public class DoorService {
 
             //获取结果，如果不是success，说明超时
             if (!Constants.OPEN_SUCCESS.equalsIgnoreCase(resState)) {
-                throw new OpenArkDoorTimeOutException("柜门关闭线程超时（50s）");
+                throw new OpenArkDoorTimeOutException("柜门关闭线程超时（" + ArkThread.TIMEOUT / 1000 + "s）");
             }
 
             //如果正常到这边，不抛出异常，就说明一切正常，可以开单
@@ -243,7 +243,7 @@ public class DoorService {
             String endStatus = arkThread.getEndStatus();
             //获取结果，如果不是success，说明超时
             if (!Constants.OPEN_SUCCESS.equalsIgnoreCase(endStatus)) {
-                throw new OpenArkDoorTimeOutException("柜门关闭线程超时（50s）");
+                throw new OpenArkDoorTimeOutException("柜门关闭线程超时（" + ArkThread.TIMEOUT / 1000 + "s）");
             }
 
             //如果正常到这边，不抛出异常，就说明一切正常，可以开单
