@@ -3,6 +3,7 @@ package com.freelycar.saas.wechat.controller;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
+import com.freelycar.saas.project.service.ArkService;
 import com.freelycar.saas.project.service.ConsumerOrderService;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import com.freelycar.saas.wechat.model.FinishOrderInfo;
@@ -28,14 +29,30 @@ public class WeChatOrderController {
 
     @Autowired
     private ConsumerOrderService consumerOrderService;
+    @Autowired
+    private ArkService arkService;
 
     @GetMapping("/listOrders")
     public ResultJsonObject listOrders(
+            @RequestParam String arkSn,
             @RequestParam String clientId,
             @RequestParam String type
     ) {
         try {
+            boolean flag = false;
             List<BaseOrderInfo> res = consumerOrderService.findAllOrdersByClientId(clientId, type);
+            if (res.size() > 0) {
+                for (BaseOrderInfo info:
+                     res) {
+                    if (info.getState()<3) {
+                        flag = true;
+                        break;
+                    }
+                }
+            }
+            if (flag) {
+
+            }
             return ResultJsonObject.getDefaultResult(res);
         } catch (IllegalArgumentException e) {
             logger.error(e.getMessage(), e);

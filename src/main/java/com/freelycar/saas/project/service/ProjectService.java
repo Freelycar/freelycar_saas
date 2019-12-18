@@ -73,8 +73,16 @@ public class ProjectService {
                 throw new ObjectNotFoundException("修改失败，原因：" + Project.class + "中不存在id为 " + id + " 的对象");
             }
             Project source = optional.get();
-            //将目标对象（projectType）中的null值，用源对象中的值替换
-            UpdateTool.copyNullProperties(source, project);
+            //将目标对象（project）中的null值，用源对象中的值替换(因会员价可为空)
+//            UpdateTool.copyNullProperties(source, project);
+            project.setDelStatus(source.getDelStatus());
+            project.setCreateTime(source.getCreateTime());
+            project.setPricePerUnit(source.getPricePerUnit());
+            project.setReferWorkTime(source.getReferWorkTime());
+            project.setUseTimes(source.getUseTimes());
+            project.setSaleStatus(source.getSaleStatus());
+            project.setStoreId(source.getStoreId());
+            project.setBookOnline(source.getBookOnline());
         }
         //执行保存or修改
         return projectRepository.saveAndFlush(project);
