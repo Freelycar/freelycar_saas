@@ -17,5 +17,7 @@ public interface DoorRepository extends JpaRepository<Door, String> {
 
     List<Door> findByArkSnAndStateAndDelStatus(String arkSn, int state, boolean delStatus);
 
+    List<Door> findByArkSnAndStateLessThanAndDelStatus(String arkSn, int state, boolean delStatus);
+
     List<Door> findAllByArkIdAndDelStatus(String arkId, boolean delStatus);
 }

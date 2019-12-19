@@ -1,7 +1,9 @@
 package com.freelycar.saas.wechat.controller;
 
+import com.freelycar.saas.basic.wrapper.ResultCode;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.ArgumentMissingException;
+import com.freelycar.saas.exception.NoEmptyArkException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.service.ArkService;
 import com.freelycar.saas.project.service.ConsumerOrderService;
@@ -50,11 +52,13 @@ public class WeChatOrderController {
                     }
                 }
             }
-            if (flag) {
-
+            if (flag) {//用户名下有进行中订单
+                return ResultJsonObject.getDefaultResult(res);
+            }else{//检查进行中订单数是否小于柜门数
+                if (arkService.checkArk(arkSn)) return ResultJsonObject.getDefaultResult(null);
+                else return ResultJsonObject.getErrorResult(null, ResultCode.ARK_FULL.message());
             }
-            return ResultJsonObject.getDefaultResult(res);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | NoEmptyArkException e ) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());

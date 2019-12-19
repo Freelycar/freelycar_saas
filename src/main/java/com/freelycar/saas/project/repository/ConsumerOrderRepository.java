@@ -57,4 +57,6 @@ public interface ConsumerOrderRepository extends JpaRepository<ConsumerOrder, St
     int countAllByPickCarStaffIdAndDelStatusAndOrderType(String staffId, boolean delStatus, int orderType);
 
     int countAllByPhoneAndDelStatusAndOrderTypeAndPayState(String phone, boolean delStatus, int orderType, int payState);
+
+    int countAllByUserKeyLocationSnContainsAndDelStatusAndStateLessThan(String userKeyLocationSn,boolean delStatus,int state);
 }

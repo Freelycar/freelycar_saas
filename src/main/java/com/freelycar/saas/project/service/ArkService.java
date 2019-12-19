@@ -1,12 +1,12 @@
 package com.freelycar.saas.project.service;
 
 import com.freelycar.saas.basic.wrapper.*;
-import com.freelycar.saas.exception.ArgumentMissingException;
-import com.freelycar.saas.exception.DataIsExistException;
-import com.freelycar.saas.exception.DoorUsingException;
-import com.freelycar.saas.exception.ObjectNotFoundException;
+import com.freelycar.saas.exception.*;
 import com.freelycar.saas.project.entity.Ark;
+import com.freelycar.saas.project.entity.Door;
 import com.freelycar.saas.project.repository.ArkRepository;
+import com.freelycar.saas.project.repository.ConsumerOrderRepository;
+import com.freelycar.saas.project.repository.DoorRepository;
 import com.freelycar.saas.util.UpdateTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +33,10 @@ public class ArkService {
 
     @Autowired
     private ArkRepository arkRepository;
+    @Autowired
+    private DoorRepository doorRepository;
+    @Autowired
+    private ConsumerOrderRepository consumerOrderRepository;
 
     @Autowired
     private DoorService doorService;
@@ -47,6 +51,28 @@ public class ArkService {
             return ResultJsonObject.getDefaultResult(ark.getLocation());
         }
         return ResultJsonObject.getCustomResult(arkSn, ResultCode.PARAM_NOT_COMPLETE);
+    }
+
+    /**
+     * 检查柜子是否满足下单条件:
+     * 1.柜子空着
+     * 2.未故障柜门数>进行中订单数
+     * @param arkSn
+     * @return
+     */
+    public boolean checkArk(String arkSn) throws NoEmptyArkException {
+        //1.检查是否有空柜子
+        List<Door> emptyDoorList = doorRepository.findByArkSnAndStateAndDelStatus(arkSn, Constants.DoorState.EMPTY.getValue(), Constants.DelStatus.NORMAL.isValue());
+        if (null == emptyDoorList || emptyDoorList.isEmpty()) {
+            logger.error("没有可分配的智能柜！");
+            throw new NoEmptyArkException("没有查找到可使用的空智能柜");
+        }
+        //2.检查进行中订单是否超过柜门数
+        //未故障的柜门数
+        int useableDoorNum = doorRepository.findByArkSnAndStateLessThanAndDelStatus(arkSn, Constants.DoorState.DISABLED.getValue(), Constants.DelStatus.NORMAL.isValue()).size();
+        //进行中订单数
+        int orderInProgressNum = consumerOrderRepository.countAllByUserKeyLocationSnContainsAndDelStatusAndStateLessThan(arkSn, Constants.DelStatus.NORMAL.isValue(), Constants.OrderState.HAND_OVER.getValue());
+        return orderInProgressNum < useableDoorNum;
     }
 
     /**
