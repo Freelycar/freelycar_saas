@@ -62,11 +62,11 @@ public class ArkService {
      */
     public boolean checkArk(String arkSn) throws NoEmptyArkException {
         //1.检查是否有空柜子
-        List<Door> emptyDoorList = doorRepository.findByArkSnAndStateAndDelStatus(arkSn, Constants.DoorState.EMPTY.getValue(), Constants.DelStatus.NORMAL.isValue());
+        /*List<Door> emptyDoorList = doorRepository.findByArkSnAndStateAndDelStatus(arkSn, Constants.DoorState.EMPTY.getValue(), Constants.DelStatus.NORMAL.isValue());
         if (null == emptyDoorList || emptyDoorList.isEmpty()) {
             logger.error("没有可分配的智能柜！");
             throw new NoEmptyArkException("没有查找到可使用的空智能柜");
-        }
+        }*/
         //2.检查进行中订单是否超过柜门数
         //未故障的柜门数
         int useableDoorNum = doorRepository.findByArkSnAndStateLessThanAndDelStatus(arkSn, Constants.DoorState.DISABLED.getValue(), Constants.DelStatus.NORMAL.isValue()).size();

@@ -44,9 +44,9 @@ public class WeChatOrderController {
             boolean flag = false;
             List<BaseOrderInfo> res = consumerOrderService.findAllOrdersByClientId(clientId, type);
             if (res.size() > 0) {
-                for (BaseOrderInfo info:
-                     res) {
-                    if (info.getState()<3) {
+                for (BaseOrderInfo info :
+                        res) {
+                    if (info.getState() < 3) {
                         flag = true;
                         break;
                     }
@@ -54,11 +54,11 @@ public class WeChatOrderController {
             }
             if (flag) {//用户名下有进行中订单
                 return ResultJsonObject.getDefaultResult(res);
-            }else{//检查进行中订单数是否小于柜门数
+            } else {//检查进行中订单数是否小于柜门数
                 if (arkService.checkArk(arkSn)) return ResultJsonObject.getDefaultResult(null);
                 else return ResultJsonObject.getErrorResult(null, ResultCode.ARK_FULL.message());
             }
-        } catch (IllegalArgumentException | NoEmptyArkException e ) {
+        } catch (IllegalArgumentException | NoEmptyArkException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());

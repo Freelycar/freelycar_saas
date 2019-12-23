@@ -117,6 +117,12 @@ public class Project implements Serializable {
     private String storeId;
 
     /**
+     * 服务商
+     */
+    @Column
+    private String serviceProviderId;
+
+    /**
      * 上架标记
      */
     @Column(nullable = false, columnDefinition = "bit default 0")
@@ -124,6 +130,7 @@ public class Project implements Serializable {
 
     @Transient
     private boolean staffReady = false;
+
 
     @Override
     public String toString() {

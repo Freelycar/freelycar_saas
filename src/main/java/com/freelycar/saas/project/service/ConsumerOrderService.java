@@ -1028,9 +1028,9 @@ public class ConsumerOrderService {
         } finally {
             ConcurrentHashMapCacheUtils.deleteCache(doorId);
         }
-
-
-        //推送微信消息给技师 需要给这个柜子相关的技师都推送
+        //判断（未完成）
+        //1.代驾订单：向e代驾下单，发送短信给代驾师傅
+        //2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
         staffService.sendWeChatMessageToStaff(consumerOrderRes, emptyDoor, null);
 
         // 推送微信公众号消息，通知用户订单生成成功
