@@ -5,6 +5,7 @@ import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.ConsumerOrder;
 import com.freelycar.saas.project.entity.Door;
 import com.freelycar.saas.project.entity.EOrder;
+import com.freelycar.saas.project.repository.EOrderRepository;
 import com.freelycar.saas.project.thread.EThread;
 import com.freelycar.saas.wxutils.HttpRequest;
 import org.apache.commons.collections4.map.HashedMap;
@@ -35,6 +36,8 @@ public class EdaijiaService {
 
     @Autowired
     private EOrderService eOrderService;
+    @Autowired
+    private EOrderRepository eOrderRepository;
 
 
     /**
@@ -50,16 +53,18 @@ public class EdaijiaService {
         logger.info("向" + url + "发送下单请求");
         JSONObject param = JSONObject.parseObject(JSONObject.toJSONString(eOrder));
         HttpEntity entity = HttpRequest.getEntity(param);
-        String result = HttpRequest.postCall(url, entity, null);
+        String result = HttpRequest.postCall2(url, HttpRequest.getEParam(param), entity, null);
         JSONObject jsonResult = JSONObject.parseObject(result);
         logger.info("下单结果：{}", jsonResult);
-        /*if (jsonResult.getInteger("code")==0){//下单成功，查询司机详情（线程开启）
+        if (jsonResult.getInteger("code") == 0) {//下单成功，查询司机详情（线程开启）
             Integer orderId = jsonResult.getInteger("data");
-            logger.info("开始查询e代驾订单：{} 详情",orderId);
-            EThread eThread = new EThread(orderId);
+            logger.info("开始查询e代驾订单：{} 详情", orderId);
+            /*EThread eThread = new EThread(orderId);
             Thread th = new Thread(eThread);
-            th.start();
-        }*/
+            th.start();*/
+            eOrder.setOrderId(orderId);
+            eOrderRepository.saveAndFlush(eOrder);
+        }
     }
 
     /**
@@ -71,20 +76,33 @@ public class EdaijiaService {
         String url = orderUrl + "cancel";
         JSONObject param = new JSONObject();
         param.put("orderId", orderId);
+        param.put("channel",channel);
         HttpEntity entity = HttpRequest.getEntity(param);
-        HttpRequest.postCall(url, entity, null);
+        String result = HttpRequest.postCall2(url,HttpRequest.getEParam(param), entity, null);
+        JSONObject jsonResult = JSONObject.parseObject(result);
+        if (jsonResult.get("code")!=null && jsonResult.getInteger("code")==0){
+            logger.info("删除成功");
+        }
     }
 
     /**
      * 获取订单详情(未完成)
+     * 1.获取详情
+     * 2.判断orderInfo-status
+     * 3.获取司机手机号
      */
     public void orderDetail(Integer orderId) {
         String url = orderUrl + "detail";
         Map<String, Object> param = new HashedMap<>();
         param.put("orderId", orderId);
         param.put("channel", channel);
-        HttpRequest.getCall(url, HttpRequest.getEParam(param), null);
+        String result = HttpRequest.getCall(url, HttpRequest.getEParam(param), null);
+        JSONObject jsonResult = JSONObject.parseObject(result);
+        if (jsonResult.get("code") != null && jsonResult.getInteger("code") == 0) {
+            logger.info("成功获取订单：{}详情", orderId);
+            JSONObject data = jsonResult.getJSONObject("data");
+        }
         logger.info("向" + url + "发送订单详情请求");
-        logger.info("获取订单进度");
+        logger.info("获取订单进度:{}", result);
     }
 }

@@ -3,12 +3,16 @@ package com.freelycar.saas.project.service;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.*;
 import com.freelycar.saas.project.repository.EOrderRepository;
+import com.freelycar.saas.util.TimestampUtil;
+import com.sun.jmx.snmp.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
 
 /**
  * @author puyuting
@@ -37,10 +41,10 @@ public class EOrderService {
     @Autowired
     private EOrderRepository eOrderRepository;
 
-    public EOrder create(String arkSn,String carId,String clientId,String serviceProviderId) throws ObjectNotFoundException {
+    public EOrder create(String arkSn, String carId, String clientId, String serviceProviderId) throws ObjectNotFoundException {
         //固定参数：渠道、商户id、订单类型、订单成单类型
-        EOrder order = new EOrder(channel,customerId,1,0);
-
+        EOrder order = new EOrder(channel, customerId, 1, 0);
+        order.setBookingTime(TimestampUtil.format(new Date(System.currentTimeMillis() + 35 * 60 * 1000), "yyyyMMddHHmmss"));
         //获取车辆信息
         Car carInfo = carService.findById(carId);
         if (null == carInfo) {
@@ -63,7 +67,7 @@ public class EOrderService {
         order.setPickupContactName(clientInfo.getName());   //取车地址联系人姓名
 
         Ark arkInfo = arkService.findByArkSn(arkSn);
-        if (null == arkInfo){
+        if (null == arkInfo) {
             logger.error("未找到对应的智能柜信息 " + clientId);
             throw new ObjectNotFoundException("未找到对应的智能柜信息");
         }
@@ -72,7 +76,7 @@ public class EOrderService {
         order.setPickupAddressLat(arkInfo.getAddresslat()); //取车地址纬度
 
         ServiceProvider serviceProvider = serviceProviderService.findById(serviceProviderId);
-        if (null == serviceProvider){
+        if (null == serviceProvider) {
             logger.error("未找到对应的服务商信息 " + clientId);
             throw new ObjectNotFoundException("未找到对应的服务商信息");
         }
@@ -82,6 +86,6 @@ public class EOrderService {
         order.setReturnContactName(serviceProvider.getName());      //还车地址联系人姓名
         order.setReturnContactPhone(serviceProvider.getPhone());    //还车地址联系人手机号
 
-        return eOrderRepository.saveAndFlush(order);
+        return order;
     }
 }

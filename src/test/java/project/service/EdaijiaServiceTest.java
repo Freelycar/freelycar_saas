@@ -2,6 +2,9 @@ package project.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.BootApplication;
+import com.freelycar.saas.exception.ObjectNotFoundException;
+import com.freelycar.saas.project.entity.ConsumerOrder;
+import com.freelycar.saas.project.entity.Door;
 import com.freelycar.saas.project.entity.EOrder;
 import com.freelycar.saas.project.service.EdaijiaService;
 import com.freelycar.saas.project.thread.EThread;
@@ -26,14 +29,28 @@ public class EdaijiaServiceTest {
 
     @Test
     public void testEOrder() {
-        EOrder order = new EOrder();
-        order.setCarNo("test");
-        order.setChannel(1);
-        /*JSONObject params = JSONObject.parseObject(JSONObject.toJSONString(order));
-        System.out.println(order);
-        System.out.println(params);*/
-        /*int result = edaijiaService.createOrder(order);
-        System.out.println("订单号："+result);*/
+        ConsumerOrder consumerOrder = new ConsumerOrder();
+        consumerOrder.setCarId("ea8ecbc5696add0701696b6124390005");
+        consumerOrder.setClientId("ea8ecbc5694d1d1d01695193e6a70012");
+        Door door = new Door();
+        door.setArkSn("862057048892597");
+        String serviceProviderId = "402880236f30d2cb016f315a865a0002";
+        try {
+            edaijiaService.createOrder(consumerOrder,door,serviceProviderId);
+        } catch (ObjectNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+    @Test
+    public void testEOrderDetail() {
+        Integer orderId = 43880;
+        edaijiaService.orderDetail(orderId);
+    }
+
+    @Test
+    public void testDelEOrder() {
+        Integer orderId = 43880;
+        edaijiaService.cancelOrder(orderId);
     }
 
 }

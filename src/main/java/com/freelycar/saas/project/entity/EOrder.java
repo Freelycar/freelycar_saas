@@ -115,4 +115,10 @@ public class EOrder implements Serializable {
      * 还车地址纬度
      */
     private Double returnAddressLat;
+
+    /**
+     * 预约时间
+     * yyyyMMddHHmmss
+     */
+    private String bookingTime;
 }

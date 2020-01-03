@@ -172,7 +172,43 @@ public class HttpRequest {
         }
         log.debug("post调用结果：" + outResult);
         return outResult;
+    }
 
+    //发送post请求
+    public static String postCall2(String interfaceName,Map<String, Object> param, HttpEntity entity, Map<String, Object> head) {
+        if (param != null) {
+            String paramString = "";
+            List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+            for (Map.Entry<String, Object> map : param.entrySet()) {
+                nvps.add(new BasicNameValuePair(map.getKey(), map.getValue().toString()));
+            }
+            paramString = URLEncodedUtils.format(nvps, "utf-8");
+            interfaceName = interfaceName + "?" + paramString;
+        }
+        log.debug("post调用远程接口， 接口名：" + interfaceName);
+        HttpPost httpPost = new HttpPost(interfaceName);
+        if (entity != null) {
+            httpPost.setEntity(entity);
+        }
+        //设置请求头
+        if (head != null) {
+            for (Map.Entry<String, Object> h : head.entrySet()) {
+                httpPost.setHeader(h.getKey(), h.getValue().toString());
+            }
+        }
+        String outResult = null;
+//		httpPost.setConfig(setTimeOut());
+        try (
+                CloseableHttpClient httpClient = getHttpClient();
+                CloseableHttpResponse response = httpClient.execute(httpPost)
+        ) {
+            outResult = getOutResult(response);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        log.debug("post调用结果：" + outResult);
+        return outResult;
     }
 
     /**
@@ -337,13 +373,9 @@ public class HttpRequest {
                     append(sortedParam.get(key));
         }
         String s = sb.toString();
-        log.info("拼接字符串：{}", s);
         String md5s = MD5.encode("MD5",s);
-        log.info("对拼接字符串去MD5：{}", md5s);
         String md5sa = md5s + 'a';
-        log.info("添加a：{}",md5sa);
         String sign = MD5.encode("MD5",md5sa);
-        log.info("sign:{}", sign);
         param.put("sign", sign);
         return param;
     }
