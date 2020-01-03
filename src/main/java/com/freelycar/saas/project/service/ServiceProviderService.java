@@ -1,5 +1,7 @@
 package com.freelycar.saas.project.service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.PageableTools;
 import com.freelycar.saas.basic.wrapper.ResultCode;
@@ -10,6 +12,7 @@ import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Project;
 import com.freelycar.saas.project.entity.ServiceProvider;
 import com.freelycar.saas.project.repository.ServiceProviderRepository;
+import com.freelycar.saas.util.AddressUtil;
 import com.freelycar.saas.util.UpdateTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.util.Map;
 import java.util.Optional;
 
 import static com.freelycar.saas.basic.wrapper.ResultCode.RESULT_DATA_NONE;
@@ -36,6 +40,12 @@ public class ServiceProviderService {
 
     @Autowired
     private ServiceProviderRepository serviceProviderRepository;
+    @Autowired
+    private AddressUtil addressUtil;
+
+    public ServiceProvider findById(String serviceProviderId){
+        return serviceProviderRepository.findById(serviceProviderId).orElse(null);
+    }
 
     /**
      * 新增/修改服务商
@@ -128,6 +138,17 @@ public class ServiceProviderService {
             throw new ArgumentMissingException("参数id为空，无法查询门店信息");
         }
         return serviceProviderRepository.findById(id).orElseThrow(ObjectNotFoundException::new);
+    }
+
+    public JSONObject getLatAndLonAndDetail(String address){
+        Map<String, Double> map =  addressUtil.getLngAndLat(address);
+        double lng = map.get("lng");
+        double lat = map.get("lat");
+        JSONObject result = new JSONObject();
+        result.put("location",map);
+        String location = addressUtil.getAddress(lng,lat);
+        result.put("formatted_address",location);
+        return result;
     }
 
     /**

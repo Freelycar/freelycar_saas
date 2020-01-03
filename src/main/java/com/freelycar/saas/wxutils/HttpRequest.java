@@ -1,6 +1,7 @@
 package com.freelycar.saas.wxutils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.common.collect.Maps;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
@@ -31,6 +32,7 @@ import java.nio.file.StandardCopyOption;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -325,4 +327,36 @@ public class HttpRequest {
         return entity;
     }
 
+    public static Map<String, Object> getEParam(Map<String, Object> param) {
+        Map<String, Object> sortedParam = sortByKey(param, false);
+        StringBuilder sb = new StringBuilder();
+        for (String key :
+                sortedParam.keySet()) {
+            sb.append(key).
+                    append("=").
+                    append(sortedParam.get(key));
+        }
+        String s = sb.toString();
+        log.info("拼接字符串：{}", s);
+        String md5s = MD5.encode("MD5",s);
+        log.info("对拼接字符串去MD5：{}", md5s);
+        String md5sa = md5s + 'a';
+        log.info("添加a：{}",md5sa);
+        String sign = MD5.encode("MD5",md5sa);
+        log.info("sign:{}", sign);
+        param.put("sign", sign);
+        return param;
+    }
+
+    public static <K extends Comparable<? super K>, V> Map<K, V> sortByKey(Map<K, V> map, boolean isDesc) {
+        Map<K, V> result = Maps.newLinkedHashMap();
+        if (isDesc) {
+            map.entrySet().stream().sorted(Map.Entry.<K, V>comparingByKey().reversed())
+                    .forEachOrdered(e -> result.put(e.getKey(), e.getValue()));
+        } else {
+            map.entrySet().stream().sorted(Map.Entry.<K, V>comparingByKey())
+                    .forEachOrdered(e -> result.put(e.getKey(), e.getValue()));
+        }
+        return result;
+    }
 }

@@ -106,6 +106,15 @@ public class ConsumerOrderService {
     @Autowired
     private StoreRepository storeRepository;
 
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private ProjectTypeRepository projectTypeRepository;
+
+    @Autowired
+    private EdaijiaService edaijiaService;
+
     /**
      * 保存和修改
      *
@@ -1028,11 +1037,32 @@ public class ConsumerOrderService {
         } finally {
             ConcurrentHashMapCacheUtils.deleteCache(doorId);
         }
-        //判断（未完成）
-        //1.代驾订单：向e代驾下单，发送短信给代驾师傅
-        //2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
-        staffService.sendWeChatMessageToStaff(consumerOrderRes, emptyDoor, null);
-
+        //判断客户所选服务项目是否为代驾项目
+        boolean orderType = false;
+        String serviceProviderId = null;
+        assert consumerProjectInfos != null;
+        for (ConsumerProjectInfo project:
+                Objects.requireNonNull(consumerProjectInfos)) {
+            String projectId = project.getProjectId();
+            Optional<Project> projectOptional = projectRepository.findById(projectId);
+            if (projectOptional.isPresent()){
+                Optional<ProjectType> projectTypeOptional = projectTypeRepository.findById(projectOptional.get().getProjectTypeId());
+                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().equals("代驾订单")){
+                    orderType = true;
+                    serviceProviderId = projectOptional.get().getServiceProviderId();
+                    break;
+                }else{
+                    throw new ObjectNotFoundException("未找到对应的项目类型信息");
+                }
+            }else {
+                throw new ObjectNotFoundException("未找到对应的项目信息");
+            }
+        }
+        if (orderType){//1.代驾订单：向e代驾下单，发送短信给代驾师傅
+            edaijiaService.createOrder(consumerOrderRes, emptyDoor,serviceProviderId);
+        }else {//2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
+            staffService.sendWeChatMessageToStaff(consumerOrderRes, emptyDoor, null);
+        }
         // 推送微信公众号消息，通知用户订单生成成功
         sendWeChatMsg(consumerOrderRes);
 

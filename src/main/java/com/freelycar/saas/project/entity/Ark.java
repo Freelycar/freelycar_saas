@@ -60,6 +60,16 @@ public class Ark implements Serializable {
 
     @Column
     private String name;
+    /**
+     * 位置经度
+     */
+    @Column
+    private Double addresslng;
+    /**
+     * 位置纬度
+     */
+    @Column
+    private Double addresslat;
 
     public Ark() {
     }
@@ -134,6 +144,22 @@ public class Ark implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public Double getAddresslng() {
+        return addresslng;
+    }
+
+    public void setAddresslng(Double addresslng) {
+        this.addresslng = addresslng;
+    }
+
+    public Double getAddresslat() {
+        return addresslat;
+    }
+
+    public void setAddresslat(Double addresslat) {
+        this.addresslat = addresslat;
     }
 
     @Override

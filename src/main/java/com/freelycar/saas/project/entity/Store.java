@@ -75,5 +75,4 @@ public class Store implements Serializable {
     @Column
     private String headUrl;
 
-
 }

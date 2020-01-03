@@ -52,6 +52,17 @@ public class ServiceProvider implements Serializable {
     @Column
     private String address;
 
+    /**
+     * 地址经度
+     */
+    @Column
+    private Double addressLng;
+    /**
+     * 地址纬度
+     */
+    @Column
+    private Double addressLat;
+
     @Column
     private String phone;
 

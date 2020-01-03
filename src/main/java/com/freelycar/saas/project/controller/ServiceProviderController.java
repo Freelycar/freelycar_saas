@@ -110,4 +110,16 @@ public class ServiceProviderController {
             return ResultJsonObject.getErrorResult(null, e.getMessage());
         }
     }
+
+    @ApiOperation(value = "查询服务商地址）", produces = "application/json")
+    @GetMapping("/getLatAndLonAndDetail")
+    @LoggerManage(description = "调用方法：查询服务商经纬度与详细地址")
+    public ResultJsonObject getLatAndLonAndDetail(@RequestParam String address){
+        if (null == address) {
+            errorMsg = "接收到的参数：address为NULL";
+            logger.error(errorMsg);
+            return ResultJsonObject.getErrorResult(null, errorMsg);
+        }
+        return ResultJsonObject.getDefaultResult(serviceProviderService.getLatAndLonAndDetail(address));
+    }
 }

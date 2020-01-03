@@ -41,6 +41,9 @@ public class ArkService {
     @Autowired
     private DoorService doorService;
 
+    public Ark findByArkSn(String arkSn){
+        return arkRepository.findTopBySnAndDelStatus(arkSn,Constants.DelStatus.NORMAL.isValue());
+    }
 
     public ResultJsonObject getCurrentArkLocation(String arkSn) {
         if (StringUtils.hasText(arkSn)) {

@@ -167,6 +167,8 @@ public class Project implements Serializable {
                 .append(storeId).append('\"');
         sb.append(",\"bookOnline\":")
                 .append(bookOnline);
+        sb.append(",\"serviceProviderId\":")
+                .append(serviceProviderId);
         sb.append('}');
         return sb.toString();
     }
