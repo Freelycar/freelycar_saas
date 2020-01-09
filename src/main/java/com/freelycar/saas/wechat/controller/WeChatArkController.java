@@ -55,7 +55,7 @@ public class WeChatArkController {
         logger.info("arkOrderLog:生成智能柜订单接口----------");
         try {
             return consumerOrderService.arkHandleOrder(orderObject);
-        } catch (ArgumentMissingException | ObjectNotFoundException | NoEmptyArkException | OpenArkDoorTimeOutException | InterruptedException | OpenArkDoorFailedException | UpdateDataErrorException e) {
+        } catch (ArgumentMissingException | ObjectNotFoundException | NoEmptyArkException | OpenArkDoorTimeOutException | InterruptedException | OpenArkDoorFailedException | UpdateDataErrorException | NormalException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, "智能柜开单失败：" + e.getMessage() + "，请稍后重试或联系门店");
@@ -68,7 +68,7 @@ public class WeChatArkController {
         String errorMessage;
         try {
             return consumerOrderService.cancelOrder(id);
-        } catch (ArgumentMissingException | OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException | ObjectNotFoundException e) {
+        } catch (ArgumentMissingException | OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException | ObjectNotFoundException | NormalException e) {
             errorMessage = e.getMessage();
             logger.error(e.getMessage(), e);
             e.printStackTrace();

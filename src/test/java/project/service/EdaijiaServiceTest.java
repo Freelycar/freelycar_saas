@@ -2,12 +2,11 @@ package project.service;
 
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.BootApplication;
+import com.freelycar.saas.exception.NormalException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.ConsumerOrder;
 import com.freelycar.saas.project.entity.Door;
-import com.freelycar.saas.project.entity.EOrder;
 import com.freelycar.saas.project.service.EdaijiaService;
-import com.freelycar.saas.project.thread.EThread;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,20 +35,24 @@ public class EdaijiaServiceTest {
         door.setArkSn("862057048892597");
         String serviceProviderId = "402880236f30d2cb016f315a865a0002";
         try {
-            edaijiaService.createOrder(consumerOrder,door,serviceProviderId);
-        } catch (ObjectNotFoundException e) {
+            edaijiaService.createOrder(consumerOrder, door, serviceProviderId);
+        } catch (ObjectNotFoundException | NormalException e) {
             e.printStackTrace();
         }
     }
+
     @Test
     public void testEOrderDetail() {
-        Integer orderId = 43880;
-        edaijiaService.orderDetail(orderId);
+        Integer orderId = 44088;
+        JSONObject result = edaijiaService.orderDetail(orderId);
+        Integer code = result.getInteger("code");
+        Integer status = result.getJSONObject("data").getJSONObject("orderInfo").getInteger("status");
+        System.out.printf("司机手机号："+ code);
     }
 
     @Test
-    public void testDelEOrder() {
-        Integer orderId = 43880;
+    public void testDelEOrder() throws NormalException, ObjectNotFoundException {
+        Integer orderId = 44091;
         edaijiaService.cancelOrder(orderId);
     }
 

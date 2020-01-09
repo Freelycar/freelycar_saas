@@ -28,6 +28,6 @@ public class LeanCloudUtilsTest {
 
     @Test
     public void testSendTemplate(){
-        leanCloudUtils.sendTemplate("18206295380");
+//        leanCloudUtils.sendTemplate("18206295380");
     }
 }

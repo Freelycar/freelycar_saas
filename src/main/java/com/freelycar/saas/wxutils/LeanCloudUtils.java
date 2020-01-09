@@ -66,13 +66,13 @@ public class LeanCloudUtils {
         return ResultJsonObject.getDefaultResult(json);
     }
 
-    public ResultJsonObject sendTemplate(String phone) {
+    public ResultJsonObject sendTemplate(String phone, Integer password, String link) {
         JSONObject param = new JSONObject();
         param.put("mobilePhoneNumber", phone);
         param.put("template", "通知e代驾");
-        param.put("link", "test");
+        param.put("link", link);
         param.put("sign", "小易爱车");
-        param.put("password", "123456");
+        param.put("password", password);
         HttpEntity entity = HttpRequest.getEntity(param);
         Map<String, Object> head = setLeancloudHead();
         String result = HttpRequest.postCall(leancloudUrlRes, entity, head);
@@ -91,4 +91,36 @@ public class LeanCloudUtils {
         }
         return ResultJsonObject.getDefaultResult(json);
     }
+
+    public ResultJsonObject sendVerifyCode(String phone, String verifyCode) {
+        JSONObject param = new JSONObject();
+        param.put("mobilePhoneNumber", phone);
+        param.put("template", "e代驾目的地验证码");
+        param.put("sign", "小易爱车");
+        param.put("code", verifyCode);
+        HttpEntity entity = HttpRequest.getEntity(param);
+        Map<String, Object> head = setLeancloudHead();
+        String result = HttpRequest.postCall(leancloudUrlRes, entity, head);
+        log.error("leancloud的返回码：" + result);
+        JSONObject json;
+        try {
+            json = JSONObject.parseObject(result);
+        } catch (JSONException e) {
+            e.printStackTrace();
+            log.error("发送短信模板,解析返回结果错误");
+            return ResultJsonObject.getErrorResult(null, "解析返回结果错误");
+        }
+
+        if (StringUtils.hasText(json.getString("error"))) {
+            return ResultJsonObject.getErrorResult(json, json.getString("error"));
+        }
+        return ResultJsonObject.getDefaultResult(json);
+    }
+
+    public Integer getPassword() {
+        int min = 10000000;
+        int max = 99999999;
+        return  min + (int)(Math.random() * ((max - min) + 1));
+    }
+
 }

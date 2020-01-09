@@ -2,6 +2,7 @@ package com.freelycar.saas.wxutils;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.common.collect.Maps;
+import org.apache.commons.collections4.map.HashedMap;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.NameValuePair;
@@ -175,7 +176,7 @@ public class HttpRequest {
     }
 
     //发送post请求
-    public static String postCall2(String interfaceName,Map<String, Object> param, HttpEntity entity, Map<String, Object> head) {
+    public static String postCall2(String interfaceName, Map<String, Object> param, HttpEntity entity, Map<String, Object> head) {
         if (param != null) {
             String paramString = "";
             List<NameValuePair> nvps = new ArrayList<NameValuePair>();
@@ -373,12 +374,31 @@ public class HttpRequest {
                     append(sortedParam.get(key));
         }
         String s = sb.toString();
-        String md5s = MD5.encode("MD5",s);
+        String md5s = MD5.encode("MD5", s);
         String md5sa = md5s + 'a';
-        String sign = MD5.encode("MD5",md5sa);
+        String sign = MD5.encode("MD5", md5sa);
         param.put("sign", sign);
         return param;
     }
+
+    public static String getSign(Map<String, Object> param) {
+        Map<String, Object> sortedParam = sortByKey(param, false);
+        StringBuilder sb = new StringBuilder();
+        for (String key :
+                sortedParam.keySet()) {
+            sb.append(key).
+                    append("=").
+                    append(sortedParam.get(key));
+        }
+        String s = sb.toString();
+        System.out.println("s:" + s);
+        String md5s = MD5.encode("MD5", s);
+        System.out.println("md5s:" + md5s);
+        String md5sa = md5s + 'a';
+        String sign = MD5.encode("MD5", md5sa);
+        return sign;
+    }
+
 
     public static <K extends Comparable<? super K>, V> Map<K, V> sortByKey(Map<K, V> map, boolean isDesc) {
         Map<K, V> result = Maps.newLinkedHashMap();
@@ -391,4 +411,17 @@ public class HttpRequest {
         }
         return result;
     }
+
+/*    public static void main(String[] args) {
+        Integer password = 123456;
+        Integer orderId = 44091;
+        String link = "/verifyCode?sign=";
+        Map<String, Object> param = new HashedMap<>();
+        param.put("password", password);
+        param.put("orderId", orderId);
+        link = link + "" + HttpRequest.getSign(param)
+                +"&password="+password
+                +"&orderId="+orderId;
+        System.out.println(link);
+    }*/
 }

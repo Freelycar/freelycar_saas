@@ -28,6 +28,16 @@ public class EOrder implements Serializable {
     @NotNull
     @Length(max = 50)
     private String id;
+
+    /**
+     * 订单id
+     */
+    private String consumerOrderId;
+
+    /**
+     * 验证码
+     */
+    private Integer verifyCode;
     /**
      * 渠道号
      */

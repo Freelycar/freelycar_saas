@@ -908,7 +908,7 @@ public class ConsumerOrderService {
      * @param orderObject
      * @return
      */
-    public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, NoEmptyArkException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException, UpdateDataErrorException {
+    public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, NoEmptyArkException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException, UpdateDataErrorException, NormalException {
 //        logger.info("执行智能柜开单操作：---start---");
         String doorId = orderObject.getDoorId();
         //获取提交过来的数据
@@ -1026,7 +1026,7 @@ public class ConsumerOrderService {
             clientOrderImgRepository.save(clientOrderImg);
         }
 
-
+        //开门，放钥匙
         // door表数据更新，根据智能柜编号获取door对象，并更新状态为"预约状态"
         this.changeDoorState(emptyDoor, orderId, Constants.DoorState.USER_RESERVATION.getValue());
         // 数据保存完毕之后操作硬件，成功后返回成功，否则抛出异常进行回滚操作
@@ -1037,6 +1037,8 @@ public class ConsumerOrderService {
         } finally {
             ConcurrentHashMapCacheUtils.deleteCache(doorId);
         }
+
+
         //判断客户所选服务项目是否为代驾项目
         boolean orderType = false;
         String serviceProviderId = null;
@@ -1058,13 +1060,19 @@ public class ConsumerOrderService {
                 throw new ObjectNotFoundException("未找到对应的项目信息");
             }
         }
+
         if (orderType){//1.代驾订单：向e代驾下单，发送短信给代驾师傅
-            edaijiaService.createOrder(consumerOrderRes, emptyDoor,serviceProviderId);
+            Integer EorderId =  edaijiaService.createOrder(consumerOrderRes, emptyDoor,serviceProviderId);
+            // 推送微信公众号消息，通知用户订单生成成功
+            sendWeChatMsg(consumerOrderRes);
+            // 向接单司机发送短信链接
+            edaijiaService.sendTemplate(EorderId);
         }else {//2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
             staffService.sendWeChatMessageToStaff(consumerOrderRes, emptyDoor, null);
+            // 推送微信公众号消息，通知用户订单生成成功
+            sendWeChatMsg(consumerOrderRes);
         }
-        // 推送微信公众号消息，通知用户订单生成成功
-        sendWeChatMsg(consumerOrderRes);
+
 
         logger.info("执行智能柜开单操作---end---：" + orderId);
         return ResultJsonObject.getDefaultResult(consumerOrderRes.getId(), "订单生成成功！");
@@ -1076,7 +1084,7 @@ public class ConsumerOrderService {
      * @param orderId
      * @return
      */
-    public ResultJsonObject cancelOrder(String orderId) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException, InterruptedException, ObjectNotFoundException {
+    public ResultJsonObject cancelOrder(String orderId) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException, InterruptedException, ObjectNotFoundException, NormalException {
         logger.info("执行用户取消订单操作：---start---" + orderId);
         ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
         if (null == consumerOrder) {
@@ -1095,8 +1103,34 @@ public class ConsumerOrderService {
         //打开柜门
         doorService.openDoorByDoorObject(door);
 
-        //用户取消服务订单的时候推送消息给技师
-        staffService.sendWeChatMessageToStaff(consumerOrderRes, door, null);
+        //判断客户所选服务项目是否为代驾项目
+        List<ConsumerProjectInfo> projectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(orderId);
+        boolean orderType = false;
+//        String serviceProviderId = null;
+        for (ConsumerProjectInfo project:
+                projectInfos) {
+            String projectId = project.getProjectId();
+            Optional<Project> projectOptional = projectRepository.findById(projectId);
+            if (projectOptional.isPresent()){
+                Optional<ProjectType> projectTypeOptional = projectTypeRepository.findById(projectOptional.get().getProjectTypeId());
+                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().equals("代驾订单")){
+                    orderType = true;
+//                    serviceProviderId = projectOptional.get().getServiceProviderId();
+                    break;
+                }else{
+                    throw new ObjectNotFoundException("未找到对应的项目类型信息");
+                }
+            }else {
+                throw new ObjectNotFoundException("未找到对应的项目信息");
+            }
+        }
+
+        if (orderType){
+            edaijiaService.cancelConsumerOrder(orderId);
+        }else {
+            //用户取消服务订单的时候推送消息给技师
+            staffService.sendWeChatMessageToStaff(consumerOrderRes, door, null);
+        }
 
         logger.info("执行用户取消订单操作：---end---" + orderId);
         return ResultJsonObject.getDefaultResult(orderId);
