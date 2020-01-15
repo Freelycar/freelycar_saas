@@ -17,4 +17,7 @@ public interface EOrderRepository extends JpaRepository<EOrder, String> {
     List<EOrder> findByConsumerOrderId(String consumerOrderId);
 
     Optional<EOrder> findByOrderId(Integer orderId);
+
+    @Query("select DISTINCT(consumerOrderId) FROM EOrder")
+    List<String> findDistinctConsumerOrderId();
 }

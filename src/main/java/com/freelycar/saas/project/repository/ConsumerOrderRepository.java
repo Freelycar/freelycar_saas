@@ -6,9 +6,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 
+import javax.persistence.QueryHint;
 import java.util.List;
 import java.util.Map;
+
+import static org.hibernate.jpa.QueryHints.HINT_COMMENT;
 
 /**
  * @author tangwei - Toby
@@ -59,4 +63,8 @@ public interface ConsumerOrderRepository extends JpaRepository<ConsumerOrder, St
     int countAllByPhoneAndDelStatusAndOrderTypeAndPayState(String phone, boolean delStatus, int orderType, int payState);
 
     int countAllByUserKeyLocationSnContainsAndDelStatusAndStateLessThan(String userKeyLocationSn,boolean delStatus,int state);
+
+    @QueryHints(value = {@QueryHint(name = HINT_COMMENT, value = "a query for pageable")})
+    @Query("select u from ConsumerOrder u where u.id in ?1 and u.delStatus = false and u.state =1")
+    Page<ConsumerOrder> findByIdIn(List<String> ids,Pageable page);
 }

@@ -18,9 +18,7 @@ import org.hibernate.transform.Transformers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Service;
@@ -114,6 +112,9 @@ public class ConsumerOrderService {
 
     @Autowired
     private EdaijiaService edaijiaService;
+
+    @Autowired
+    private EOrderRepository eOrderRepository;
 
     /**
      * 保存和修改
@@ -1043,31 +1044,31 @@ public class ConsumerOrderService {
         boolean orderType = false;
         String serviceProviderId = null;
         assert consumerProjectInfos != null;
-        for (ConsumerProjectInfo project:
+        for (ConsumerProjectInfo project :
                 Objects.requireNonNull(consumerProjectInfos)) {
             String projectId = project.getProjectId();
             Optional<Project> projectOptional = projectRepository.findById(projectId);
-            if (projectOptional.isPresent()){
+            if (projectOptional.isPresent()) {
                 Optional<ProjectType> projectTypeOptional = projectTypeRepository.findById(projectOptional.get().getProjectTypeId());
-                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().equals("代驾订单")){
+                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().equals("代驾订单")) {
                     orderType = true;
                     serviceProviderId = projectOptional.get().getServiceProviderId();
                     break;
-                }else{
+                } else {
                     throw new ObjectNotFoundException("未找到对应的项目类型信息");
                 }
-            }else {
+            } else {
                 throw new ObjectNotFoundException("未找到对应的项目信息");
             }
         }
 
-        if (orderType){//1.代驾订单：向e代驾下单，发送短信给代驾师傅
-            Integer EorderId =  edaijiaService.createOrder(consumerOrderRes, emptyDoor,serviceProviderId);
+        if (orderType) {//1.代驾订单：向e代驾下单，发送短信给代驾师傅
+            Integer EorderId = edaijiaService.createOrder(consumerOrderRes, emptyDoor, serviceProviderId);
             // 推送微信公众号消息，通知用户订单生成成功
             sendWeChatMsg(consumerOrderRes);
             // 向接单司机发送短信链接
             edaijiaService.sendTemplate(EorderId);
-        }else {//2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
+        } else {//2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
             staffService.sendWeChatMessageToStaff(consumerOrderRes, emptyDoor, null);
             // 推送微信公众号消息，通知用户订单生成成功
             sendWeChatMsg(consumerOrderRes);
@@ -1107,27 +1108,27 @@ public class ConsumerOrderService {
         List<ConsumerProjectInfo> projectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(orderId);
         boolean orderType = false;
 //        String serviceProviderId = null;
-        for (ConsumerProjectInfo project:
+        for (ConsumerProjectInfo project :
                 projectInfos) {
             String projectId = project.getProjectId();
             Optional<Project> projectOptional = projectRepository.findById(projectId);
-            if (projectOptional.isPresent()){
+            if (projectOptional.isPresent()) {
                 Optional<ProjectType> projectTypeOptional = projectTypeRepository.findById(projectOptional.get().getProjectTypeId());
-                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().equals("代驾订单")){
+                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().equals("代驾订单")) {
                     orderType = true;
 //                    serviceProviderId = projectOptional.get().getServiceProviderId();
                     break;
-                }else{
+                } else {
                     throw new ObjectNotFoundException("未找到对应的项目类型信息");
                 }
-            }else {
+            } else {
                 throw new ObjectNotFoundException("未找到对应的项目信息");
             }
         }
 
-        if (orderType){
+        if (orderType) {
             edaijiaService.cancelConsumerOrder(orderId);
-        }else {
+        } else {
             //用户取消服务订单的时候推送消息给技师
             staffService.sendWeChatMessageToStaff(consumerOrderRes, door, null);
         }
@@ -2131,5 +2132,14 @@ public class ConsumerOrderService {
         em.close();
 
         return res.longValue();
+    }
+
+    public ResultJsonObject EdaijiaList(Integer currentPage, Integer pageSize) {
+        List<String> stringList = eOrderRepository.findDistinctConsumerOrderId();
+        stringList.removeAll(Collections.singleton(null));
+        List<Sort.Order> orders = new ArrayList<>();
+        orders.add(new Sort.Order(Sort.Direction.DESC, "createTime"));
+        Page<ConsumerOrder> page = consumerOrderRepository.findByIdIn(stringList, new PageRequest(currentPage-1, pageSize, new Sort(orders)));
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(page));
     }
 }

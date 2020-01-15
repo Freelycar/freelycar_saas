@@ -131,4 +131,30 @@ public class EOrder implements Serializable {
      * yyyyMMddHHmmss
      */
     private String bookingTime;
+    /**
+     * 车辆品牌名称
+     */
+    private String carBrandName;
+    /**
+     * 车辆车系名称
+     */
+    private String carSeriesName;
+    /**
+     * 订单支付方式，默认为0
+     * 0-vip扣款
+     * 1-用户付款
+     */
+    private Integer payMode;
+    /**
+     * 0-发送短信
+     * 1-不发短信
+     * 默认是0
+     */
+    private Integer pushSms;
+
+    /**
+     * 取车/还车，delivery or return
+     * 0/1
+     */
+    private Integer dor;
 }

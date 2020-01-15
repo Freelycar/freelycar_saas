@@ -11,6 +11,9 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author puyuting
  * @date 2020/1/9
@@ -36,5 +39,15 @@ public class EOrderRepositoryTest {
     @Test
     public void findByOrderIdTest() {
         log.info("e代驾订单详情：{}", eOrderRepository.findByOrderId(43880).get());
+    }
+
+    @Test
+    public void findDistinctConsumerOrderIdTest() {
+        List<String> stringList = eOrderRepository.findDistinctConsumerOrderId();
+        stringList.removeAll(Collections.singleton(null));
+        for (String s: stringList){
+            log.info("e代驾订单详情：{}", s);
+        }
+
     }
 }

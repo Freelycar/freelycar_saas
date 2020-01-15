@@ -27,7 +27,7 @@ public class EdaijiaServiceTest {
     private EdaijiaService edaijiaService;
 
     @Test
-    public void testEOrder() {
+    public void testCreateOrder() {
         ConsumerOrder consumerOrder = new ConsumerOrder();
         consumerOrder.setCarId("ea8ecbc5696add0701696b6124390005");
         consumerOrder.setClientId("ea8ecbc5694d1d1d01695193e6a70012");
@@ -35,7 +35,8 @@ public class EdaijiaServiceTest {
         door.setArkSn("862057048892597");
         String serviceProviderId = "402880236f30d2cb016f315a865a0002";
         try {
-            edaijiaService.createOrder(consumerOrder, door, serviceProviderId);
+            Integer EorderId = edaijiaService.createOrder(consumerOrder, door, serviceProviderId);
+            edaijiaService.sendTemplate(EorderId);
         } catch (ObjectNotFoundException | NormalException e) {
             e.printStackTrace();
         }
@@ -52,7 +53,7 @@ public class EdaijiaServiceTest {
 
     @Test
     public void testDelEOrder() throws NormalException, ObjectNotFoundException {
-        Integer orderId = 44091;
+        Integer orderId = 44432;
         edaijiaService.cancelOrder(orderId);
     }
 

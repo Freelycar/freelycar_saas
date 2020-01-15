@@ -392,7 +392,7 @@ public class HttpRequest {
         }
         String s = sb.toString();
         System.out.println("s:" + s);
-        String md5s = MD5.encode("MD5", s);
+        String md5s = MD5.encode("md5", s);
         System.out.println("md5s:" + md5s);
         String md5sa = md5s + 'a';
         String sign = MD5.encode("MD5", md5sa);
@@ -400,7 +400,7 @@ public class HttpRequest {
     }
 
 
-    public static <K extends Comparable<? super K>, V> Map<K, V> sortByKey(Map<K, V> map, boolean isDesc) {
+    private static <K extends Comparable<? super K>, V> Map<K, V> sortByKey(Map<K, V> map, boolean isDesc) {
         Map<K, V> result = Maps.newLinkedHashMap();
         if (isDesc) {
             map.entrySet().stream().sorted(Map.Entry.<K, V>comparingByKey().reversed())
@@ -412,8 +412,8 @@ public class HttpRequest {
         return result;
     }
 
-/*    public static void main(String[] args) {
-        Integer password = 123456;
+    public static void main(String[] args) {
+        /*Integer password = 123456;
         Integer orderId = 44091;
         String link = "/verifyCode?sign=";
         Map<String, Object> param = new HashedMap<>();
@@ -422,6 +422,14 @@ public class HttpRequest {
         link = link + "" + HttpRequest.getSign(param)
                 +"&password="+password
                 +"&orderId="+orderId;
-        System.out.println(link);
-    }*/
+        System.out.println(link);*/
+        Map<String, Object> param = new HashedMap<>();
+        param.put("b", "v2");
+        param.put("a", "v1");
+        param.put("c","v3");
+        param.put("d",null);
+        Map<String,Object> result = getEParam(param);
+        System.out.println(result);
+        System.out.println(getSign(param));
+    }
 }
