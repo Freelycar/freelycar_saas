@@ -127,6 +127,7 @@ public class EOrderService {
         order.setReturnAddressLat(eOrder.getPickupAddressLat()); //还车地址纬度
         order.setReturnContactName(eOrder.getPickupContactName());      //还车地址联系人姓名
         order.setReturnContactPhone(eOrder.getPickupContactPhone());    //还车地址联系人手机号
+        order.setPushSms(1);
 
         return order;
     }

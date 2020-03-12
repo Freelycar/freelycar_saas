@@ -286,7 +286,6 @@ public class ProjectService {
 
     public List<Project> getProjects(String storeId, boolean preferential) throws ArgumentMissingException {
 
-
         List<Project> projects = getProjects(storeId);
         List<Project> actProjects = new ArrayList<>();
         List<Project> res = new ArrayList<>();
@@ -327,6 +326,7 @@ public class ProjectService {
         List<List<Project>> allStaffProjects = new ArrayList<>();
 
         //TODO 查找门店所有在服务的技师
+        logger.info("查找门店所有在服务的技师");
         List<Staff> staffs = staffService.getAllArkStaffInStore(storeId);
         if (null != staffs && !staffs.isEmpty()) {
             for (Staff staff : staffs) {
@@ -339,6 +339,7 @@ public class ProjectService {
                     allStaffProjects.add(staffProjects);
                 }
             }
+            logger.info("staffProjects.size():"+allStaffProjects.size());
         }
 
         return servicingProjectsFilter(projects, allStaffProjects);
@@ -354,7 +355,6 @@ public class ProjectService {
                     break;
                 }
             }
-
             servicingProjects.add(project);
         }
         return servicingProjects;

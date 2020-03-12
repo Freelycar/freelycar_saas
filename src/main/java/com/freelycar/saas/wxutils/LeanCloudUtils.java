@@ -95,9 +95,9 @@ public class LeanCloudUtils {
     public ResultJsonObject sendVerifyCode(String phone, String verifyCode) {
         JSONObject param = new JSONObject();
         param.put("mobilePhoneNumber", phone);
-        param.put("template", "e代驾目的地验证码");
+        param.put("template", "收车验证码");
         param.put("sign", "小易爱车");
-        param.put("code", verifyCode);
+        param.put("verifyCode", verifyCode);
         HttpEntity entity = HttpRequest.getEntity(param);
         Map<String, Object> head = setLeancloudHead();
         String result = HttpRequest.postCall(leancloudUrlRes, entity, head);

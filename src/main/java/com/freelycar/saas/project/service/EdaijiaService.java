@@ -27,6 +27,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author puyuting
@@ -42,6 +43,7 @@ public class EdaijiaService {
     private Integer channel;
 
     private Logger logger = LoggerFactory.getLogger(this.getClass());
+    private static final AtomicLong count = new AtomicLong(0);
 
     @Autowired
     private EOrderService eOrderService;
@@ -90,6 +92,7 @@ public class EdaijiaService {
             Integer orderId = jsonResult.getInteger("data");
             eOrder.setConsumerOrderId(consumerOrder.getId());
             eOrder.setOrderId(orderId);
+            eOrder.setDor(0);   //delivery
             eOrderRepository.saveAndFlush(eOrder);
 //            logger.info("开始查询e代驾订单：{} 详情", orderId);
             return orderId;
@@ -104,7 +107,9 @@ public class EdaijiaService {
      */
     public void sendTemplate(Integer orderId) {
         logger.info("线程开始");
-        AtomicBoolean flag = new AtomicBoolean(true);
+        AtomicBoolean flag = new AtomicBoolean(false);
+        EOrder eOrder = eOrderService.findByOrderId(orderId);
+        if (eOrder!= null) flag.set(true);
         while (flag.get()) {
             try {
                 Thread.sleep(30000);//30s
@@ -121,6 +126,7 @@ public class EdaijiaService {
                         String driverPhone;
                         //1.获取司机电话
                         JSONArray array = orderDetail.getJSONObject("data").getJSONArray("drivingInfoList");
+                         eOrderService.findByOrderId(orderId);
                         for (Object driver :
                                 array) {
                             JSONObject driverInfo = (JSONObject) driver;
@@ -128,18 +134,18 @@ public class EdaijiaService {
                                 driverPhone = driverInfo.getString("driverPhone");
                                 //2.给driverPhone发送链接
                                 int password = leanCloudUtils.getPassword();
-                                EOrder eOrder = eOrderService.findByOrderId(orderId);
-                                if (eOrder != null) {
-//                                    eOrder.setVerifyCode(password);
-                                    eOrderRepository.saveAndFlush(eOrder);
-                                } else throw new ObjectNotFoundException("未找到对应的代驾订单");
-                                String link = "verifyCode?sign=";
+
+                                eOrder.setVerifyCode(password);
+                                eOrderRepository.saveAndFlush(eOrder);
+
+                                String consumerOrderId = eOrder.getConsumerOrderId();
+                                String link = "e-dirve/verifyCode?sign=";
                                 Map<String, Object> param = new HashedMap<>();
                                 param.put("password", password);
                                 param.put("orderId", orderId);
                                 link = link + "" + HttpRequest.getSign(param)
-                                        + "&password=" + password
-                                        + "&orderId=" + orderId;
+                                        + "&orderId=" + orderId
+                                        + "&consumerOrderId="+consumerOrderId;
                                 leanCloudUtils.sendTemplate(driverPhone, password, link);
                                 break;
                             }
@@ -149,23 +155,22 @@ public class EdaijiaService {
                         String driverPhone = "18206295380";
                         //2.给driverPhone发送链接
                         int password = leanCloudUtils.getPassword();
-                        EOrder eOrder = eOrderService.findByOrderId(orderId);
-                        if (eOrder != null) {
-//                            eOrder.setVerifyCode(password);
-                            eOrderRepository.saveAndFlush(eOrder);
-                        } else throw new ObjectNotFoundException("未找到对应的代驾订单");
-                        String link = "verifyCode?sign=";
+                        eOrder.setVerifyCode(password);
+                        eOrderRepository.saveAndFlush(eOrder);
+                        String consumerOrderId = eOrder.getConsumerOrderId();
+                        String link = "e-dirve/verifyCode?sign=";
                         Map<String, Object> param = new HashedMap<>();
                         param.put("password", password);
                         param.put("orderId", orderId);
                         link = link + "" + HttpRequest.getSign(param)
                                 + "&password=" + password
-                                + "&orderId=" + orderId;
+                                + "&orderId=" + orderId
+                                + "&consumerOrderId="+consumerOrderId;
                         leanCloudUtils.sendTemplate(driverPhone, password, link);
                         flag.set(false);
                     }
                 }
-            } catch (InterruptedException | ObjectNotFoundException e) {
+            } catch (InterruptedException e) {
                 logger.error(e.getMessage());
             }
         }
@@ -180,6 +185,8 @@ public class EdaijiaService {
     public void sendVerifyCode(Integer orderId, String serviceProviderId) {
         logger.info("线程开始");
         AtomicBoolean flag = new AtomicBoolean(true);
+        //用于测试
+        AtomicLong count = new AtomicLong(0);
         while (flag.get()) {
             try {
                 Thread.sleep(30000);//30s
@@ -206,6 +213,22 @@ public class EdaijiaService {
                         flag.set(false);
                     }
                 }
+                //测试用
+                if (count.get()==2){
+                    //1.获取服务商手机号
+                    ServiceProvider serviceProvider = serviceProviderService.findById(serviceProviderId);
+                    if (null == serviceProvider) {
+                        logger.error("未找到对应的服务商信息 " + serviceProviderId);
+                        throw new ObjectNotFoundException("未找到对应的服务商信息");
+                    }
+                    String serviceProviderPhone = serviceProvider.getPhone();
+                    //2.发送验证短信
+                    logger.info("向服务商发送收车验证码");
+//                    String verifyCode = getVerifyCode(orderId);
+                    leanCloudUtils.sendVerifyCode(serviceProviderPhone, "123456");
+                    flag.set(false);
+                }
+                count.incrementAndGet();
             } catch (InterruptedException | ObjectNotFoundException e) {
                 logger.error(e.getMessage());
             }
@@ -289,8 +312,7 @@ public class EdaijiaService {
     }
 
     /**
-     * 代驾司机取/还车，提醒用户订单已受理
-     *
+     * 代驾司机取车，提醒用户订单已受理
      * @param orderId e代驾订单id
      * @return
      */
@@ -301,7 +323,9 @@ public class EdaijiaService {
         param.put("password", password);
         param.put("orderId", orderId);
         if (sign.equals(HttpRequest.getSign(param))) {
+            logger.info("签名正确，准备校验验证码");
             EOrder eOrder = eOrderService.findByOrderId(orderId);
+            logger.info(eOrder.toString());
             if (eOrder != null && eOrder.getVerifyCode() != null && eOrder.getVerifyCode().equals(password) && eOrder.getDor() == 0) {
                 logger.info("代驾司机准备取车送到服务商处服务");
                 logger.info("司机输入验证码正确，准备打开柜门");
@@ -311,71 +335,98 @@ public class EdaijiaService {
                 if (null == consumerOrder) {
                     return ResultJsonObject.getCustomResult("Not found consumerOrder object by orderId : " + orderId, ResultCode.RESULT_DATA_NONE);
                 }
-                String driverPhone = ""; //司机手机号
-                String driverNo = "";   //司机工号
-                JSONObject orderDetail = this.orderDetail(orderId);
-                if (orderDetail.get("code") != null && orderDetail.getInteger("code") == 0) {
-                    logger.info("成功获取订单：{}详情", orderId);
-                    //1.获取司机电话
-                    JSONArray array = orderDetail.getJSONObject("data").getJSONArray("drivingInfoList");
-                    for (Object driver :
-                            array) {
-                        JSONObject driverInfo = (JSONObject) driver;
-                        if (driverInfo.get("driverPhone") != null && !driverInfo.getString("driverPhone").equals("")) {
-                            driverPhone = driverInfo.getString("driverPhone");
-                            driverNo = driverInfo.getString("driverNo");
+                if (consumerOrder.getState().equals(Constants.OrderState.RESERVATION.getValue())){
+                    String driverPhone = ""; //司机手机号
+                    String driverNo = "";   //司机工号
+                    JSONObject orderDetail = this.orderDetail(orderId);
+                    if (orderDetail.get("code") != null && orderDetail.getInteger("code") == 0) {
+                        logger.info("成功获取订单：{}详情", orderId);
+                        //1.获取司机电话
+                        JSONArray array = orderDetail.getJSONObject("data").getJSONArray("drivingInfoList");
+                        for (Object driver :
+                                array) {
+                            JSONObject driverInfo = (JSONObject) driver;
+                            if (driverInfo.get("driverPhone") != null && !driverInfo.getString("driverPhone").equals("")) {
+                                driverPhone = driverInfo.getString("driverPhone");
+                                driverNo = driverInfo.getString("driverNo");
+                                break;
+                            }
+                        }
+                    }
+                    consumerOrder.setPickTime(new Timestamp(System.currentTimeMillis()));
+                    consumerOrder.setState(Constants.OrderState.RECEIVE_CAR.getValue());
+                    consumerOrder.setPickCarStaffId(driverNo);
+                    consumerOrder.setPickCarStaffName("e代驾" + driverPhone);
+                    ConsumerOrder orderRes = consumerOrderService.updateOrder(consumerOrder);
+
+                    // 回填服务技师的id和name
+                    List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(consumerOrderId);
+                    for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+                        consumerProjectInfo.setStaffId(driverNo);
+                        consumerProjectInfo.setStaffName("e代驾" + driverPhone);
+                        consumerProjectInfoService.saveOrUpdate(consumerProjectInfo);
+                    }
+
+                    //3.更新door表数据状态
+                    Door door = doorRepository.findTopByOrderId(consumerOrderId);
+
+                    logger.info("arkOrderLog:智能柜柜门door信息：" + door);
+                    //更新柜门状态
+                    this.changeDoorState(door, null, Constants.DoorState.EMPTY.getValue());
+                    //4. 调用硬件接口方法打开柜门
+                    doorService.openDoorByDoorObject(door);
+
+                    //5.推送微信公众号消息，通知用户已开始受理服务
+                    consumerOrderService.sendWeChatMsg(orderRes);
+
+                    logger.info("执行代驾司机接车操作：---end---" + orderId);
+
+                    //6.给服务商发送接车短信
+                    Boolean flag = false;
+                    List<ConsumerProjectInfo> projectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(consumerOrderId);
+                    for (ConsumerProjectInfo info:projectInfos
+                    ) {
+                        Project project = projectRepository.findById(info.getProjectId()).orElse(null);
+                        if (project!=null && project.getServiceProviderId()!=null){
+                            sendVerifyCode(orderId,project.getServiceProviderId());
+                            flag = true;
                             break;
                         }
                     }
-                }
-                consumerOrder.setPickTime(new Timestamp(System.currentTimeMillis()));
-                consumerOrder.setState(Constants.OrderState.RECEIVE_CAR.getValue());
-                consumerOrder.setPickCarStaffId(driverNo);
-                consumerOrder.setPickCarStaffName("e代驾" + driverPhone);
-                ConsumerOrder orderRes = consumerOrderService.updateOrder(consumerOrder);
-
-                // 回填服务技师的id和name
-                List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(consumerOrderId);
-                for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
-                    consumerProjectInfo.setStaffId(driverNo);
-                    consumerProjectInfo.setStaffName("e代驾" + driverPhone);
-                    consumerProjectInfoService.saveOrUpdate(consumerProjectInfo);
-                }
-
-                //3.更新door表数据状态
-                Door door = doorRepository.findTopByOrderId(consumerOrderId);
-
-                logger.info("arkOrderLog:智能柜柜门door信息：" + door);
-                //更新柜门状态
-                this.changeDoorState(door, null, Constants.DoorState.EMPTY.getValue());
-                //4. 调用硬件接口方法打开柜门
-                doorService.openDoorByDoorObject(door);
-
-                //5.推送微信公众号消息，通知用户已开始受理服务
-                consumerOrderService.sendWeChatMsg(orderRes);
-
-                logger.info("执行代驾司机接车操作：---end---" + orderId);
-
-                //6.给服务商发送接车短信
-                Boolean flag = false;
-                List<ConsumerProjectInfo> projectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(consumerOrderId);
-                for (ConsumerProjectInfo info:projectInfos
-                     ) {
-                    Project project = projectRepository.findById(info.getProjectId()).orElse(null);
-                    if (project!=null && project.getServiceProviderId()!=null){
-                        sendVerifyCode(orderId,project.getServiceProviderId());
-                        flag = true;
-                        break;
+                    if (flag){
+                        return ResultJsonObject.getDefaultResult(orderId);
+                    }else {
+                        return ResultJsonObject.getErrorResult(null,"未找到相关服务商，请联系工作人员。");
                     }
-                }
-                if (flag){
-                    return ResultJsonObject.getDefaultResult(orderId);
                 }else {
-                    return ResultJsonObject.getErrorResult(null,"未找到相关服务商，请联系工作人员。");
+                    return ResultJsonObject.getErrorResult(null,"钥匙已取出，验证码无效");
                 }
+            }else {
+                return ResultJsonObject.getErrorResult("代驾订单不存在");
+            }
+        }else {
+            return ResultJsonObject.getErrorResult(null, "签名错误");
+        }
+    }
 
-            } else if (eOrder != null && eOrder.getVerifyCode() != null && eOrder.getVerifyCode().equals(password) && eOrder.getDor() == 1) {
-                logger.info("代驾司机准备将车还回到智能柜中");
+
+    /**
+     * 代驾司机还车，提醒用户订单已受理
+     * @param orderId e代驾订单id
+     * @return
+     */
+    public ResultJsonObject verifyCodeAndOpenDoor(String sign, Integer password, Integer orderId,String doorId) throws ObjectNotFoundException, InterruptedException, OpenArkDoorFailedException, OpenArkDoorTimeOutException, ArgumentMissingException, NoEmptyArkException {
+        logger.info("执行代驾司机接车操作：---start---" + orderId);
+        //1.验证司机的订单验证码是否正确
+        Map<String, Object> param = new HashedMap<>();
+        param.put("password", password);
+        param.put("orderId", orderId);
+        if (sign.equals(HttpRequest.getSign(param))) {
+            logger.info("签名正确，准备校验验证码");
+            EOrder eOrder = eOrderService.findByOrderId(orderId);
+            logger.info(eOrder.toString());
+            if (eOrder != null && eOrder.getVerifyCode() != null && eOrder.getVerifyCode().equals(password) && eOrder.getDor() == 1) {
+                logger.info("代驾司机准备将车钥匙还回到智能柜中");
                 logger.info("司机输入验证码正确，准备打开柜门");
 
                 String consumerOrderId = eOrder.getConsumerOrderId();
@@ -385,18 +436,18 @@ public class EdaijiaService {
                 }
                 //1.获取arkSn
                 if (consumerOrder.getUserKeyLocationSn() == null) {
-                    throw new ObjectNotFoundException("未找到对应智能柜");
+                    return ResultJsonObject.getErrorResult("未找到对应智能柜");
                 } else {
-                    String userKeyLocationSn = consumerOrder.getUserKeyLocationSn();
-                    String arkSn = userKeyLocationSn.split(Constants.HYPHEN)[0];
-                    Door door = doorService.getUsefulDoor(arkSn);
+                    /*String userKeyLocationSn = consumerOrder.getUserKeyLocationSn();
+                    String arkSn = userKeyLocationSn.split(Constants.HYPHEN)[0];*/
+                    Door door = doorService.findById(doorId);
                     consumerOrder.setFinishTime(new Timestamp(System.currentTimeMillis()));
                     consumerOrder.setState(Constants.OrderState.SERVICE_FINISH.getValue());
 
                     // 有效柜子分配逻辑
                     Door emptyDoor = (Door) ConcurrentHashMapCacheUtils.getCache(door.getId());
                     if (null == emptyDoor) {
-                        throw new ObjectNotFoundException("未找到分配的柜门号，请稍后重试");
+                        return ResultJsonObject.getErrorResult("未找到分配的柜门号，请稍后重试");
                     }
 
                     logger.info("arkOrderLog:智能柜柜门door信息：" + emptyDoor);
@@ -430,13 +481,14 @@ public class EdaijiaService {
                     }
                     // 推送微信公众号消息，通知用户取车
                     consumerOrderService.sendWeChatMsg(order);
-                    return ResultJsonObject.getDefaultResult(null);
+                    return ResultJsonObject.getDefaultResult(emptyDoor.getDoorSn());
                 }
-
+            }else {
+                return ResultJsonObject.getErrorResult("代驾订单不存在");
             }
-            return ResultJsonObject.getErrorResult(null, "开柜验证码错误");
+        }else {
+            return ResultJsonObject.getErrorResult(null, "签名错误");
         }
-        return ResultJsonObject.getErrorResult(null, "签名错误");
     }
 
     private void changeDoorState(Door door, String orderId, int doorState) throws ArgumentMissingException {
@@ -456,6 +508,7 @@ public class EdaijiaService {
      * @return
      */
     public ResultJsonObject confirmService(String orderId) throws ObjectNotFoundException, NormalException {
+        logger.info("服务商完成服务，电话告知");
         ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
         if (consumerOrder == null) {
             throw new ObjectNotFoundException("未查询到对应的订单");
@@ -486,6 +539,8 @@ public class EdaijiaService {
                 Integer eOrderId = jsonResult.getInteger("data");
                 eOrder.setOrderId(eOrderId);
                 eOrderRepository.saveAndFlush(eOrder);
+                consumerOrder.setState(Constants.OrderState.TO_BE_RETURNED.getValue());
+                consumerOrderRepository.saveAndFlush(consumerOrder);
                 logger.info("开始查询e代驾订单：{} 详情", eOrderId);
                 sendTemplate(eOrderId);
                 return ResultJsonObject.getDefaultResult("下单成功");

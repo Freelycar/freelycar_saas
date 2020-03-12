@@ -1,7 +1,7 @@
 spring:
   # 选择加载不同环境的配置文件
   profiles:
-    active: pro
+    active: dev
     include: data,mvc,endpoints
 
   # 静态资源路径
@@ -30,3 +30,24 @@ spring:
   output:
     ansi:
       enabled: always
+
+leancloud:
+  app:
+    id: YPVPvcghD0yT1CtQKUOpOUGI-gzGzoHsz
+    key: AnrwmLo01qL7RuKNbV0NwWR4
+  url:
+    res: https://leancloud.cn/1.1/requestSmsCode
+    ver: https://leancloud.cn/1.1/verifySmsCode
+
+baidu:
+  map:
+    ak: d9lPgxKkEwRlEoguEGEmjb0MweNqYk2G
+    geocoding:
+      url: http://api.map.baidu.com/geocoding/v3/
+      reverse:
+        url: http://api.map.baidu.com/reverse_geocoding/v3/
+
+edaijia:
+  order: https://baoyang.d.edaijia.cn/api/third/2/order/
+  channel: 91
+  customerId: CH0110000223

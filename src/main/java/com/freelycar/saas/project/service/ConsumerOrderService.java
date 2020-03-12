@@ -1050,7 +1050,7 @@ public class ConsumerOrderService {
             Optional<Project> projectOptional = projectRepository.findById(projectId);
             if (projectOptional.isPresent()) {
                 Optional<ProjectType> projectTypeOptional = projectTypeRepository.findById(projectOptional.get().getProjectTypeId());
-                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().equals("代驾订单")) {
+                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().contains("代驾")) {
                     orderType = true;
                     serviceProviderId = projectOptional.get().getServiceProviderId();
                     break;
@@ -1063,6 +1063,7 @@ public class ConsumerOrderService {
         }
 
         if (orderType) {//1.代驾订单：向e代驾下单，发送短信给代驾师傅
+            logger.info("订单："+consumerOrderRes.getId()+"为代驾订单");
             Integer EorderId = edaijiaService.createOrder(consumerOrderRes, emptyDoor, serviceProviderId);
             // 推送微信公众号消息，通知用户订单生成成功
             sendWeChatMsg(consumerOrderRes);
@@ -1111,10 +1112,12 @@ public class ConsumerOrderService {
         for (ConsumerProjectInfo project :
                 projectInfos) {
             String projectId = project.getProjectId();
+            logger.info("projectId:"+projectId);
             Optional<Project> projectOptional = projectRepository.findById(projectId);
             if (projectOptional.isPresent()) {
+                logger.info("projectTypeId:"+projectOptional.get().getProjectTypeId());
                 Optional<ProjectType> projectTypeOptional = projectTypeRepository.findById(projectOptional.get().getProjectTypeId());
-                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().equals("代驾订单")) {
+                if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().contains("代驾")) {
                     orderType = true;
 //                    serviceProviderId = projectOptional.get().getServiceProviderId();
                     break;

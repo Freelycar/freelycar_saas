@@ -116,7 +116,8 @@ public class Constants {
         RECEIVE_CAR(1, "接车"),
         SERVICE_FINISH(2, "完工"),
         HAND_OVER(3, "交车"),
-        CANCEL(4, "取消");
+        CANCEL(4, "取消"),
+        TO_BE_RETURNED(5,"待还回");
 
         private final Integer value;
         private final String name;

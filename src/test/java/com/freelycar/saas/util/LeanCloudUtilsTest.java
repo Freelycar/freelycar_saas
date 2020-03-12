@@ -29,5 +29,6 @@ public class LeanCloudUtilsTest {
     @Test
     public void testSendTemplate(){
 //        leanCloudUtils.sendTemplate("18206295380");
+        leanCloudUtils.sendVerifyCode("18206295380","123456");
     }
 }

@@ -391,11 +391,12 @@ public class HttpRequest {
                     append(sortedParam.get(key));
         }
         String s = sb.toString();
-        System.out.println("s:" + s);
+//        System.out.println("s:" + s);
         String md5s = MD5.encode("md5", s);
-        System.out.println("md5s:" + md5s);
+//        System.out.println("md5s:" + md5s);
         String md5sa = md5s + 'a';
         String sign = MD5.encode("MD5", md5sa);
+//        System.out.println(sign);
         return sign;
     }
 
@@ -423,13 +424,13 @@ public class HttpRequest {
                 +"&password="+password
                 +"&orderId="+orderId;
         System.out.println(link);*/
-        Map<String, Object> param = new HashedMap<>();
+       /* Map<String, Object> param = new HashedMap<>();
         param.put("b", "v2");
         param.put("a", "v1");
         param.put("c","v3");
         param.put("d",null);
         Map<String,Object> result = getEParam(param);
         System.out.println(result);
-        System.out.println(getSign(param));
+        System.out.println(getSign(param));*/
     }
 }

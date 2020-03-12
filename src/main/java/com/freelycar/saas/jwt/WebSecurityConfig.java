@@ -33,8 +33,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.POST, "/login").permitAll()
                 // 放行e代驾司机短信验证接口
                 .antMatchers(HttpMethod.GET, "/verifyCode").permitAll()
+                .antMatchers(HttpMethod.GET,"/verifyCodeAndOpenDoor").permitAll()
                 // 放行e代驾订单分页
                 .antMatchers(HttpMethod.GET, "/edaijiList").permitAll()
+                //放行confirmService
+                .antMatchers(HttpMethod.GET,"/confirmService").permitAll()
+
+                .antMatchers(HttpMethod.GET,"/wechat/order/getOrderDetail").permitAll()
+                .antMatchers(HttpMethod.GET,"/wechat/ark/getEmptyDoor").permitAll()
+
+
                 //放行Swagger2页面
                 .antMatchers(HttpMethod.GET, "/swagger-ui.html").permitAll()
                 .antMatchers("/webjars/**").permitAll()

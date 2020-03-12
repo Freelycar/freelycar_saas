@@ -11,8 +11,9 @@ package com.freelycar.saas.iotcloudcn;
 public class ArkOps {
 
     public static void main(String[] args) {
-        String deviceId = "";
-        int boxId = 1;
+        String deviceId = "861230044422179";
+//        3,9,11,13
+        int boxId = 3;
 
         int boxCount = 16;
 
@@ -20,14 +21,14 @@ public class ArkOps {
 //        openBox(deviceId,boxId);
 
         //打开所有柜门
-//        openAllBox(deviceId, boxCount);
+        openAllBox(deviceId, boxCount);
 
         //查询某个柜门状态
 //        queryBox(deviceId, boxId);
 
 
         //查询某个柜子所有柜门
-//        queryBoard(deviceId);
+        queryBoard(deviceId);
     }
 
     private static void openBox(String deviceId, int boxId) {
