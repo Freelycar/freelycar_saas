@@ -16,4 +16,6 @@ import java.util.List;
 @Repository
 public interface WxUserInfoRepository extends JpaRepository<WxUserInfo,String> {
     List<WxUserInfo> findByDelStatusAndCreateTimeAfter(boolean delStatus,Timestamp createTime);
+
+    List<WxUserInfo> findByDelStatusAndCreateTimeBefore(boolean delStatus,Timestamp createTime);
 }

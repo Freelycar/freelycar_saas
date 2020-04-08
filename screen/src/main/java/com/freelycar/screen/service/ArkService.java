@@ -26,36 +26,43 @@ public class ArkService {
     /**
      * 1.最近12月智能柜每月新增数量
      * 2.最近12月覆盖用户数
+     *
      * @return list
      */
     public JSONObject getMonthlyAdditions() {
         JSONObject result = new JSONObject();
         DateTime now = new DateTime();
         Timestamp start = new Timestamp(TimestampUtil.getStartTime(now).getMillis());
-        List<Ark> arkList = arkRepository.findByDelStatusAndCreateTimeAfter(false,start);
+        List<Ark> arkList = arkRepository.findByDelStatusAndCreateTimeAfter(false, start);
+        //每月新增智能柜数
         List<Map<String, Integer>> r1 = MonthService.getMonthlyAdditions(arkList, now);
-        result.put("ark", r1);
         List<Map<String, Long>> r2 = new ArrayList<>();
-        long sum = getInitNumberOfCoveredPeople();
+        int initSum = getInitNumberOfArk();
+        long sum = genRandomSum(initSum);
         for (Map<String, Integer> o : r1) {
             for (String key :
                     o.keySet()) {
+                //累计覆盖用户数
                 int s = o.get(key);
                 sum += genRandomSum(s);
                 Map<String, Long> map = new HashMap<>();
                 map.put(key, sum);
                 r2.add(map);
+                //累计智能柜数
+                initSum += s;
+                o.put(key, initSum);
             }
         }
+        result.put("ark", r1);
         result.put("user", r2);
         return result;
     }
 
-    private Long getInitNumberOfCoveredPeople() {
+    private int getInitNumberOfArk() {
         DateTime now = new DateTime();
         Timestamp start = new Timestamp(TimestampUtil.getStartTime(now).getMillis());
-        List<Ark> arkList = arkRepository.findByDelStatusAndCreateTimeBefore(false,start);
-        return genRandomSum(arkList.size());
+        List<Ark> arkList = arkRepository.findByDelStatusAndCreateTimeBefore(false, start);
+        return arkList.size();
     }
 
     /**

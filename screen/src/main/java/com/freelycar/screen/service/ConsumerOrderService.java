@@ -6,8 +6,9 @@ import com.freelycar.screen.entity.Store;
 import com.freelycar.screen.entity.repo.ConsumerOrderRepository;
 import com.freelycar.screen.entity.repo.StoreRepository;
 import com.freelycar.screen.utils.TimestampUtil;
-import com.google.common.collect.Lists;
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ import java.util.*;
  */
 @Service
 public class ConsumerOrderService {
+    private final static Logger logger = LoggerFactory.getLogger(ConsumerOrderService.class);
     @Autowired
     private ConsumerOrderRepository consumerOrderRepository;
     @Autowired
@@ -32,6 +34,9 @@ public class ConsumerOrderService {
      * 1.最近12月每月智能柜使用用户数:activeUser
      * （同一用户当月多次使用仅作为一条数据）
      * 2.门店排名
+     * 3.最近12月用户平均使用频次
+     * 4.用户平均每月消费数额
+     *
      * @return JSONObject
      */
     public JSONObject getMonthlyAdditions() {
@@ -43,12 +48,36 @@ public class ConsumerOrderService {
         result.put("activeUser", r1);
         List<Map<String, Object>> r2 = genStoreRanking(consumerOrderList);
         result.put("storeRanking", r2);
+        List<Map<String, Object>> r3 = getAverageUsageFrequencyMonthly(consumerOrderList, now);
+        result.put("averageUsage", r3);
+        double averageConsumption = getAvarageConsumption(consumerOrderList);
+        result.put("averageConsumption", averageConsumption);
         return result;
+    }
+
+    /**
+     * 用户平均每月消费数额
+     *
+     * @return JSONObject
+     */
+    public double getAvarageConsumption(List<ConsumerOrder> consumerOrderList) {
+        BigDecimal sum = new BigDecimal("0");
+        Set<String> clientIds = new HashSet<>();
+        for (ConsumerOrder order :
+                consumerOrderList) {
+            clientIds.add(order.getClientId());
+            sum = sum.add(BigDecimal.valueOf(order.getActualPrice()));
+        }
+        logger.info("{}人共消费：{}", clientIds.size(), sum.toString());
+        BigDecimal average = sum.divide(BigDecimal.valueOf(clientIds.size() * 12), 2, BigDecimal.ROUND_HALF_UP);
+        double averageConsumption = average.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        return averageConsumption;
     }
 
     /**
      * 处理用户订单列表
      * 每月每个用户只保留一条数据
+     *
      * @param consumerOrderList
      * @return
      */
@@ -81,6 +110,7 @@ public class ConsumerOrderService {
 
     /**
      * 获取门店排名（根据业务量（订单数）显示业绩（收入））
+     * 最近12月
      *
      * @param consumerOrderList
      * @return list
@@ -134,9 +164,10 @@ public class ConsumerOrderService {
         //2.根据业务量对门店进行排序
         for (int i = 0; i < stores.size() - 1; i++) {
             int count1 = (int) stores.get(i).get("count");
-            for (int j = 1; j < stores.size(); j++) {
+            for (int j = i + 1; j < stores.size(); j++) {
                 int count2 = (int) stores.get(j).get("count");
                 if (count2 > count1) {
+                    count1 = count2;
                     Collections.swap(stores, i, j);
                 }
             }
@@ -179,16 +210,71 @@ public class ConsumerOrderService {
                 }
             }
         }
+        for (Map<String, Object> map :
+                result) {
+            map.remove("storeId");
+        }
         return result;
     }
 
-    public static void main(String[] args) {
-        List<Integer> nums = new ArrayList<>();
-        for (int i = 0; i < 11; i++) {
-            nums.add(i);
+    /**
+     * 按月处理，获取每月客户的平均消费次数
+     *
+     * @param consumerOrderList
+     * @param now
+     * @return
+     */
+    private List<Map<String, Object>> getAverageUsageFrequencyMonthly(List<ConsumerOrder> consumerOrderList, DateTime now) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        //将数据按月分类
+        Map<String, List<ConsumerOrder>> mapResult = new HashMap<>();
+        for (ConsumerOrder order :
+                consumerOrderList) {
+            DateTime createTime = new DateTime(order.getCreateTime().getTime());
+            String month = createTime.toString(TimestampUtil.dateTimeFormatter1);
+            if (mapResult.keySet().contains(month)) {
+                List<ConsumerOrder> list = mapResult.get(month);
+                list.add(order);
+            } else {
+                List<ConsumerOrder> ll = new ArrayList<>();
+                ll.add(order);
+                mapResult.put(month, ll);
+            }
         }
-        System.out.println(nums.toString());
-        List<Integer> result = nums.subList(0, 10);
-        System.out.println(result.toString());
+        //数据按月统计
+        List<DateTime> timeList = TimestampUtil.getTimeList(now);
+        List<String> stimeList = new ArrayList<>();
+        for (int i = 0; i < timeList.size() - 1; i++) {
+            stimeList.add(timeList.get(i).toString(TimestampUtil.dateTimeFormatter1));
+        }
+        for (String month :
+                stimeList) {
+            Map<String, Object> rr = new HashMap<>();
+            float r1 = 0;
+            if (mapResult.get(month) != null && mapResult.get(month).size() > 0) {
+                List<ConsumerOrder> orderPerMonth = mapResult.get(month);
+                r1 = getAverageUsageFrequency(orderPerMonth);
+            }
+            rr.put(month, r1);
+            result.add(rr);
+        }
+        return result;
+    }
+
+    /**
+     * 根据消费订单获取平均每人消费次数
+     *
+     * @param consumerOrderList
+     * @return
+     */
+    private float getAverageUsageFrequency(List<ConsumerOrder> consumerOrderList) {
+        Set<String> clientIds = new HashSet<>();
+        for (ConsumerOrder order :
+                consumerOrderList) {
+            if (!clientIds.contains(order.getClientId())) {
+                clientIds.add(order.getClientId());
+            }
+        }
+        return (float) (Math.round(((float) consumerOrderList.size() / clientIds.size()) * 100)) / 100;
     }
 }

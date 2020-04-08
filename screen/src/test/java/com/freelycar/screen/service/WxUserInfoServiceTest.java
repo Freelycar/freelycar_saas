@@ -1,13 +1,11 @@
 package com.freelycar.screen.service;
 
+import com.alibaba.fastjson.JSONObject;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author pyt
@@ -23,13 +21,7 @@ class WxUserInfoServiceTest {
 
     @Test
     void getMonthlyAdditions() {
-        List<Map<String, Integer>> result = wxUserInfoService.getMonthlyAdditions();
-        for (Map<String, Integer> r :
-                result) {
-            for (String name :
-                    r.keySet()) {
-                System.out.println(name + ":" + r.get(name));
-            }
-        }
+        JSONObject  result = wxUserInfoService.getMonthlyAdditions();
+        System.out.println(result);
     }
 }

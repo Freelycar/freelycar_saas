@@ -17,4 +17,5 @@ import java.util.List;
 @Repository
 public interface ConsumerProjectInfoRepository extends JpaRepository<ConsumerProjectInfo, String> {
     List<ConsumerProjectInfo> findByDelStatusAndCreateTimeAfter(boolean delStatus, Timestamp createTime);
+    List<ConsumerProjectInfo> findByDelStatus(boolean delStatus);
 }

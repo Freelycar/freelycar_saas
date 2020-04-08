@@ -14,19 +14,21 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author pyt
- * @date 2020/4/1 16:32
+ * @date 2020/4/8 14:57
  * @email 2630451673@qq.com
  * @desc
  */
 @SpringBootTest
 @RunWith(SpringRunner.class)
-class ConsumerOrderServiceTest {
+class CarServiceTest {
     @Autowired
-    private ConsumerOrderService consumerOrderService;
+    private CarService carService;
 
     @Test
-    void getMonthlyAddtions() {
-        JSONObject result = consumerOrderService.getMonthlyAdditions();
+    void getCarBrand() {
+        List<Map<String, Integer>> list = carService.getCarBrand();
+        JSONObject result = new JSONObject();
+        result.put("list", list);
         System.out.println(result);
     }
 }
