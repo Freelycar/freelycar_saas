@@ -1,8 +1,8 @@
-package com.freelycar.screen.handle;
+package com.freelycar.saas.screen.handle;
 
-import com.freelycar.screen.domain.Result;
-import com.freelycar.screen.exception.WebSocketException;
-import com.freelycar.screen.utils.ResultUtil;
+import com.freelycar.saas.screen.domain.Result;
+import com.freelycar.saas.screen.exception.WebSocketException;
+import com.freelycar.saas.screen.utils.ResultUtil;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;

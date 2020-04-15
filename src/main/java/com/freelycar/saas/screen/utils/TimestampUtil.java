@@ -1,10 +1,9 @@
-package com.freelycar.screen.utils;
+package com.freelycar.saas.screen.utils;
 
 import org.joda.time.DateTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,10 +23,11 @@ public class TimestampUtil {
      * 如：
      * 参数时间为：2020-04-01 14:39:07.426
      * 结果：2019-05-01 00:00:00.000
+     *
      * @param end 截止时间
      * @return DateTime
      */
-    public static DateTime getStartTime(DateTime end){
+    public static DateTime getStartTime(DateTime end) {
         DateTime result = end.minusMonths(11)
                 .withDayOfMonth(1)    //当月第一天
                 .withHourOfDay(0)     //当天0点
@@ -39,17 +39,18 @@ public class TimestampUtil {
     }
 
     /**
-     *  如:
-     *  参数时间为：2020-04-01 14:39:07.426
-     *  结果为：
+     * 如:
+     * 参数时间为：2020-04-01 14:39:07.426
+     * 结果为：
      * [2019-05-01 00:00:00.000, 2019-06-01 00:00:00.000, 2019-07-01 00:00:00.000, 2019-08-01 00:00:00.000,
      * 2019-09-01 00:00:00.000, 2019-10-01 00:00:00.000, 2019-11-01 00:00:00.000, 2019-12-01 00:00:00.000,
      * 2020-01-01 00:00:00.000, 2020-02-01 00:00:00.000, 2020-03-01 00:00:00.000, 2020-04-01 00:00:00.000,
      * 2020-04-01 14:39:07.426]
+     *
      * @param end
      * @return
      */
-    public static List<DateTime> getTimeList(DateTime end){
+    public static List<DateTime> getTimeList(DateTime end) {
         DateTime start = getStartTime(end);
         List<DateTime> timeList = new ArrayList<>();
         timeList.add(start);
@@ -60,7 +61,7 @@ public class TimestampUtil {
         return timeList;
     }
 
-    public static List<String> getMonthsList(DateTime start){
+    public static List<String> getMonthsList(DateTime start) {
         List<String> monthsList = new ArrayList<>();
         for (int i = 0; i < 12; i++) {
             monthsList.add(start.minusMonths(i).toString(dateTimeFormatter1));
@@ -75,6 +76,14 @@ public class TimestampUtil {
 //             getTimeList(new DateTime())) {
 //            System.out.println(t.toString(dateTimeFormatter));
 //        }
+        DateTime dateTime = DateTime.now();
+        DateTime firstDay = dateTime.minusMonths(1)
+                .withDayOfMonth(1)    //当月第一天
+                .withHourOfDay(0)     //当天0点
+                .withMinuteOfHour(0)  //当小时0分
+                .withSecondOfMinute(0)//当分钟0秒
+                .withMillisOfSecond(0); //当秒0毫秒
+
     }
 
 }

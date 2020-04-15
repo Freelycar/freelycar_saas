@@ -1,9 +1,13 @@
-package com.freelycar.screen.websocket.server;
+package com.freelycar.saas.screen.websocket.server;
 
-import com.freelycar.screen.enums.ResultEnum;
-import com.freelycar.screen.exception.WebSocketException;
+import com.alibaba.fastjson.JSONObject;
+import com.freelycar.saas.screen.enums.ResultEnum;
+import com.freelycar.saas.screen.exception.WebSocketException;
+import com.freelycar.saas.screen.service.ScreenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import javax.websocket.*;
@@ -17,9 +21,15 @@ import java.util.concurrent.CopyOnWriteArraySet;
  * @email 2630451673@qq.com
  * @desc
  */
-@ServerEndpoint("/test")
+@ServerEndpoint("/wss")
 @Component
 public class ScreenWebsocketServer {
+    private static ScreenService screenService;
+    @Autowired
+    public void setScreenService(ScreenService screenService) {
+        ScreenWebsocketServer.screenService = screenService;
+    }
+
     private final static Logger logger = LoggerFactory.getLogger(ScreenWebsocketServer.class);
     /**
      * concurrent包的线程安全Set，用来存放每个客户端对应的MyWebSocket对象。
@@ -32,14 +42,17 @@ public class ScreenWebsocketServer {
      */
     private Session session;
 
+
     @OnOpen
     public void onOpen(Session session) {
         logger.info("有新的客户端连接了: {}", session.getId());
         //将新用户存入在线的组
         this.session = session;
         webSocketSet.add(this);
+        JSONObject result = screenService.result();
         try {
             sendMessage("连接成功建立");
+            sendMessage(result.toString());
         } catch (IOException e) {
             logger.error("IO异常");
         }
@@ -81,7 +94,6 @@ public class ScreenWebsocketServer {
     public void sendMessage(String message) throws IOException {
         this.session.getBasicRemote().sendText(message);
     }
-
 
 
     public static CopyOnWriteArraySet<ScreenWebsocketServer> getWebSocketSet() {

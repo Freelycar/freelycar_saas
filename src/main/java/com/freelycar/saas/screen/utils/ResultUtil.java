@@ -1,7 +1,7 @@
-package com.freelycar.screen.utils;
+package com.freelycar.saas.screen.utils;
 
 
-import com.freelycar.screen.domain.Result;
+import com.freelycar.saas.screen.domain.Result;
 
 /**
  * @author pyt

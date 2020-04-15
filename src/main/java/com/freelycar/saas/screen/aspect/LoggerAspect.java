@@ -1,4 +1,4 @@
-package com.freelycar.screen.aspect;
+package com.freelycar.saas.screen.aspect;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.*;
@@ -21,7 +21,7 @@ public class LoggerAspect {
         return  joinPoint.getSignature().getDeclaringTypeName() + '.' + joinPoint.getSignature().getName();
     }
 
-    @Pointcut("execution(public * com.freelycar.screen.controller.*.*(..))")
+    @Pointcut("execution(public * com.freelycar.saas.screen.controller.*.*(..))")
     public void logPointcut() {
     }
 

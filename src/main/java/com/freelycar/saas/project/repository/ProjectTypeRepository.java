@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tangwei - Toby
@@ -30,5 +31,7 @@ public interface ProjectTypeRepository extends JpaRepository<ProjectType, String
     @Modifying(clearAutomatically = true)
     @Query(value = "update projectType set delStatus = 1 where id=:id", nativeQuery = true)
     int delById(String id);
+
+    List<ProjectType> findByIdIn(Set<String> id);
 
 }

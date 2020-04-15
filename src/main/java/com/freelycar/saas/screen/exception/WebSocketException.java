@@ -1,6 +1,7 @@
-package com.freelycar.screen.exception;
+package com.freelycar.saas.screen.exception;
 
-import com.freelycar.screen.enums.ResultEnum;
+
+import com.freelycar.saas.screen.enums.ResultEnum;
 
 /**
  * @author pyt

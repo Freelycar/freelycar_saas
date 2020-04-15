@@ -1054,12 +1054,12 @@ public class ConsumerOrderService {
                     orderType = true;
                     serviceProviderId = projectOptional.get().getServiceProviderId();
                     break;
-                } else {
+                }/* else {
                     throw new ObjectNotFoundException("未找到对应的项目类型信息");
-                }
-            } else {
+                }*/
+            }/* else {
                 throw new ObjectNotFoundException("未找到对应的项目信息");
-            }
+            }*/
         }
 
         if (orderType) {//1.代驾订单：向e代驾下单，发送短信给代驾师傅

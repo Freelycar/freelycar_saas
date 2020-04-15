@@ -1,4 +1,4 @@
-package com.freelycar.screen.enums;
+package com.freelycar.saas.screen.enums;
 
 /**
  * @author pyt

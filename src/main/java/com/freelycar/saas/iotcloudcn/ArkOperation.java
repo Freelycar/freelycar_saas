@@ -24,6 +24,7 @@ public class ArkOperation {
 
     private static BoxCommandResponse getRemoteResponse(BoxCommand cmd, String url) {
         try {
+//            logger.info("发送数据:{}",cmd);
             return SafeConnection.postAndGetResponse(url, cmd, BoxCommandResponse.class);
         } catch (IOException e) {
             logger.error("调用iotcloudcn远端接口出现异常", e);

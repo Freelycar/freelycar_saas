@@ -5,6 +5,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.sql.Timestamp;
+import java.util.List;
+
 /**
  * @author tangwei - Toby
  * @date 2019-02-18
@@ -16,4 +19,7 @@ public interface ArkRepository extends JpaRepository<Ark, String> {
     Page<Ark> findAllByStoreIdAndSnContainingAndDelStatus(String storeId, String sn, boolean delStatus, Pageable pageable);
 
     Page<Ark> findAllBySnContainingAndDelStatus(String sn, boolean delStatus, Pageable pageable);
+
+    List<Ark> findByDelStatusAndCreateTimeAfter(boolean delStatus, Timestamp createTime);
+    List<Ark> findByDelStatusAndCreateTimeBefore(boolean delStatus, Timestamp createTime);
 }

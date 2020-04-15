@@ -1,9 +1,9 @@
-package com.freelycar.screen.service;
+package com.freelycar.saas.screen.service;
 
-import com.freelycar.screen.entity.Ark;
-import com.freelycar.screen.entity.ConsumerOrder;
-import com.freelycar.screen.entity.WxUserInfo;
-import com.freelycar.screen.utils.TimestampUtil;
+import com.freelycar.saas.project.entity.Ark;
+import com.freelycar.saas.project.entity.ConsumerOrder;
+import com.freelycar.saas.project.entity.WxUserInfo;
+import com.freelycar.saas.screen.utils.TimestampUtil;
 import org.joda.time.DateTime;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package com.freelycar.screen.domain;
+package com.freelycar.saas.screen.domain;
 
 /**
  * @author pyt

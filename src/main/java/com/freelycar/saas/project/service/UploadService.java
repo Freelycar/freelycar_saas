@@ -65,8 +65,6 @@ public class UploadService {
      */
     public ResultJsonObject uploadStoreImg(MultipartFile file, HttpServletRequest request) throws FileNotFoundException, ArgumentMissingException {
         String resultURL = this.uploadPicture(file, request, STORE_IMG_FOLDER_NAME);
-
-
         // 文件名与文件URL存入数据库表
         if (StringUtils.hasText(resultURL)) {
             StoreImg storeImg = new StoreImg();

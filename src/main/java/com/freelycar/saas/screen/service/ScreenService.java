@@ -1,48 +1,39 @@
-package com.freelycar.screen.timer;
+package com.freelycar.saas.screen.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.freelycar.screen.service.*;
-import com.freelycar.screen.websocket.server.ScreenWebsocketServer;
+import com.freelycar.saas.screen.timer.TimeTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CopyOnWriteArraySet;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 
 /**
  * @author pyt
- * @date 2020/3/31 15:44
+ * @date 2020/4/15 11:05
  * @email 2630451673@qq.com
  * @desc
  */
-@Component
-@EnableScheduling
-public class TimeTask {
-    private final static Logger logger = LoggerFactory.getLogger(TimeTask.class);
+@Service
+public class ScreenService {
+    private final static Logger logger = LoggerFactory.getLogger(ScreenService.class);
     @Autowired
+    @Qualifier("arkService1")
     private ArkService arkService;
     @Autowired
+    @Qualifier("consumerOrderService1")
     private ConsumerOrderService consumerOrderService;
     @Autowired
+    @Qualifier("consumerProjectService1")
     private ConsumerProjectService consumerProjectService;
     @Autowired
+    @Qualifier("wxUserInfoService1")
     private WxUserInfoService wxUserInfoService;
     @Autowired
+    @Qualifier("carService1")
     private CarService carService;
 
-
-    @Scheduled(cron = "0 0/1 * * * ?")   //每分钟执行一次
-    public void test() {
-        logger.info("**************开始定时推送**************");
-        CopyOnWriteArraySet<ScreenWebsocketServer> webSocketSet =
-                ScreenWebsocketServer.getWebSocketSet();
+    public JSONObject result(){
         JSONObject result = new JSONObject();
         JSONObject result1 = arkService.getMonthlyAdditions();
         /*
@@ -74,17 +65,19 @@ public class TimeTask {
          */
         result.put("newUser", result4.get("newUser"));
         /*
-         * 1.用户中汽车品牌top10
+         * 1.用户中汽车品牌top10:topCarBrandByUser
+         * 2.用户消费次数汽车品牌top10:topCarBrandByConsumptionTime
+         * 3.平均消费金额汽车品牌top10:topCarBrandByAverageConsumption
+         * 4.用户增长率汽车品牌top10:topCarBrandByUserIncrement
+         * 5.用户复购率汽车品牌top10:topCarBrandByRepeatUse
          */
-        List<Map<String, Integer>> result5 = carService.getCarBrand();
-        result.put("topCarBrand",result5);
-        webSocketSet.forEach(c -> {
-            try {
-                c.sendMessage(result.toString());
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        logger.info("**************定时推送结束**************");
+        JSONObject result5 = carService.getTop10CarBrand();
+        result.put("topCarBrandByUser", result5.get("result1"));
+        result.put("topCarBrandByConsumptionTime", result5.get("result2"));
+        result.put("topCarBrandByAverageConsumption", result5.get("result3"));
+        result.put("topCarBrandByUserIncrement", result5.get("currentUserIncrement"));
+        result.put("topCarBrandByRepeatUse", result5.get("repeatUserList"));
+
+        return result;
     }
 }

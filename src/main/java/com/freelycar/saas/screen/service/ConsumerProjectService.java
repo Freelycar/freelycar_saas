@@ -1,21 +1,17 @@
-package com.freelycar.screen.service;
+package com.freelycar.saas.screen.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.freelycar.screen.entity.ConsumerProjectInfo;
-import com.freelycar.screen.entity.Project;
-import com.freelycar.screen.entity.ProjectType;
-import com.freelycar.screen.entity.repo.ConsumerProjectInfoRepository;
-import com.freelycar.screen.entity.repo.ProjectRepository;
-import com.freelycar.screen.entity.repo.ProjectTypeRepository;
-import com.freelycar.screen.utils.TimestampUtil;
-import com.freelycar.screen.websocket.server.ScreenWebsocketServer;
-import org.joda.time.DateTime;
+import com.freelycar.saas.project.entity.ConsumerProjectInfo;
+import com.freelycar.saas.project.entity.Project;
+import com.freelycar.saas.project.entity.ProjectType;
+import com.freelycar.saas.project.repository.ConsumerProjectInfoRepository;
+import com.freelycar.saas.project.repository.ProjectRepository;
+import com.freelycar.saas.project.repository.ProjectTypeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
 import java.util.*;
 
 /**
@@ -24,7 +20,7 @@ import java.util.*;
  * @email 2630451673@qq.com
  * @desc
  */
-@Service
+@Service("consumerProjectService1")
 public class ConsumerProjectService {
     private final static Logger logger = LoggerFactory.getLogger(ConsumerProjectService.class);
     @Autowired
@@ -39,11 +35,8 @@ public class ConsumerProjectService {
      */
     public JSONObject genProjectRanking() {
         //1.获取项目数据
-//        DateTime now = new DateTime();
-//        Timestamp start = new Timestamp(TimestampUtil.getStartTime(now).getMillis());
         //1.1获取到12个月的项目服务数据
         List<ConsumerProjectInfo> projectInfoList = consumerProjectInfoRepository.findByDelStatus(false);
-//        logger.info("共有：{}条项目服务数据", projectInfoList.size());
         //项目id
         Set<String> projectIds = new HashSet<>();
         //项目id-项目业务量
@@ -72,10 +65,8 @@ public class ConsumerProjectService {
                 }
             }
         }
-//        logger.info("共有:{}个项目", projectIds.size());
         //2.根据项目类型对项目数据进行处理
         List<Project> projectList = projectRepository.findByDelStatusAndIdIn(false, projectIds);
-//        logger.info("共有:{}个有效项目", projectList.size());
         Set<String> projectTypeIds = new HashSet<>();
         List<Map<String, Integer>> projectTypeSumList = new ArrayList<>();
         Map<String, String> projectTypeRelationship = new HashMap<>();
@@ -101,7 +92,6 @@ public class ConsumerProjectService {
                 String projectTypeId = projectTypeRelationship.get(key);
                 if (projectTypeId != null) {
                     String projectTypeName = projectType.get(projectTypeId);
-//                    System.out.println("project：" + key + "的项目类型为:" + projectTypeId + "名称：" + projectTypeName);
                     //2)项目类型名称为key
                     if (!record.contains(projectTypeName)) {
                         record.add(projectTypeName);
@@ -113,20 +103,16 @@ public class ConsumerProjectService {
                                 projectTypeSumList) {
                             for (String keyi :
                                     projectTypeSum.keySet()) {
-                                if (!keyi.equals(projectTypeName)) {
-                                    break;
-                                } else {
+                                if (keyi.equals(projectTypeName)) {
                                     int currentSum = projectTypeSum.get(projectTypeName);
                                     currentSum += projectSum.get(key);
                                     projectTypeSum.put(projectTypeName, currentSum);
+                                    break;
                                 }
                             }
                         }
                     }
                 }
-                /*else {
-                    logger.info("projectId:{}无效,该项目有{}条记录", key, projectSum.get(key));
-                }*/
             }
         }
         JSONObject result = new JSONObject();

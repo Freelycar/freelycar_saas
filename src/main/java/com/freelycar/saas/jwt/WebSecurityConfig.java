@@ -1,5 +1,6 @@
 package com.freelycar.saas.jwt;
 
+import okhttp3.WebSocket;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -41,6 +42,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 
                 .antMatchers(HttpMethod.GET,"/wechat/order/getOrderDetail").permitAll()
                 .antMatchers(HttpMethod.GET,"/wechat/ark/getEmptyDoor").permitAll()
+                //放行大屏测试接口
+                .antMatchers(HttpMethod.GET,"/screen/test").permitAll()
+                .antMatchers("/wss").permitAll()
 
 
                 //放行Swagger2页面

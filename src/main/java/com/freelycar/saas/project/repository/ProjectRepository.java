@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tangwei - Toby
@@ -55,4 +56,6 @@ public interface ProjectRepository extends JpaRepository<Project, String> {
     List<Project> findAllByStoreIdAndDelStatusAndSaleStatusOrderByCreateTime(String storeId, boolean delStatus, boolean saleStatus);
 
     List<Project> findByStoreIdAndDelStatusAndBookOnline(String storeId, boolean delStatus, boolean bookOnline);
+
+    List<Project> findByDelStatusAndIdIn(boolean delStatus, Set<String> id);
 }

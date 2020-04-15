@@ -9,8 +9,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.QueryHints;
 
 import javax.persistence.QueryHint;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.hibernate.jpa.QueryHints.HINT_COMMENT;
 
@@ -67,4 +69,11 @@ public interface ConsumerOrderRepository extends JpaRepository<ConsumerOrder, St
     @QueryHints(value = {@QueryHint(name = HINT_COMMENT, value = "a query for pageable")})
     @Query("select u from ConsumerOrder u where u.id in ?1 and u.delStatus = false and u.state =1")
     Page<ConsumerOrder> findByIdIn(List<String> ids,Pageable page);
+
+    List<ConsumerOrder> findByDelStatusAndCreateTimeAfter(boolean delStatus, Timestamp createTime);
+
+    @Query(value = "select clientId from ConsumerOrder where delStatus = ?1")
+    Set<String> findClientIdByDelStatus(boolean delStatus);
+
+    List<ConsumerOrder> findByDelStatus(boolean delStatus);
 }

@@ -1,10 +1,9 @@
-package com.freelycar.screen.service;
+package com.freelycar.saas.screen.service;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.freelycar.screen.entity.Ark;
-import com.freelycar.screen.entity.repo.ArkRepository;
-import com.freelycar.screen.utils.TimestampUtil;
+import com.freelycar.saas.project.entity.Ark;
+import com.freelycar.saas.project.repository.ArkRepository;
+import com.freelycar.saas.screen.utils.TimestampUtil;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,7 @@ import java.util.*;
  * @email 2630451673@qq.com
  * @desc
  */
-@Service
+@Service("arkService1")
 public class ArkService {
     @Autowired
     private ArkRepository arkRepository;
@@ -53,8 +52,8 @@ public class ArkService {
                 o.put(key, initSum);
             }
         }
-        result.put("ark", r1);
-        result.put("user", r2);
+        result.put("ark", updateDate1(r1));
+        result.put("user", updateDate2(r2));
         return result;
     }
 
@@ -79,6 +78,36 @@ public class ArkService {
         while (count < len) {
             result += r.nextInt(301) + 500;
             count++;
+        }
+        return result;
+    }
+
+    private List<Map<String, Integer>> updateDate1(List<Map<String, Integer>> list) {
+        List<Map<String, Integer>> result = new ArrayList<>();
+        for (Map<String, Integer> map :
+                list) {
+            for (String key :
+                    map.keySet()) {
+                Map<String, Integer> map1 = new HashMap<>();
+                map1.put(key.substring(5), map.get(key));
+                result.add(map1);
+                break;
+            }
+        }
+        return result;
+    }
+
+    private List<Map<String, Long>> updateDate2(List<Map<String, Long>> list) {
+        List<Map<String, Long>> result = new ArrayList<>();
+        for (Map<String, Long> map :
+                list) {
+            for (String key :
+                    map.keySet()) {
+                Map<String, Long> map1 = new HashMap<>();
+                map1.put(key.substring(5), map.get(key));
+                result.add(map1);
+                break;
+            }
         }
         return result;
     }

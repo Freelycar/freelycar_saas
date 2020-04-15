@@ -14,6 +14,8 @@ import java.util.List;
  * @email toby911115@gmail.com
  */
 public interface CarRepository extends JpaRepository<Car, String> {
+    List<Car> findByDelStatus(boolean delStatus);
+
     List<Car> findByClientIdAndDelStatus(String clientId, boolean delStatus);
 
     @Transactional

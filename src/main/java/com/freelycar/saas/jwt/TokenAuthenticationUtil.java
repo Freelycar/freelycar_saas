@@ -29,7 +29,7 @@ public class TokenAuthenticationUtil {
     private static Logger logger = LoggerFactory.getLogger(TokenAuthenticationUtil.class);
 
     private static final long EXPIRATION_TIME = 7776000000L;     // 4周
-    //        private static final long EXPIRATIONTIME = 300_000;     // 5分钟测试用
+//            private static final long EXPIRATIONTIME = 300_000;     // 5分钟测试用
     private static final String SECRET = "FreelyC@r";            // JWT密码
     private static final String TOKEN_PREFIX = "Bearer";        // Token前缀
     private static final String HEADER_STRING = "Authorization";// 存放Token的Header Key

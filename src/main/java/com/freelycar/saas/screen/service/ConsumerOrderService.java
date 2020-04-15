@@ -1,11 +1,11 @@
-package com.freelycar.screen.service;
+package com.freelycar.saas.screen.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.freelycar.screen.entity.ConsumerOrder;
-import com.freelycar.screen.entity.Store;
-import com.freelycar.screen.entity.repo.ConsumerOrderRepository;
-import com.freelycar.screen.entity.repo.StoreRepository;
-import com.freelycar.screen.utils.TimestampUtil;
+import com.freelycar.saas.project.entity.ConsumerOrder;
+import com.freelycar.saas.project.entity.Store;
+import com.freelycar.saas.project.repository.ConsumerOrderRepository;
+import com.freelycar.saas.project.repository.StoreRepository;
+import com.freelycar.saas.screen.utils.TimestampUtil;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +22,7 @@ import java.util.*;
  * @email 2630451673@qq.com
  * @desc
  */
-@Service
+@Service("consumerOrderService1")
 public class ConsumerOrderService {
     private final static Logger logger = LoggerFactory.getLogger(ConsumerOrderService.class);
     @Autowired
@@ -41,19 +41,50 @@ public class ConsumerOrderService {
      */
     public JSONObject getMonthlyAdditions() {
         JSONObject result = new JSONObject();
-        DateTime now = new DateTime();
+        DateTime now = DateTime.now();
         Timestamp start = new Timestamp(TimestampUtil.getStartTime(now).getMillis());
         List<ConsumerOrder> consumerOrderList = consumerOrderRepository.findByDelStatusAndCreateTimeAfter(false, start);
         List<Map<String, Integer>> r1 = MonthService.getMonthlyAdditions(dealWithList(consumerOrderList), now);
-        result.put("activeUser", r1);
+        result.put("activeUser", updateDate2(r1));
         List<Map<String, Object>> r2 = genStoreRanking(consumerOrderList);
         result.put("storeRanking", r2);
         List<Map<String, Object>> r3 = getAverageUsageFrequencyMonthly(consumerOrderList, now);
-        result.put("averageUsage", r3);
+        result.put("averageUsage", updateDate1(r3));
         double averageConsumption = getAvarageConsumption(consumerOrderList);
         result.put("averageConsumption", averageConsumption);
         return result;
     }
+
+    private List<Map<String, Object>> updateDate1(List<Map<String, Object>> list) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (Map<String, Object> map :
+                list) {
+            for (String key :
+                    map.keySet()) {
+                Map<String, Object> map1 = new HashMap<>();
+                map1.put(key.substring(5), map.get(key));
+                result.add(map1);
+                break;
+            }
+        }
+        return result;
+    }
+
+    private List<Map<String, Integer>> updateDate2(List<Map<String, Integer>> list) {
+        List<Map<String, Integer>> result = new ArrayList<>();
+        for (Map<String, Integer> map :
+                list) {
+            for (String key :
+                    map.keySet()) {
+                Map<String, Integer> map1 = new HashMap<>();
+                map1.put(key.substring(5), map.get(key));
+                result.add(map1);
+                break;
+            }
+        }
+        return result;
+    }
+
 
     /**
      * 用户平均每月消费数额
@@ -68,7 +99,7 @@ public class ConsumerOrderService {
             clientIds.add(order.getClientId());
             sum = sum.add(BigDecimal.valueOf(order.getActualPrice()));
         }
-        logger.info("{}人共消费：{}", clientIds.size(), sum.toString());
+//        logger.info("{}人共消费：{}", clientIds.size(), sum.toString());
         BigDecimal average = sum.divide(BigDecimal.valueOf(clientIds.size() * 12), 2, BigDecimal.ROUND_HALF_UP);
         double averageConsumption = average.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         return averageConsumption;
@@ -185,7 +216,7 @@ public class ConsumerOrderService {
             storeIdList.add((String) stores.get(i).get("storeId"));
         }
         List<Store> storeResults = storeRepository.findByDelStatusAndIdIn(false, storeIdList);
-        for (Store s :
+        /*for (Store s :
                 storeResults) {
             String id = s.getId();
             String name = s.getName();
@@ -199,7 +230,7 @@ public class ConsumerOrderService {
                         continue;
                     } else {
                         if (!map.get(key).equals(id)) {
-                            continue;
+                            break;
                         } else {
                             flag = true;
                         }
@@ -207,6 +238,16 @@ public class ConsumerOrderService {
                 }
                 if (flag) {
                     map.put("name", name);
+                }
+            }
+        }*/
+        for (Map<String, Object> map :
+                result) {
+            String storeId = (String) map.get("storeId");
+            for (Store store : storeResults) {
+                if (storeId.equals(store.getId())) {
+                    map.put("name", store.getName());
+                    break;
                 }
             }
         }

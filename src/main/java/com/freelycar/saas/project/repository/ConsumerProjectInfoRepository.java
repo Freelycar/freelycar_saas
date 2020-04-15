@@ -3,6 +3,7 @@ package com.freelycar.saas.project.repository;
 import com.freelycar.saas.project.entity.ConsumerProjectInfo;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 /**
@@ -17,4 +18,7 @@ public interface ConsumerProjectInfoRepository extends JpaRepository<ConsumerPro
     List<ConsumerProjectInfo> findAllByDelStatusAndAndCardIdOrderByCreateTimeDesc(boolean delStatus, String cardId);
 
     List<ConsumerProjectInfo> findAllByDelStatusAndCouponIdOrderByCreateTimeDesc(boolean delStatus, String couponId);
+
+    List<ConsumerProjectInfo> findByDelStatusAndCreateTimeAfter(boolean delStatus, Timestamp createTime);
+    List<ConsumerProjectInfo> findByDelStatus(boolean delStatus);
 }

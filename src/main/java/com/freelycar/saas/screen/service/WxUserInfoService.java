@@ -1,10 +1,10 @@
-package com.freelycar.screen.service;
+package com.freelycar.saas.screen.service;
 
 import com.alibaba.fastjson.JSONObject;
-import com.freelycar.screen.entity.WxUserInfo;
-import com.freelycar.screen.entity.repo.ConsumerOrderRepository;
-import com.freelycar.screen.entity.repo.WxUserInfoRepository;
-import com.freelycar.screen.utils.TimestampUtil;
+import com.freelycar.saas.project.entity.WxUserInfo;
+import com.freelycar.saas.project.repository.ConsumerOrderRepository;
+import com.freelycar.saas.project.repository.WxUserInfoRepository;
+import com.freelycar.saas.screen.utils.TimestampUtil;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ import java.util.*;
  * @email 2630451673@qq.com
  * @desc
  */
-@Service
+@Service("wxUserInfoService1")
 public class WxUserInfoService {
     private final static Logger logger = LoggerFactory.getLogger(WxUserInfoService.class);
     @Autowired
@@ -37,7 +37,7 @@ public class WxUserInfoService {
      */
     public JSONObject getMonthlyAdditions() {
         JSONObject result = new JSONObject();
-        DateTime now = new DateTime();
+        DateTime now = DateTime.now();
         Timestamp start = new Timestamp(TimestampUtil.getStartTime(now).getMillis());
         List<WxUserInfo> wxUserInfoList1 = wxUserInfoRepository.findByDelStatusAndCreateTimeAfter(false, start);
         List<WxUserInfo> wxUserInfoList2 = wxUserInfoRepository.findByDelStatusAndCreateTimeBefore(false, start);
@@ -45,7 +45,7 @@ public class WxUserInfoService {
         List<Map<String, Integer>> resultPre = MonthService.getMonthlyAdditions(wxUserInfoList1, now);
         //每月：新增用户数量，总数量，日期
         List<Map<String, Object>> result1 = new ArrayList<>();
-        Set<String> allClientIds = consumerOrderRepository.findByDelStatus(false);
+        Set<String> allClientIds = consumerOrderRepository.findClientIdByDelStatus(false);
         Long startCount = (long) wxUserInfoList2.size();
         Long startEffectiveCount = 0l;
         for (WxUserInfo user :
@@ -98,6 +98,11 @@ public class WxUserInfoService {
             //截止到当月的总用户转化率
             map.put("totalConversion", totalConversion);
         }
+        for (Map<String, Object> map :
+                result1) {
+            map.put("date", ((String) map.get("date")).substring(5));
+        }
+
         return result;
     }
 
