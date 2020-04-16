@@ -92,6 +92,9 @@ dependencies {
     compile group: 'cn.afterturn', name: 'easypoi-annotation', version: '4.0.0'
     compile group: 'cn.afterturn', name: 'easypoi-web', version: '4.0.0'
 
+    //joda时间
+    compile group: "joda-time", name: "joda-time", version: "2.10.5"
+
 
     // LeanCloud Java SDK 老版本
     compile("cn.leancloud:java-sdk:0.2.1")
@@ -127,7 +130,7 @@ remotes {
         host = 'freelycar.com'
         user = 'Administrator'
         // 支持password、rsa等方式登录
-        password = 'Freelycar2017'
+        password = ''
 //        identity = file("${rootDir}/id_rsa")
     }
 }
