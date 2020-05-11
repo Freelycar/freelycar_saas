@@ -7,7 +7,7 @@ import com.freelycar.saas.exception.NumberOutOfRangeException;
  * @date 2019-05-09
  * @email toby911115@gmail.com
  */
-public class Number2StringFormatter {
+public class  Number2StringFormatter {
 
     /**
      * 格式化数字为四位数字符串格式

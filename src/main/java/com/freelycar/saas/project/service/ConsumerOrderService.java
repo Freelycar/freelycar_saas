@@ -1121,12 +1121,14 @@ public class ConsumerOrderService {
                     orderType = true;
 //                    serviceProviderId = projectOptional.get().getServiceProviderId();
                     break;
-                } else {
-                    throw new ObjectNotFoundException("未找到对应的项目类型信息");
                 }
-            } else {
-                throw new ObjectNotFoundException("未找到对应的项目信息");
+                /*else {
+                    throw new ObjectNotFoundException("未找到对应的项目类型信息");
+                }*/
             }
+            /*else {
+                throw new ObjectNotFoundException("未找到对应的项目信息");
+            }*/
         }
 
         if (orderType) {
@@ -1256,6 +1258,8 @@ public class ConsumerOrderService {
         ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
         if (null == consumerOrder) {
             return ResultJsonObject.getCustomResult("Not found consumerOrder object by orderId : " + orderId, ResultCode.RESULT_DATA_NONE);
+        }else if (consumerOrder.getState().equals(Constants.OrderState.RECEIVE_CAR.getValue()) ){
+            return ResultJsonObject.getCustomResult("The consumerOrder has been accepted. The param 'orderId' is  " + orderId, ResultCode.ORDER_ACCEPTED);
         }
 
         Staff staff = staffService.findById(staffId);
