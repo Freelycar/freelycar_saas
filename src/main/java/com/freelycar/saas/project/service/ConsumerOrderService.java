@@ -961,12 +961,15 @@ public class ConsumerOrderService {
         consumerOrder.setCarColor(carInfo.getColor());
         consumerOrder.setCarImageUrl(carInfo.getCarImageUrl());
 
+        logger.info("arkOrderLog：车辆信息完善");
+
         //设置车主信息
         consumerOrder.setClientId(clientId);
         consumerOrder.setClientName(clientInfo.getTrueName());
         consumerOrder.setPhone(clientInfo.getPhone());
         consumerOrder.setIsMember(clientInfo.getMember());
         consumerOrder.setStoreId(clientInfo.getStoreId());
+        logger.info("arkOrderLog：车主信息完善");
 
         //设置order的其他信息
         Timestamp currentTime = new Timestamp(System.currentTimeMillis());
@@ -974,6 +977,7 @@ public class ConsumerOrderService {
         consumerOrder.setPayState(Constants.PayState.NOT_PAY.getValue());
         //设置订单状态为“预约”
         consumerOrder.setState(Constants.OrderState.RESERVATION.getValue());
+        logger.info("arkOrderLog：订单状态修改");
 
         //计算项目金额
         double totalPrice = consumerProjectInfoService.sumAllProjectPrice(consumerProjectInfos, false);
@@ -982,6 +986,7 @@ public class ConsumerOrderService {
         //计算会员价总计金额
         double memberPrice = consumerProjectInfoService.sumAllProjectPrice(consumerProjectInfos, true);
         consumerOrder.setMemberPrice(memberPrice);
+        logger.info("arkOrderLog：订单价格计算完成");
 
 
         // 有效柜子分配逻辑
@@ -990,8 +995,10 @@ public class ConsumerOrderService {
             throw new ObjectNotFoundException("未找到分配的柜门号，请稍后重试");
         }
 
-        logger.info("arkOrderLog:智能柜柜门door信息：" + emptyDoor);
-
+        logger.info("arkOrderLog:智能柜柜门door信息");
+        if (emptyDoor!=null){
+            logger.info("arkOrderLog：" + emptyDoor);
+        }
         // 更新用户把钥匙存放在哪个柜子的哪个门
         String userKeyLocation = emptyDoor.getArkName() + Constants.HYPHEN + emptyDoor.getDoorSn() + "号门";
         String userKeyLocationSn = emptyDoor.getArkSn() + Constants.HYPHEN + emptyDoor.getDoorSn();

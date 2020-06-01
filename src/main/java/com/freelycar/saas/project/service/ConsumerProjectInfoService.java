@@ -8,6 +8,8 @@ import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wechat.model.CardRecordInfo;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.transform.Transformers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ import java.util.Optional;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class ConsumerProjectInfoService {
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
     @Autowired
     private ConsumerProjectInfoRepository consumerProjectInfoRepository;
 
@@ -77,6 +80,7 @@ public class ConsumerProjectInfoService {
      * @return
      */
     public double sumAllProjectPrice(List<ConsumerProjectInfo> consumerProjectInfos, boolean memberPrice) {
+        logger.info("开始计算项目列表的总金额");
         if (null == consumerProjectInfos) {
             return 0;
         }
@@ -85,7 +89,7 @@ public class ConsumerProjectInfoService {
             Double price;
             if (memberPrice) {
                 price = consumerProjectInfo.getMemberPrice();
-                if ((double) 0 == price) {
+                if (price==null || (double) 0 == price) {
                     price = consumerProjectInfo.getPrice();
                 }
             } else {
@@ -96,6 +100,7 @@ public class ConsumerProjectInfoService {
             }
             totalPrice += price;
         }
+        logger.info("计算项目列表的总金额结束");
         return totalPrice;
     }
 
