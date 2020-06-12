@@ -284,6 +284,15 @@ public class ProjectService {
 
     }
 
+    /**
+     * 门店下 全部 未删除 已上架 项目 按照创建时间排序
+     * 对新用户显示：新用户专享项目
+     * 对非新用户排除：新用户专享项目
+     * @param storeId
+     * @param preferential
+     * @return
+     * @throws ArgumentMissingException
+     */
     public List<Project> getProjects(String storeId, boolean preferential) throws ArgumentMissingException {
 
         List<Project> projects = getProjects(storeId);

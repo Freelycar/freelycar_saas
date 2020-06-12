@@ -6,10 +6,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tangwei - Toby
@@ -38,6 +40,12 @@ public interface ClientRepository extends JpaRepository<Client,String> {
 
     Client findTopByPhoneAndDelStatusOrderByCreateTimeAsc(String phone, boolean delStatus);
 
+    Client findTopByNameAndDelStatus(String name,boolean delStatus);
+
+    List<Client> findByNameAndDelStatus(String name,boolean delStatus);
+
+    Client findTopByStoreIdAndNameAndDelStatus(String storeId, String name, boolean delStatus);
+
     int countByDelStatusAndStoreIdAndIsMember(boolean delStatus, String storeId, boolean isMember);
 
     int countByDelStatusAndStoreIdAndIsMemberAndMemberDateBetween(boolean delStatus, String storeId, boolean isMember, Timestamp memberDateStart, Timestamp memberDateEnd);
@@ -46,4 +54,7 @@ public interface ClientRepository extends JpaRepository<Client,String> {
     @Modifying
     @Query(value = "update client set delStatus=1 where id=:id", nativeQuery = true)
     int delById(String id);
+
+    @Query(value = "select id from client where delStatus = :delStatus", nativeQuery = true)
+    Set<String> findDistinctIdByDelStatus(@Param("delStatus") boolean delStatus);
 }

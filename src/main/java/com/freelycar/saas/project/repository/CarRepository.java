@@ -4,6 +4,7 @@ import com.freelycar.saas.project.entity.Car;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public interface CarRepository extends JpaRepository<Car, String> {
     List<Car> checkRepeatName(String id, String licensePlate, String storeId);
 
     @Query(value = "select * from car where storeId = :storeId and delStatus = 0 and licensePlate = :licensePlate", nativeQuery = true)
-    List<Car> checkRepeatName(String licensePlate, String storeId);
+    List<Car> checkRepeatName(@Param("licensePlate") String licensePlate, @Param("storeId") String storeId);
 
     @Query(value = "SELECT car.* FROM car LEFT JOIN client c ON c.id = car.clientId WHERE phone = :phone AND car.delStatus = 0 GROUP BY car.licensePlate ORDER BY car.defaultCar DESC, car.createTime ASC", nativeQuery = true)
     List<Car> listCarsByStoreIdWithoutSamePlate(String phone);
@@ -36,4 +37,6 @@ public interface CarRepository extends JpaRepository<Car, String> {
     List<Car> listCarsByStoreIdAndPhone(String storeId, String phone);
 
     Car findTopByLicensePlateAndStoreIdAndAndDelStatusOrderByCreateTimeDesc(String licensePlate, String storeId, boolean delStatus);
+
+    Car findByClientIdAndStoreIdAndDelStatus(String clientId, String storeId, boolean delStatus);
 }

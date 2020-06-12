@@ -6,9 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tangwei - Toby
@@ -22,6 +24,9 @@ public interface StoreRepository extends JpaRepository<Store, String> {
 
     List<Store> findAllByDelStatusOrderBySortAsc(boolean delStatus);
 
+    @Query(value = "select id FROM store where delStatus = :delStatus",nativeQuery = true)
+    Set<String> findIdByDelStatus(@Param("delStatus") Boolean delStatus);
+
     Store findTopByDelStatusAndSortIsNotNullOrderBySortDesc(boolean delStatus);
 
     @Transactional
@@ -30,4 +35,6 @@ public interface StoreRepository extends JpaRepository<Store, String> {
     int delById(String id);
 
     List<Store> findByDelStatusAndIdIn(boolean delStatus, List<String> id);
+
+    Store findByNameAndDelStatus(String name,boolean delStatus);
 }

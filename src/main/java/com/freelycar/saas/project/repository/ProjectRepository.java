@@ -58,4 +58,9 @@ public interface ProjectRepository extends JpaRepository<Project, String> {
     List<Project> findByStoreIdAndDelStatusAndBookOnline(String storeId, boolean delStatus, boolean bookOnline);
 
     List<Project> findByDelStatusAndIdIn(boolean delStatus, Set<String> id);
+
+    @Query(value = "select id from project where delStatus = :delStatus", nativeQuery = true)
+    Set<String> findDistinctIdByDelStatus(@Param("delStatus") boolean delStatus);
+
+    Project findByStoreIdAndName(String storeId, String name);
 }

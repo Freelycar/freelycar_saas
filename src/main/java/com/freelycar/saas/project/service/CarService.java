@@ -39,6 +39,10 @@ public class CarService {
         return carRepository.findById(id).orElse(null);
     }
 
+    public Car findByClientIdAndStoreId(String clientId,String storeId){
+        return carRepository.findByClientIdAndStoreIdAndDelStatus(clientId,storeId,false);
+    }
+
     /**
      * 保存车辆信息
      *

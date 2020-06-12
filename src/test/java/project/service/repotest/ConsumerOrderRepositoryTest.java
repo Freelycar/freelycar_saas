@@ -2,12 +2,8 @@ package project.service.repotest;
 
 import com.freelycar.saas.BootApplication;
 import com.freelycar.saas.basic.wrapper.Constants;
-import com.freelycar.saas.exception.ArgumentMissingException;
-import com.freelycar.saas.exception.NoEmptyArkException;
 import com.freelycar.saas.project.entity.ConsumerOrder;
-import com.freelycar.saas.project.entity.Door;
 import com.freelycar.saas.project.repository.ConsumerOrderRepository;
-import com.freelycar.saas.project.service.DoorService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

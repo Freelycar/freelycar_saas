@@ -145,6 +145,34 @@ public class ConsumerOrderService {
     }
 
     /**
+     * excel导入
+     * @param consumerOrder
+     * @return
+     * @throws ObjectNotFoundException
+     * @throws ArgumentMissingException
+     */
+    public ConsumerOrder createOrder(ConsumerOrder consumerOrder) throws ObjectNotFoundException, ArgumentMissingException {
+        if (null == consumerOrder) {
+            throw new ArgumentMissingException("参数consumerOrder对象为空");
+        }
+        String id = consumerOrder.getId();
+        if (StringUtils.isEmpty(id)) {
+            //订单号生成规则：订单类型编号（1位）+ 门店（3位）+ 日期（6位）+ 每日递增（4位）
+            String newId;
+            try {
+                newId = orderIDGenerator.getOrderSn(consumerOrder.getStoreId(), consumerOrder.getOrderType(),consumerOrder.getCreateTime());
+            } catch (ArgumentMissingException | NumberOutOfRangeException | NormalException e) {
+                e.printStackTrace();
+                throw new ObjectNotFoundException("生成订单编号失败：" + e.getMessage());
+            }
+            consumerOrder.setId(newId);
+            consumerOrder.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+            return consumerOrderRepository.saveAndFlush(consumerOrder);
+        }
+        return this.updateOrder(consumerOrder);
+    }
+
+    /**
      * 更新order信息
      *
      * @param consumerOrder
