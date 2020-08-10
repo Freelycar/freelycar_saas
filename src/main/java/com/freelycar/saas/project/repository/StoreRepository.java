@@ -20,11 +20,13 @@ import java.util.Set;
 public interface StoreRepository extends JpaRepository<Store, String> {
     List<Store> findStoreByDelStatusAndNameContainingOrderBySortAsc(boolean delStatus, String name);
 
+    List<Store> findStoreByDelStatusAndIdIn(boolean delStatus, Set<String> ids);
+
     Page<Store> findStoreByDelStatusAndNameContainingOrderBySortAsc(boolean delStatus, String name, Pageable pageable);
 
     List<Store> findAllByDelStatusOrderBySortAsc(boolean delStatus);
 
-    @Query(value = "select id FROM store where delStatus = :delStatus",nativeQuery = true)
+    @Query(value = "select id FROM store where delStatus = :delStatus", nativeQuery = true)
     Set<String> findIdByDelStatus(@Param("delStatus") Boolean delStatus);
 
     Store findTopByDelStatusAndSortIsNotNullOrderBySortDesc(boolean delStatus);
@@ -36,5 +38,5 @@ public interface StoreRepository extends JpaRepository<Store, String> {
 
     List<Store> findByDelStatusAndIdIn(boolean delStatus, List<String> id);
 
-    Store findByNameAndDelStatus(String name,boolean delStatus);
+    Store findByNameAndDelStatus(String name, boolean delStatus);
 }

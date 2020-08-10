@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Api(value = "门店项目管理", description = "门店项目管理接口", tags = "门店项目管理接口")
 @RestController
 @RequestMapping("/project")
@@ -49,6 +51,24 @@ public class ProjectController {
     }
 
     /**
+     * 修改项目列表位置
+     *
+     * @param map
+     * @return
+     */
+    @ApiOperation(value = "修改项目列表位置", produces = "application/json")
+    @PostMapping(value = "/switchLocation")
+    @LoggerManage(description = "调用方法：修改项目列表位置")
+    public ResultJsonObject switchLocation(@RequestBody Map<String, Long> map) {
+        boolean result = projectService.switchLocation(map);
+        if (result) {
+            return ResultJsonObject.getDefaultResult(null);
+        } else {
+            return ResultJsonObject.getErrorResult(null, "项目数据有误");
+        }
+    }
+
+    /**
      * 获取项目类型对象
      *
      * @param id
@@ -63,6 +83,7 @@ public class ProjectController {
 
     /**
      * 获取项目列表
+     *
      * @param storeId
      * @param currentPage
      * @param pageSize
@@ -81,7 +102,7 @@ public class ProjectController {
         if (StringUtils.isEmpty(StringUtils.trimWhitespace(name))) {
             name = "";
         }
-        return ResultJsonObject.getDefaultResult(projectService.list(storeId, currentPage, pageSize,name,projectTypeId));
+        return ResultJsonObject.getDefaultResult(projectService.list(storeId, currentPage, pageSize, name, projectTypeId));
     }
 
     /**

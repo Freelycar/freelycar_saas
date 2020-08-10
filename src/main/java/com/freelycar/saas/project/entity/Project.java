@@ -131,6 +131,8 @@ public class Project implements Serializable {
     @Transient
     private boolean staffReady = false;
 
+    private Long sort;
+
 
     @Override
     public String toString() {

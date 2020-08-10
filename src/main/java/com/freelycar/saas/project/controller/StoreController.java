@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 /**
  * @author tangwei - Toby
  * @date 2019-01-07
@@ -129,6 +131,18 @@ public class StoreController {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
+    }
+
+    @ApiOperation(value = "修改门店列表位置", produces = "application/json")
+    @PostMapping("/switchLocation")
+    @LoggerManage(description = "调用方法：修改门店列表位置")
+    public ResultJsonObject switchLocation(@RequestBody Map<String, Long> map) {
+        boolean result = storeService.switchLocation(map);
+        if (result) {
+            return ResultJsonObject.getDefaultResult(null);
+        } else {
+            return ResultJsonObject.getErrorResult(null, "门店数据有误");
         }
     }
 }

@@ -4,10 +4,7 @@ import com.freelycar.saas.basic.wrapper.*;
 import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
-import com.freelycar.saas.project.entity.Employee;
-import com.freelycar.saas.project.entity.Project;
-import com.freelycar.saas.project.entity.ProjectType;
-import com.freelycar.saas.project.entity.Staff;
+import com.freelycar.saas.project.entity.*;
 import com.freelycar.saas.project.repository.ProjectRepository;
 import com.freelycar.saas.project.repository.ProjectTypeRepository;
 import com.freelycar.saas.util.UpdateTool;
@@ -27,9 +24,7 @@ import org.springframework.util.StringUtils;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.freelycar.saas.basic.wrapper.ResultCode.RESULT_DATA_NONE;
 
@@ -66,6 +61,7 @@ public class ProjectService {
         if (StringUtils.isEmpty(id)) {
             project.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             project.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            project.setSort(generateSort(project.getStoreId()));
         } else {
             Optional<Project> optional = projectRepository.findById(id);
             //判断数据库中是否有该对象
@@ -83,9 +79,36 @@ public class ProjectService {
             project.setSaleStatus(source.getSaleStatus());
             project.setStoreId(source.getStoreId());
             project.setBookOnline(source.getBookOnline());
+            project.setSort(source.getSort());
         }
         //执行保存or修改
         return projectRepository.saveAndFlush(project);
+    }
+
+    /**
+     * 自动生成排序
+     *
+     * @return
+     */
+    private synchronized long generateSort(String storeId) {
+        Project project = projectRepository.findTopByStoreIdAndDelStatusAndSortIsNotNullOrderBySortDesc(storeId, Constants.DelStatus.NORMAL.isValue());
+        if (null == project) {
+            return 10L;
+        }
+        return project.getSort() + 10;
+    }
+
+    public boolean switchLocation(Map<String, Long> map) {
+        Set<String> projectIds = map.keySet();
+        List<Project> projects = projectRepository.findByDelStatusAndIdIn(Constants.DelStatus.NORMAL.isValue(), projectIds);
+        if (projectIds.size() != projectIds.size()) return false;
+        else {
+            for (Project project : projects) {
+                project.setSort(map.get(project.getId()));
+                projectRepository.saveAndFlush(project);
+            }
+            return true;
+        }
     }
 
     /**
@@ -108,11 +131,12 @@ public class ProjectService {
 
     /**
      * 为项目添加项目类型
+     *
      * @param project
      * @return
      */
-    private Project addProjectType(Project project){
-        if (project!=null && project.getProjectTypeId()!=null){
+    private Project addProjectType(Project project) {
+        if (project != null && project.getProjectTypeId() != null) {
             Optional<ProjectType> typeOptional = projectTypeRepository.findById(project.getProjectTypeId());
             typeOptional.ifPresent(projectType -> project.setProjectTypeName(projectType.getName()));
         }
@@ -143,9 +167,9 @@ public class ProjectService {
         Pageable pageable = PageableTools.basicPage(currentPage, pageSize);
         Page<Project> projectPage;
         if (StringUtils.isEmpty(projectTypeId)) {
-            projectPage = projectRepository.findAllByDelStatusAndStoreIdAndNameContaining(Constants.DelStatus.NORMAL.isValue(), storeId, name, pageable);
+            projectPage = projectRepository.findAllByDelStatusAndStoreIdAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), storeId, name, pageable);
         } else {
-            projectPage = projectRepository.findAllByDelStatusAndStoreIdAndNameContainingAndProjectTypeId(Constants.DelStatus.NORMAL.isValue(), storeId, name, projectTypeId, pageable);
+            projectPage = projectRepository.findAllByDelStatusAndStoreIdAndNameContainingAndProjectTypeIdOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), storeId, name, projectTypeId, pageable);
         }
         return addProjectTypeForPage(projectPage);
     }
@@ -154,7 +178,7 @@ public class ProjectService {
         PaginationRJO rjo = PaginationRJO.of(projectPage);
         List<Project> content = projectPage.getContent();
         List<Project> result = new ArrayList<>();
-        for (Project project:
+        for (Project project :
                 content) {
             result.add(addProjectType(project));
         }
@@ -279,15 +303,14 @@ public class ProjectService {
         if (StringUtils.isEmpty(storeId)) {
             throw new ArgumentMissingException("参数storeId值为空");
         }
-        return projectRepository.findAllByStoreIdAndDelStatusAndSaleStatusOrderByCreateTime(storeId, Constants.DelStatus.NORMAL.isValue(), true);
-
-
+        return projectRepository.findAllByStoreIdAndDelStatusAndSaleStatusOrderBySortAsc(storeId, Constants.DelStatus.NORMAL.isValue(), true);
     }
 
     /**
      * 门店下 全部 未删除 已上架 项目 按照创建时间排序
      * 对新用户显示：新用户专享项目
      * 对非新用户排除：新用户专享项目
+     *
      * @param storeId
      * @param preferential
      * @return
@@ -348,7 +371,7 @@ public class ProjectService {
                     allStaffProjects.add(staffProjects);
                 }
             }
-            logger.info("staffProjects.size():"+allStaffProjects.size());
+            logger.info("staffProjects.size():" + allStaffProjects.size());
         }
 
         return servicingProjectsFilter(projects, allStaffProjects);

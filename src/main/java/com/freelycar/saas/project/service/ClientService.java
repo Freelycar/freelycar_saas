@@ -234,6 +234,57 @@ public class ClientService {
 
             //关闭em
             em.close();
+            /*"brands": "明锐,东南DX3,ALFA 159,凯旋",
+                    "id": "ea8ecbc5694ccea501694ceacabf0003",
+                    "isMember": "否",
+                    "lastVisit": null,
+                    "name": "yyy",
+                    "phone": "17826616659",
+                    "plates": "青A10011,青A00001,苏A00001,苏A01111",
+                    "totalBalance": 1.2,
+                    "totalCount": 0*/
+
+            /*List<CustomerList> resultList = new ArrayList<>();
+            for (CustomerList customer :
+                    customerInfos) {
+                CustomerList newCustomr = new CustomerList();
+                newCustomr.setId(customer.getId());
+                newCustomr.setIsMember(customer.getIsMember());
+                newCustomr.setLastVisit(customer.getLastVisit());
+                newCustomr.setName(customer.getName());
+                newCustomr.setPhone(customer.getPhone());
+                newCustomr.setTotalBalance(customer.getTotalBalance());
+                newCustomr.setTotalCount(customer.getTotalCount());
+
+                String brands = customer.getBrands();
+                String newBrands = "";
+                if (brands != null && brands.contains(",")) {
+                    Set<String> brandSet = new HashSet<>();
+                    for (String brand : brands.split(",")) {
+                        if (brandSet.contains(brand)) continue;
+                        else {
+                            newBrands += brand + ',';
+                            brandSet.add(brand);
+                        }
+                    }
+                }
+                newCustomr.setBrands(newBrands);
+
+                String plates = customer.getPlates();
+                String newPlates = "";
+                if (plates != null && plates.contains(",")) {
+                    Set<String> plateSet = new HashSet<>();
+                    for (String plate : plates.split(",")) {
+                        if (plateSet.contains(plate)) continue;
+                        else {
+                            newPlates += plate + ',';
+                            plateSet.add(plate);
+                        }
+                    }
+                }
+                newCustomr.setPlates(newPlates);
+                resultList.add(newCustomr);
+            }*/
 
             @SuppressWarnings("unchecked")
             Page<CustomerList> page = new PageImpl(customerInfos, pageable, total);

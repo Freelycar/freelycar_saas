@@ -153,7 +153,7 @@ public class CarService {
      * @param car
      * @return
      */
-    private boolean checkRepeatName(Car car) {
+    public boolean checkRepeatName(Car car) {
         List<Car> carList;
         if (null != car.getId()) {
             carList = carRepository.checkRepeatName(car.getId(), car.getLicensePlate(), car.getStoreId());

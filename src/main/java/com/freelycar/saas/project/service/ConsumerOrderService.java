@@ -146,6 +146,7 @@ public class ConsumerOrderService {
 
     /**
      * excel导入
+     *
      * @param consumerOrder
      * @return
      * @throws ObjectNotFoundException
@@ -160,7 +161,7 @@ public class ConsumerOrderService {
             //订单号生成规则：订单类型编号（1位）+ 门店（3位）+ 日期（6位）+ 每日递增（4位）
             String newId;
             try {
-                newId = orderIDGenerator.getOrderSn(consumerOrder.getStoreId(), consumerOrder.getOrderType(),consumerOrder.getCreateTime());
+                newId = orderIDGenerator.getOrderSn(consumerOrder.getStoreId(), consumerOrder.getOrderType(), consumerOrder.getCreateTime());
             } catch (ArgumentMissingException | NumberOutOfRangeException | NormalException e) {
                 e.printStackTrace();
                 throw new ObjectNotFoundException("生成订单编号失败：" + e.getMessage());
@@ -332,7 +333,12 @@ public class ConsumerOrderService {
         nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(ReservationOrderInfo.class));
         @SuppressWarnings({"unused", "unchecked"})
         List<ReservationOrderInfo> reservationOrderInfos = nativeQuery.getResultList();
-
+        for (ReservationOrderInfo orderInfo :
+                reservationOrderInfos) {
+            String orderId = orderInfo.getId();
+            ClientOrderImg img = clientOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, false);
+            orderInfo.setCarImageUrl(img.getUrl());
+        }
         //关闭em
         em.close();
 
@@ -1024,7 +1030,7 @@ public class ConsumerOrderService {
         }
 
         logger.info("arkOrderLog:智能柜柜门door信息");
-        if (emptyDoor!=null){
+        if (emptyDoor != null) {
             logger.info("arkOrderLog：" + emptyDoor);
         }
         // 更新用户把钥匙存放在哪个柜子的哪个门
@@ -1098,7 +1104,7 @@ public class ConsumerOrderService {
         }
 
         if (orderType) {//1.代驾订单：向e代驾下单，发送短信给代驾师傅
-            logger.info("订单："+consumerOrderRes.getId()+"为代驾订单");
+            logger.info("订单：" + consumerOrderRes.getId() + "为代驾订单");
             Integer EorderId = edaijiaService.createOrder(consumerOrderRes, emptyDoor, serviceProviderId);
             // 推送微信公众号消息，通知用户订单生成成功
             sendWeChatMsg(consumerOrderRes);
@@ -1147,10 +1153,10 @@ public class ConsumerOrderService {
         for (ConsumerProjectInfo project :
                 projectInfos) {
             String projectId = project.getProjectId();
-            logger.info("projectId:"+projectId);
+            logger.info("projectId:" + projectId);
             Optional<Project> projectOptional = projectRepository.findById(projectId);
             if (projectOptional.isPresent()) {
-                logger.info("projectTypeId:"+projectOptional.get().getProjectTypeId());
+                logger.info("projectTypeId:" + projectOptional.get().getProjectTypeId());
                 Optional<ProjectType> projectTypeOptional = projectTypeRepository.findById(projectOptional.get().getProjectTypeId());
                 if (projectTypeOptional.isPresent() && projectTypeOptional.get().getName().trim().contains("代驾")) {
                     orderType = true;
@@ -1293,7 +1299,7 @@ public class ConsumerOrderService {
         ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
         if (null == consumerOrder) {
             return ResultJsonObject.getCustomResult("Not found consumerOrder object by orderId : " + orderId, ResultCode.RESULT_DATA_NONE);
-        }else if (consumerOrder.getState().equals(Constants.OrderState.RECEIVE_CAR.getValue()) ){
+        } else if (consumerOrder.getState().equals(Constants.OrderState.RECEIVE_CAR.getValue())) {
             return ResultJsonObject.getCustomResult("The consumerOrder has been accepted. The param 'orderId' is  " + orderId, ResultCode.ORDER_ACCEPTED);
         }
 
@@ -2181,7 +2187,7 @@ public class ConsumerOrderService {
         stringList.removeAll(Collections.singleton(null));
         List<Sort.Order> orders = new ArrayList<>();
         orders.add(new Sort.Order(Sort.Direction.DESC, "createTime"));
-        Page<ConsumerOrder> page = consumerOrderRepository.findByIdIn(stringList, new PageRequest(currentPage-1, pageSize, new Sort(orders)));
+        Page<ConsumerOrder> page = consumerOrderRepository.findByIdIn(stringList, new PageRequest(currentPage - 1, pageSize, new Sort(orders)));
         return ResultJsonObject.getDefaultResult(PaginationRJO.of(page));
     }
 }

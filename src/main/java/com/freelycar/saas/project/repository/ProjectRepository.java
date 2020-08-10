@@ -19,14 +19,14 @@ import java.util.Set;
  */
 public interface ProjectRepository extends JpaRepository<Project, String> {
     @Query(value = "select * from project where id != :id and storeId = :storeId and delStatus = 0 and name = :name", nativeQuery = true)
-    List<Project> checkRepeatName(@Param("id") String id,@Param("name") String name,@Param("storeId") String storeId);
+    List<Project> checkRepeatName(@Param("id") String id, @Param("name") String name, @Param("storeId") String storeId);
 
     @Query(value = "select * from project where storeId = :storeId and delStatus = 0 and name = :name", nativeQuery = true)
-    List<Project> checkRepeatName(@Param("name") String name,@Param("storeId") String storeId);
+    List<Project> checkRepeatName(@Param("name") String name, @Param("storeId") String storeId);
 
-    Page<Project> findAllByDelStatusAndStoreIdAndNameContainingAndProjectTypeId(boolean delStatus, String storeId, String name, String projectTypeId, Pageable pageable);
+    Page<Project> findAllByDelStatusAndStoreIdAndNameContainingAndProjectTypeIdOrderBySortAsc(boolean delStatus, String storeId, String name, String projectTypeId, Pageable pageable);
 
-    Page<Project> findAllByDelStatusAndStoreIdAndNameContaining(boolean delStatus, String storeId, String name, Pageable pageable);
+    Page<Project> findAllByDelStatusAndStoreIdAndNameContainingOrderBySortAsc(boolean delStatus, String storeId, String name, Pageable pageable);
 
     @Transactional
     @Modifying(clearAutomatically = true)
@@ -55,6 +55,8 @@ public interface ProjectRepository extends JpaRepository<Project, String> {
 
     List<Project> findAllByStoreIdAndDelStatusAndSaleStatusOrderByCreateTime(String storeId, boolean delStatus, boolean saleStatus);
 
+    List<Project> findAllByStoreIdAndDelStatusAndSaleStatusOrderBySortAsc(String storeId, boolean delStatus, boolean saleStatus);
+
     List<Project> findByStoreIdAndDelStatusAndBookOnline(String storeId, boolean delStatus, boolean bookOnline);
 
     List<Project> findByDelStatusAndIdIn(boolean delStatus, Set<String> id);
@@ -63,4 +65,12 @@ public interface ProjectRepository extends JpaRepository<Project, String> {
     Set<String> findDistinctIdByDelStatus(@Param("delStatus") boolean delStatus);
 
     Project findByStoreIdAndName(String storeId, String name);
+
+    Project findTopByStoreIdAndDelStatusAndSortIsNotNullOrderBySortDesc(String storeId, boolean delStatus);
+
+    @Query(value = "SELECT DISTINCT(storeId) from project WHERE delStatus = FALSE", nativeQuery = true)
+    Set<String> findDistinctStoreIdByDelStatus();
+
+    List<Project> findByStoreIdAndDelStatusOrderByCreateTimeDesc(String storeId, boolean delStatus);
+
 }

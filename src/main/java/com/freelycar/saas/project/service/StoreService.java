@@ -370,4 +370,17 @@ public class StoreService {
 
         return storeInfo;
     }
+
+    @Transactional
+    public boolean switchLocation(Map<String, Long> map) {
+        Set<String> storeIds = map.keySet();
+        List<Store> storeList = storeRepository.findStoreByDelStatusAndIdIn(false, storeIds);
+        if (storeList.size() != storeIds.size()) return false;
+        for (Store store :
+                storeList) {
+            store.setSort(map.get(store.getId()));
+            storeRepository.saveAndFlush(store);
+        }
+        return true;
+    }
 }
