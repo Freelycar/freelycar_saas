@@ -3,6 +3,7 @@ package com.freelycar.saas.project.repository;
 import com.freelycar.saas.project.entity.Card;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -19,6 +20,6 @@ public interface CardRepository extends JpaRepository<Card, String> {
     List<Card> findByCardNumberAndDelStatusAndStoreId(String cardNumber, boolean delStatus, String storeId);
 
     @Query(value = "select sum(balance) from card where clientId=:clientId and delStatus=0", nativeQuery = true)
-    Float sumBalanceByClientId(String clientId);
+    Float sumBalanceByClientId(@Param("clientId") String clientId);
 
 }

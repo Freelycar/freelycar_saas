@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -117,12 +118,12 @@ public class StoreService {
      *
      * @return long
      */
-    private long generateSort() {
+    private BigInteger generateSort() {
         Store store = storeRepository.findTopByDelStatusAndSortIsNotNullOrderBySortDesc(Constants.DelStatus.NORMAL.isValue());
         if (null == store) {
-            return 10L;
+            return new BigInteger("10");
         }
-        return store.getSort() + 10;
+        return store.getSort().add(new BigInteger("10"));
     }
 
 
@@ -372,7 +373,7 @@ public class StoreService {
     }
 
     @Transactional
-    public boolean switchLocation(Map<String, Long> map) {
+    public boolean switchLocation(Map<String, BigInteger> map) {
         Set<String> storeIds = map.keySet();
         List<Store> storeList = storeRepository.findStoreByDelStatusAndIdIn(false, storeIds);
         if (storeList.size() != storeIds.size()) return false;

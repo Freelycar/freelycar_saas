@@ -32,6 +32,8 @@ public class OrderObject {
 
     private Store store;
 
+    private Ark ark;
+
     public OrderObject() {
     }
 
@@ -113,6 +115,14 @@ public class OrderObject {
 
     public void setDoorId(String doorId) {
         this.doorId = doorId;
+    }
+
+    public Ark getArk() {
+        return ark;
+    }
+
+    public void setArk(Ark ark) {
+        this.ark = ark;
     }
 
     @Override

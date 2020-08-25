@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,7 +33,7 @@ public class UploadController {
     @ApiOperation(value = "上传门店宣传图片", produces = "application/json")
     @LoggerManage(description = "调用方法：上传门店宣传图片")
     @PostMapping("/storeimg")
-    public ResultJsonObject uploadStoreImg(MultipartFile file, HttpServletRequest request) {
+    public ResultJsonObject uploadStoreImg(@Param("file") String file, HttpServletRequest request) {
         try {
             return uploadService.uploadStoreImg(file, request);
         } catch (FileNotFoundException | ArgumentMissingException e) {
@@ -45,7 +46,7 @@ public class UploadController {
     @ApiOperation(value = "用户上传智能柜订单图片", produces = "application/json")
     @LoggerManage(description = "调用方法：用户上传智能柜订单图片")
     @PostMapping("/clientOrderImg")
-    public ResultJsonObject uploadClientOrderImg(MultipartFile file, HttpServletRequest request) {
+    public ResultJsonObject uploadClientOrderImg(@Param("file")String file, HttpServletRequest request) {
         try {
             return uploadService.uploadClientOrderImg(file, request);
         } catch (FileNotFoundException | ArgumentMissingException e) {
@@ -58,7 +59,7 @@ public class UploadController {
     @ApiOperation(value = "技师上传智能柜订单图片", produces = "application/json")
     @LoggerManage(description = "调用方法：技师上传智能柜订单图片")
     @PostMapping("/staffOrderImg")
-    public ResultJsonObject uploadStaffOrderImg(MultipartFile file, HttpServletRequest request) {
+    public ResultJsonObject uploadStaffOrderImg(@Param("file")String file, HttpServletRequest request) {
         try {
             return uploadService.uploadStaffOrderImg(file, request);
         } catch (FileNotFoundException | ArgumentMissingException e) {
@@ -71,7 +72,7 @@ public class UploadController {
     @ApiOperation(value = "用户上传车辆订单图片", produces = "application/json")
     @LoggerManage(description = "调用方法：用户上传车辆订单图片")
     @PostMapping("/carImg")
-    public ResultJsonObject uploadCarImg(MultipartFile file, HttpServletRequest request) {
+    public ResultJsonObject uploadCarImg(@Param("file")String file, HttpServletRequest request) {
         try {
             return uploadService.uploadCarImg(file, request);
         } catch (FileNotFoundException | ArgumentMissingException e) {

@@ -1,10 +1,5 @@
 package com.freelycar.saas.iotcloudcn;
 
-import com.freelycar.saas.iotcloudcn.util.BoxCommand;
-import com.freelycar.saas.iotcloudcn.util.BoxCommandResponse;
-import com.freelycar.saas.iotcloudcn.util.SafeConnection;
-
-import javax.swing.*;
 import java.io.IOException;
 
 /**
@@ -18,9 +13,9 @@ import java.io.IOException;
 public class ArkOps {
 
     public static void main(String[] args) throws IOException {
-        String deviceId = "861230044412022";
+        String deviceId = "867400036368805";
 
-        int boxId = 7;
+        int boxId = 5;
 
         int boxCount = 16;
 
@@ -33,7 +28,7 @@ public class ArkOps {
         //查询某个柜门状态
 //        queryBox(deviceId, boxId);
         //查询某个柜子所有柜门
-//        queryBoard(deviceId);
+        queryBoard(deviceId);
     }
 
     private static void openBox(String deviceId, int boxId) {

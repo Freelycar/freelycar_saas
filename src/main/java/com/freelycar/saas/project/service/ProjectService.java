@@ -23,6 +23,7 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.*;
 
@@ -90,16 +91,20 @@ public class ProjectService {
      *
      * @return
      */
-    private synchronized long generateSort(String storeId) {
+    private synchronized BigInteger generateSort(String storeId) {
         Project project = projectRepository.findTopByStoreIdAndDelStatusAndSortIsNotNullOrderBySortDesc(storeId, Constants.DelStatus.NORMAL.isValue());
         if (null == project) {
-            return 10L;
+            return new BigInteger("10");
         }
-        return project.getSort() + 10;
+        return project.getSort().add(new BigInteger("10"));
     }
 
-    public boolean switchLocation(Map<String, Long> map) {
+    public boolean switchLocation(Map<String, BigInteger> map) {
         Set<String> projectIds = map.keySet();
+        for (String projectId : projectIds) {
+            System.out.println(projectId + ":" + map.get(projectId));
+
+        }
         List<Project> projects = projectRepository.findByDelStatusAndIdIn(Constants.DelStatus.NORMAL.isValue(), projectIds);
         if (projectIds.size() != projectIds.size()) return false;
         else {

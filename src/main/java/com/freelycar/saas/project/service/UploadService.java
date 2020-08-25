@@ -12,6 +12,7 @@ import com.freelycar.saas.project.repository.StaffOrderImgRepository;
 import com.freelycar.saas.project.repository.StoreImgRepository;
 import com.freelycar.saas.util.PhotoCompressionUtil;
 import com.freelycar.saas.util.UUIDGenerator;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,15 +21,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.UUID;
 
 /**
  * @author tangwei - Toby
@@ -63,7 +64,7 @@ public class UploadService {
      * @throws FileNotFoundException
      * @throws ArgumentMissingException
      */
-    public ResultJsonObject uploadStoreImg(MultipartFile file, HttpServletRequest request) throws FileNotFoundException, ArgumentMissingException {
+    public ResultJsonObject uploadStoreImg(String file, HttpServletRequest request) throws FileNotFoundException, ArgumentMissingException {
         String resultURL = this.uploadPicture(file, request, STORE_IMG_FOLDER_NAME);
         // 文件名与文件URL存入数据库表
         if (StringUtils.hasText(resultURL)) {
@@ -87,7 +88,7 @@ public class UploadService {
      * @throws FileNotFoundException
      * @throws ArgumentMissingException
      */
-    public ResultJsonObject uploadClientOrderImg(MultipartFile file, HttpServletRequest request) throws FileNotFoundException, ArgumentMissingException {
+    public ResultJsonObject uploadClientOrderImg(String file, HttpServletRequest request) throws FileNotFoundException, ArgumentMissingException {
         String resultURL = this.uploadPicture(file, request, CLIENT_ORDER_IMG_FOLDER_NAME);
 
         if (StringUtils.hasText(resultURL)) {
@@ -111,7 +112,7 @@ public class UploadService {
      * @throws FileNotFoundException
      * @throws ArgumentMissingException
      */
-    public ResultJsonObject uploadStaffOrderImg(MultipartFile file, HttpServletRequest request) throws FileNotFoundException, ArgumentMissingException {
+    public ResultJsonObject uploadStaffOrderImg(String file, HttpServletRequest request) throws FileNotFoundException, ArgumentMissingException {
         String resultURL = this.uploadPicture(file, request, STAFF_ORDER_IMG_FOLDER_NAME);
 
         if (StringUtils.hasText(resultURL)) {
@@ -136,7 +137,7 @@ public class UploadService {
      * @throws FileNotFoundException
      * @throws ArgumentMissingException
      */
-    public ResultJsonObject uploadCarImg(MultipartFile file, HttpServletRequest request) throws FileNotFoundException, ArgumentMissingException {
+    public ResultJsonObject uploadCarImg(String file, HttpServletRequest request) throws FileNotFoundException, ArgumentMissingException {
         String resultURL = this.uploadPicture(file, request, CAR_IMG_FOLDER_NAME);
 
         if (StringUtils.hasText(resultURL)) {
@@ -144,7 +145,6 @@ public class UploadService {
         }
         return ResultJsonObject.getErrorResult(null, "上传失败");
     }
-
 
 
     /**
@@ -157,11 +157,11 @@ public class UploadService {
      * @throws FileNotFoundException
      * @throws ArgumentMissingException
      */
+    @Deprecated
     public String uploadPicture(MultipartFile file, HttpServletRequest request, String folderName) throws FileNotFoundException, ArgumentMissingException {
-        if (null == file || file.isEmpty()) {
+        /*if (null == file || file.isEmpty()) {
             throw new FileNotFoundException("提交的图片流未获取到");
-        }
-
+        }*/
         // 获取文件名
         String fileName = file.getOriginalFilename();
         logger.info("上传的文件名为：" + fileName);
@@ -220,6 +220,67 @@ public class UploadService {
         return url;
     }
 
+    public String uploadPicture(String imageBase64, HttpServletRequest request, String folderName) {
+        byte[] imageBytes = base64tobyte(imageBase64);
+        String suffixName = getSuffixName(imageBase64);
+
+        //保存时的文件名
+        DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+        Calendar calendar = Calendar.getInstance();
+        String uuid = new UUIDGenerator().generate();
+        String path = df.format(calendar.getTime()) + uuid + suffixName;
+
+        //压缩后的图片文件名
+        String litePath = df.format(calendar.getTime()) + uuid + "_lite.jpg";
+
+        logger.info(path);
+
+        //保存文件的绝对路径
+        String filePath = picturePath + File.separator + folderName + File.separator + path;
+        String liteFilePath = picturePath + File.separator + folderName + File.separator + litePath;
+        logger.info("绝对路径:" + filePath);
+
+        File newFile = new File(filePath);
+
+        // 检测是否存在目录
+        if (!newFile.getParentFile().exists()) {
+            // 新建文件夹
+            newFile.getParentFile().mkdirs();
+        }
+        OutputStream outputStream = null;
+        try {
+            outputStream = new FileOutputStream(filePath);
+            outputStream.write(imageBytes);
+            outputStream.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                outputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        String url = null;
+        try {
+            //执行图片压缩
+            String targetResultPath = PhotoCompressionUtil.compress(filePath, liteFilePath);
+            if (null == targetResultPath) {
+                return null;
+            }
+
+            //数据库存储的相对路径
+            url = pictureURL + "/" + folderName + "/" + litePath;
+            logger.info("相对路径:" + url);
+
+        } catch (IllegalStateException | ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+        return url;
+
+    }
+
     public ResultJsonObject importProjects(String storeId, MultipartFile file, HttpServletRequest request) {
         // TODO 上传Excel导入门店项目
 
@@ -233,5 +294,48 @@ public class UploadService {
 
 
         return null;
+    }
+
+    public static byte[] base64tobyte(String imageBase64) {
+        byte[] b1 = null;
+        BASE64Decoder decoder = new BASE64Decoder();
+        try {
+            if (imageBase64.indexOf("data:image/jpeg;base64,") != -1) {
+                b1 = decoder.decodeBuffer(imageBase64.replaceAll("data:image/jpeg;base64,", ""));
+            } else {
+                if (imageBase64.indexOf("data:image/png;base64,") != -1) {
+                    b1 = decoder.decodeBuffer(imageBase64.replaceAll("data:image/png;base64,", ""));
+                } else {
+                    b1 = decoder.decodeBuffer(imageBase64.replaceAll("data:image/jpg;base64,", ""));
+                }
+            }
+            for (int i = 0; i < b1.length; ++i) {
+                if (b1[i] < 0) {// 调整异常数据
+                    b1[i] += 256;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return b1;
+    }
+
+    public static String getSuffixName(String imageBase64) {
+        String suffixName = "";
+        BASE64Decoder decoder = new BASE64Decoder();
+        try {
+            if (imageBase64.indexOf("data:image/jpeg;base64,") != -1) {
+                suffixName = ".jpeg";
+            } else {
+                if (imageBase64.indexOf("data:image/png;base64,") != -1) {
+                    suffixName = ".png";
+                } else {
+                    suffixName = ".jpg";
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return suffixName;
     }
 }

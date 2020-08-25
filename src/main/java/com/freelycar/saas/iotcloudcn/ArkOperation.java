@@ -16,7 +16,9 @@ import java.io.IOException;
 public class ArkOperation {
     public static final int SUCCESS_CODE = 0;
 
-    private static final String SERVER_BASE_URL = "https://serverapi.iotcloudcn.com";
+    //    private static final String SERVER_BASE_URL = "https://serverapi.iotcloudcn.com";
+    private static final String SERVER_BASE_URL = "https://www.freelycar.cn";
+
     private static final Logger logger = LoggerFactory.getLogger(ArkOperation.class);
     private static final String URL_OPEN_BOX = SERVER_BASE_URL + "/api/box/open";
     private static final String URL_QUERY_BOX = SERVER_BASE_URL + "/api/box/query";
@@ -59,6 +61,7 @@ public class ArkOperation {
 
     /**
      * 查询某个柜子所有柜门状态
+     *
      * @param deviceId
      * @return
      */

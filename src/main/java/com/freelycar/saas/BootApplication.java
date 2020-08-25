@@ -1,6 +1,5 @@
 package com.freelycar.saas;
 
-import com.freelycar.saas.screen.websocket.server.ScreenWebsocketServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
@@ -9,7 +8,6 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Arrays;

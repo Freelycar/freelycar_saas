@@ -116,6 +116,9 @@ public class ConsumerOrderService {
     @Autowired
     private EOrderRepository eOrderRepository;
 
+    @Autowired
+    private ArkService arkService;
+
     /**
      * 保存和修改
      *
@@ -319,29 +322,33 @@ public class ConsumerOrderService {
         if (StringUtils.isEmpty(staffId)) {
             throw new ArgumentMissingException("参数staffId为空");
         }
+        List<ReservationOrderInfo> reservationOrderInfos = null;
+        try {
+            StringBuilder sql = new StringBuilder();
+            sql.append(" SELECT co.id, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.parkingLocation AS parkingLocation, d.arkSn AS arkSn, d.doorSn AS doorSn, concat( ( SELECT ark.`name` FROM ark WHERE ark.id = d.arkId ), '-', d.doorSn, '号门' ) AS keyLocation FROM door d LEFT JOIN consumerOrder co ON co.id = d.orderId WHERE co.state = 0 ")
+                    .append(" AND co.storeId = '").append(storeId).append("' ");
+            if (StringUtils.hasText(licensePlate)) {
+                sql.append(" and (co.licensePlate like '%").append(licensePlate.toUpperCase()).append("%' or co.id like '%").append(licensePlate.toUpperCase()).append("%') ");
+            }
+            sql.append(" ORDER BY co.createTime ASC");
 
-        StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT co.id, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.parkingLocation AS parkingLocation, d.arkSn AS arkSn, d.doorSn AS doorSn, concat( ( SELECT ark.`name` FROM ark WHERE ark.id = d.arkId ), '-', d.doorSn, '号门' ) AS keyLocation FROM door d LEFT JOIN consumerOrder co ON co.id = d.orderId WHERE co.state = 0 ")
-                .append(" AND co.storeId = '").append(storeId).append("' ");
-        if (StringUtils.hasText(licensePlate)) {
-            sql.append(" and (co.licensePlate like '%").append(licensePlate.toUpperCase()).append("%' or co.id like '%").append(licensePlate.toUpperCase()).append("%') ");
+            EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+            Query nativeQuery = em.createNativeQuery(sql.toString());
+            nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(ReservationOrderInfo.class));
+            reservationOrderInfos = nativeQuery.getResultList();
+            for (ReservationOrderInfo orderInfo :
+                    reservationOrderInfos) {
+                String orderId = orderInfo.getId();
+                ClientOrderImg img = clientOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, false);
+                if (img != null) {
+                    orderInfo.setCarImageUrl(img.getUrl());
+                }
+            }
+            //关闭em
+            em.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        sql.append(" ORDER BY co.createTime ASC");
-
-        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
-        Query nativeQuery = em.createNativeQuery(sql.toString());
-        nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(ReservationOrderInfo.class));
-        @SuppressWarnings({"unused", "unchecked"})
-        List<ReservationOrderInfo> reservationOrderInfos = nativeQuery.getResultList();
-        for (ReservationOrderInfo orderInfo :
-                reservationOrderInfos) {
-            String orderId = orderInfo.getId();
-            ClientOrderImg img = clientOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, false);
-            orderInfo.setCarImageUrl(img.getUrl());
-        }
-        //关闭em
-        em.close();
-
         return reservationOrderFilter(reservationOrderInfos, staffId);
     }
 
@@ -386,23 +393,28 @@ public class ConsumerOrderService {
      * @return
      */
     public List<FinishOrderInfo> listServicingOrders(String licensePlate, String storeId, String staffId) {
-        StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT co.id, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, co.pickTime as pickTime, co.userKeyLocationSn, co.userKeyLocation FROM consumerOrder co WHERE co.delStatus = 0 AND co.orderType = 2 AND co.state = 1 ")
-                .append(" AND co.storeId = '").append(storeId).append("' ")
-                // 添加staffId条件筛选，技师只能还自己接单的订单，不能其他技师代还
-                .append(" AND co.pickCarStaffId = '").append(staffId).append("' ");
-        if (StringUtils.hasText(licensePlate)) {
-            sql.append(" and (co.licensePlate like '%").append(licensePlate).append("%' or co.id like '%").append(licensePlate).append("%') ");
-        }
-        sql.append(" ORDER BY co.pickTime ASC ");
-        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
-        Query nativeQuery = em.createNativeQuery(sql.toString());
-        nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(FinishOrderInfo.class));
-        @SuppressWarnings({"unused", "unchecked"})
-        List<FinishOrderInfo> finishOrderInfo = nativeQuery.getResultList();
+        List<FinishOrderInfo> finishOrderInfo = null;
+        try {
+            StringBuilder sql = new StringBuilder();
+            sql.append(" SELECT co.id, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, co.pickTime as pickTime, co.userKeyLocationSn, co.userKeyLocation FROM consumerOrder co WHERE co.delStatus = 0 AND co.orderType = 2 AND co.state = 1 ")
+                    .append(" AND co.storeId = '").append(storeId).append("' ")
+                    // 添加staffId条件筛选，技师只能还自己接单的订单，不能其他技师代还
+                    .append(" AND co.pickCarStaffId = '").append(staffId).append("' ");
+            if (StringUtils.hasText(licensePlate)) {
+                sql.append(" and (co.licensePlate like '%").append(licensePlate).append("%' or co.id like '%").append(licensePlate).append("%') ");
+            }
+            sql.append(" ORDER BY co.pickTime ASC ");
+            EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+            Query nativeQuery = em.createNativeQuery(sql.toString());
+            nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(FinishOrderInfo.class));
+            finishOrderInfo = nativeQuery.getResultList();
 
-        //关闭em
-        em.close();
+            //关闭em
+            em.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
 
         return finishOrderInfo;
     }
@@ -453,7 +465,12 @@ public class ConsumerOrderService {
                 }
             }
         }
-
+        String arkSn = consumerOrder.getUserKeyLocationSn();
+        if (arkSn != null && arkSn.length() > 15) {
+            arkSn = arkSn.substring(0, 15);
+            Ark ark = arkService.findByArkSn(arkSn);
+            orderObject.setArk(ark);
+        }
         orderObject.setConsumerOrder(consumerOrder);
         orderObject.setConsumerProjectInfos(consumerProjectInfos);
         orderObject.setAutoParts(autoPartsList);

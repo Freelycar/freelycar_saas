@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigInteger;
 import java.util.Map;
 
 /**
@@ -137,7 +138,7 @@ public class StoreController {
     @ApiOperation(value = "修改门店列表位置", produces = "application/json")
     @PostMapping("/switchLocation")
     @LoggerManage(description = "调用方法：修改门店列表位置")
-    public ResultJsonObject switchLocation(@RequestBody Map<String, Long> map) {
+    public ResultJsonObject switchLocation(@RequestBody Map<String, BigInteger> map) {
         boolean result = storeService.switchLocation(map);
         if (result) {
             return ResultJsonObject.getDefaultResult(null);
