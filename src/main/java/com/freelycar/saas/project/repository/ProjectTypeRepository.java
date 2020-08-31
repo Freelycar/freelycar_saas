@@ -6,9 +6,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -20,10 +22,10 @@ public interface ProjectTypeRepository extends JpaRepository<ProjectType, String
 
 
     @Query(value = "select * from projectType where id != :id and storeId = :storeId and delStatus = 0 and name = :name", nativeQuery = true)
-    List<ProjectType> checkRepeatName(String id, String name,String storeId);
+    List<ProjectType> checkRepeatName(String id, String name, String storeId);
 
     @Query(value = "select * from projectType where storeId = :storeId and delStatus = 0 and name = :name", nativeQuery = true)
-    List<ProjectType> checkRepeatName(String name,String storeId);
+    List<ProjectType> checkRepeatName(@Param("name") String name, @Param("storeId") String storeId);
 
     Page<ProjectType> findAllByDelStatusAndStoreIdOrderByCreateTimeAsc(boolean delStatus, String storeId, Pageable pageable);
 
@@ -33,5 +35,7 @@ public interface ProjectTypeRepository extends JpaRepository<ProjectType, String
     int delById(String id);
 
     List<ProjectType> findByIdIn(Set<String> id);
+
+    Optional<ProjectType> findByStoreIdAndDelStatusAndName(String storeId, boolean delStatus, String name);
 
 }

@@ -6,24 +6,26 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author tangwei - Toby
  * @date 2018/10/17
  * @email toby911115@gmail.com
  */
-public interface StaffRepository extends JpaRepository<Staff,String> {
+public interface StaffRepository extends JpaRepository<Staff, String> {
     @Query(value = "select * from staff where id != :id and storeId = :storeId and delStatus = 0 and name = :name", nativeQuery = true)
     List<Staff> checkRepeatName(String id, String name, String storeId);
 
     @Query(value = "select * from staff where storeId = :storeId and delStatus = 0 and name = :name", nativeQuery = true)
-    List<Staff> checkRepeatName(String name,String storeId);
+    List<Staff> checkRepeatName(String name, String storeId);
 
 
-    Page<Staff> findAllByDelStatusAndStoreIdAndIdContainingAndNameContaining(boolean delStatus, String storeId,String id,String name, Pageable pageable);
+    Page<Staff> findAllByDelStatusAndStoreIdAndIdContainingAndNameContaining(boolean delStatus, String storeId, String id, String name, Pageable pageable);
 
     @Transactional
     @Modifying(clearAutomatically = true)
@@ -31,9 +33,9 @@ public interface StaffRepository extends JpaRepository<Staff,String> {
     int delById(String id);
 
     @Query(value = "select * from staff where account=:account and id!=:id and isArk = 1", nativeQuery = true)
-    List<Staff> checkRepeatAccount(String account,String id);
+    List<Staff> checkRepeatAccount(String account, String id);
 
-    @Query(value = "select * from staff where account=:account",nativeQuery = true)
+    @Query(value = "select * from staff where account=:account", nativeQuery = true)
     List<Staff> checkRepeatAccount(String account);
 
     Staff findTopByAccountAndPasswordAndDelStatus(String account, String password, boolean delStatus);
@@ -64,7 +66,7 @@ public interface StaffRepository extends JpaRepository<Staff,String> {
      * @return
      */
     @Query(value = "select * from staff where id != :id and storeId = :storeId and delStatus = 0 and phone = :phone", nativeQuery = true)
-    List<Staff> checkRepeatPhone(String id, String phone, String storeId);
+    List<Staff> checkRepeatPhone(@Param("id") String id, @Param("phone") String phone, @Param("storeId") String storeId);
 
     /**
      * 验证门店中手机号唯一性（不排除数据本身）
@@ -74,6 +76,10 @@ public interface StaffRepository extends JpaRepository<Staff,String> {
      * @return
      */
     @Query(value = "select * from staff where storeId = :storeId and delStatus = 0 and phone = :phone", nativeQuery = true)
-    List<Staff> checkRepeatPhone(String phone, String storeId);
+    List<Staff> checkRepeatPhone(@Param("phone") String phone, @Param("storeId") String storeId);
+
+    List<Staff> findByNameAndDelStatusAndIsArk(String name, boolean delStatus, boolean isArk);
+
+    Optional<Staff> findByStoreIdAndDelStatusAndPhone(String storeId, boolean delStatus, String phone);
 
 }

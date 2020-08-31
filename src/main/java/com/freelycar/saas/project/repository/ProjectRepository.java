@@ -36,7 +36,7 @@ public interface ProjectRepository extends JpaRepository<Project, String> {
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "update project set saleStatus = 1 where id=:id", nativeQuery = true)
-    int uppArkById(String id);
+    int uppArkById(@Param("id") String id);
 
     @Transactional
     @Modifying(clearAutomatically = true)
@@ -72,5 +72,7 @@ public interface ProjectRepository extends JpaRepository<Project, String> {
     Set<String> findDistinctStoreIdByDelStatus();
 
     List<Project> findByStoreIdAndDelStatusOrderByCreateTimeDesc(String storeId, boolean delStatus);
+
+    List<Project> findByDelStatusAndComment(boolean delStatus, String comment);
 
 }

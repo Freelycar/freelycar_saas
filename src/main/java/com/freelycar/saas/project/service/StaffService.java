@@ -57,7 +57,7 @@ public class StaffService {
         try {
             //验重
             if (this.checkRepeatPhone(staff)) {
-                return ResultJsonObject.getErrorResult(null, "已包含手机号为为：“" + phone + "”的数据，不能重复添加。");
+                return ResultJsonObject.getErrorResult(null, "已包含手机号为：“" + phone + "”的数据，不能重复添加。");
             }
 
             //是否有ID，判断时新增还是修改
@@ -84,7 +84,7 @@ public class StaffService {
                 Employee newEmployee = new Employee();
                 newEmployee.setDelStatus(Constants.DelStatus.NORMAL.isValue());
                 newEmployee.setTrueName(staff.getName());
-                newEmployee.setNotification(true);
+                newEmployee.setNotification(false);
                 newEmployee.setPhone(phone);
                 newEmployee.setAccount(phone);
                 newEmployee.setPassword(staff.getPassword());
@@ -108,6 +108,7 @@ public class StaffService {
             //执行保存/修改
             return ResultJsonObject.getDefaultResult(staffRepository.saveAndFlush(staff));
         } catch (Exception e) {
+//            e.printStackTrace();
             return ResultJsonObject.getErrorResult(null);
         }
     }

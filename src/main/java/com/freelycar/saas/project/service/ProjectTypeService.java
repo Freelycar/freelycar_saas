@@ -70,6 +70,7 @@ public class ProjectTypeService {
             //执行保存
             return ResultJsonObject.getDefaultResult(projectTypeRepository.saveAndFlush(projectType));
         } catch (Exception e) {
+//            e.printStackTrace();
             return ResultJsonObject.getErrorResult(null);
         }
     }
