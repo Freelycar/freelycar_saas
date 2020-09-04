@@ -23,7 +23,8 @@ public class BootApplication extends SpringBootServletInitializer {
     private static Logger logger = LoggerFactory.getLogger(BootApplication.class);
 
     public static void main(String[] args) {
-        ApplicationContext ctx = SpringApplication.run(BootApplication.class, args);
+        ApplicationContext ctx =
+                SpringApplication.run(BootApplication.class, args);
 
         logger.debug("通过SpringBoot来注入依赖:");
 
@@ -32,7 +33,7 @@ public class BootApplication extends SpringBootServletInitializer {
         for (String beanName : beanNames) {
             logger.debug(beanName);
         }
-        logger.info("FreelyCar-SaaS服务启动完成。");
+        logger.debug("FreelyCar-SaaS服务启动完成。");
     }
 
     @Override

@@ -12,7 +12,6 @@ import com.freelycar.saas.project.repository.StaffOrderImgRepository;
 import com.freelycar.saas.project.repository.StoreImgRepository;
 import com.freelycar.saas.util.PhotoCompressionUtil;
 import com.freelycar.saas.util.UUIDGenerator;
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +28,6 @@ import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.UUID;
 
 /**
  * @author tangwei - Toby
@@ -275,7 +273,7 @@ public class UploadService {
 
         } catch (IllegalStateException | ObjectNotFoundException e) {
             logger.error(e.getMessage(), e);
-            e.printStackTrace();
+//            e.printStackTrace();
         }
         return url;
 

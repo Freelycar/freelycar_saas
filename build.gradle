@@ -15,6 +15,9 @@ buildscript {
         classpath("org.hidetake:gradle-ssh-plugin:${sshPluginVersion}")
     }
 }
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+}
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -128,6 +131,7 @@ ssh.settings {
 remotes {
     deployServer {
         host = 'freelycar.com'
+//        host = '124.70.190.179'
         user = 'Administrator'
         // 支持password、rsa等方式登录
         password = ''
@@ -156,6 +160,7 @@ task deploy(dependsOn: pkg) {
         println("开始执行远程部署task，当前时间为:${now()}")
         ssh.run {
             session(remotes.deployServer) {
+                execute '/cygdrive/c/winsw/stop.bat'
                 // 备份原有程序，首次部署mv会执行失败，忽略错误
                 execute "cp /cygdrive/c/winsw/saas.jar /cygdrive/c/winsw/backup/saas.${now()}", ignoreError: true
                 // 上传新版本程序
