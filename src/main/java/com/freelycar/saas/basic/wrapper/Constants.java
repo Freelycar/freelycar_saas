@@ -117,7 +117,7 @@ public class Constants {
         SERVICE_FINISH(2, "完工"),
         HAND_OVER(3, "交车"),
         CANCEL(4, "取消"),
-        TO_BE_RETURNED(5,"待还回");
+        TO_BE_RETURNED(5, "待还回");
 
         private final Integer value;
         private final String name;
@@ -265,6 +265,20 @@ public class Constants {
 
         public String getName() {
             return name;
+        }
+    }
+
+    public enum ServiceStatus {
+        IN_SERVICE(true),
+        OUT_OF_SERVICE(false);
+        private final boolean value;
+
+        ServiceStatus(boolean value) {
+            this.value = value;
+        }
+
+        public boolean isValue() {
+            return value;
         }
     }
 }
