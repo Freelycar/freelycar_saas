@@ -27,7 +27,8 @@ public class TimeTask {
     @Autowired
     private ScreenService screenService;
 
-    @Scheduled(cron = "0 0/1 * * * ?")   //每分钟执行一次
+//    @Scheduled(cron = "0 0/1 * * * ?")   //每分钟执行一次
+    @Scheduled(cron = "0 0 0 * * ?")//每天执行一次
     public void test() {
         logger.info("**************开始定时推送**************");
         CopyOnWriteArraySet<ScreenWebsocketServer> webSocketSet =

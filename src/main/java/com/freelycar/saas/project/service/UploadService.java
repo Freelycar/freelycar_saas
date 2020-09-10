@@ -12,6 +12,7 @@ import com.freelycar.saas.project.repository.StaffOrderImgRepository;
 import com.freelycar.saas.project.repository.StoreImgRepository;
 import com.freelycar.saas.util.PhotoCompressionUtil;
 import com.freelycar.saas.util.UUIDGenerator;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import sun.misc.BASE64Decoder;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
@@ -296,15 +296,15 @@ public class UploadService {
 
     public static byte[] base64tobyte(String imageBase64) {
         byte[] b1 = null;
-        BASE64Decoder decoder = new BASE64Decoder();
+//        BASE64Decoder decoder = new BASE64Decoder();
         try {
             if (imageBase64.indexOf("data:image/jpeg;base64,") != -1) {
-                b1 = decoder.decodeBuffer(imageBase64.replaceAll("data:image/jpeg;base64,", ""));
+                b1 = Base64.decodeBase64(imageBase64.replaceAll("data:image/jpeg;base64,", ""));
             } else {
                 if (imageBase64.indexOf("data:image/png;base64,") != -1) {
-                    b1 = decoder.decodeBuffer(imageBase64.replaceAll("data:image/png;base64,", ""));
+                    b1 = Base64.decodeBase64(imageBase64.replaceAll("data:image/png;base64,", ""));
                 } else {
-                    b1 = decoder.decodeBuffer(imageBase64.replaceAll("data:image/jpg;base64,", ""));
+                    b1 = Base64.decodeBase64(imageBase64.replaceAll("data:image/jpg;base64,", ""));
                 }
             }
             for (int i = 0; i < b1.length; ++i) {
@@ -320,7 +320,7 @@ public class UploadService {
 
     public static String getSuffixName(String imageBase64) {
         String suffixName = "";
-        BASE64Decoder decoder = new BASE64Decoder();
+//        BASE64Decoder decoder = new BASE64Decoder();
         try {
             if (imageBase64.indexOf("data:image/jpeg;base64,") != -1) {
                 suffixName = ".jpeg";
