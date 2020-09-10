@@ -1,6 +1,9 @@
 package com.freelycar.saas.project.service;
 
 import com.freelycar.saas.basic.wrapper.Constants;
+import com.freelycar.saas.basic.wrapper.PageableTools;
+import com.freelycar.saas.basic.wrapper.ResultJsonObject;
+import com.freelycar.saas.exception.BatchDeleteException;
 import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Project;
@@ -11,12 +14,18 @@ import com.freelycar.saas.util.UpdateTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
+
+import static com.freelycar.saas.basic.wrapper.ResultCode.RESULT_DATA_NONE;
 
 @Service
 @Transactional(rollbackFor = Exception.class)
@@ -61,5 +70,36 @@ public class RealServiceProviderService {
         }
         //执行保存or修改
         return realServiceProviderRepository.saveAndFlush(serviceProvider);
+    }
+
+    /**
+     * 删除服务商项目（软删除）
+     *
+     * @param ids
+     * @return
+     */
+    @Transactional(rollbackFor = BatchDeleteException.class)
+    public ResultJsonObject delete(String[] ids) throws BatchDeleteException {
+        Set<String> idSet = new HashSet<>(Arrays.asList(ids));
+        int result = realServiceProviderRepository.delById(idSet);
+        if (result == 0) {
+            return ResultJsonObject.getErrorResult(ids, "删除失败," + RESULT_DATA_NONE);
+        }
+        if (result != ids.length){
+            throw new BatchDeleteException("部分id不存在");
+        }
+        return ResultJsonObject.getDefaultResult(ids, "删除成功");
+    }
+
+    /**
+     * 分页查询（包含“门店名称”的模糊查询）
+     *
+     * @param name
+     * @param currentPage
+     * @param pageSize
+     * @return
+     */
+    public Page<RealServiceProvider> list(String name, Integer currentPage, Integer pageSize) {
+        return realServiceProviderRepository.findByDelStatusAndNameContainingOrderByIdAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
     }
 }
