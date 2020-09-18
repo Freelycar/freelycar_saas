@@ -8,6 +8,7 @@ import com.freelycar.saas.project.entity.OrderSn;
 import com.freelycar.saas.project.entity.Store;
 import com.freelycar.saas.project.repository.OrderSnRepository;
 import com.freelycar.saas.project.repository.StoreRepository;
+import com.freelycar.saas.project.service.StoreService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -50,6 +51,9 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
 
     @Autowired
     private StoreRepository storeRepository;
+
+    @Autowired
+    private StoreService storeService;
 
     private String generateOrderSnWithoutOrderType(String storeId) throws ArgumentMissingException, NumberOutOfRangeException, NormalException {
         if (StringUtils.isEmpty(storeId)) {
@@ -103,6 +107,7 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
 
     /**
      * 用于excel导入创建订单
+     *
      * @param storeId
      * @param createTime
      * @return
@@ -110,7 +115,7 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
      * @throws NumberOutOfRangeException
      * @throws NormalException
      */
-    private String generateOrderSnWithoutOrderType(String storeId,Date createTime) throws ArgumentMissingException, NumberOutOfRangeException, NormalException {
+    private String generateOrderSnWithoutOrderType(String storeId, Date createTime) throws ArgumentMissingException, NumberOutOfRangeException, NormalException {
         if (StringUtils.isEmpty(storeId)) {
             throw new ArgumentMissingException("门店ID为空值，无法生成单据ID");
         }
@@ -152,6 +157,7 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
 
     /**
      * 用于excel导入创建订单
+     *
      * @param storeId
      * @param orderType
      * @param createTime
@@ -160,11 +166,11 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
      * @throws NumberOutOfRangeException
      * @throws NormalException
      */
-    public String getOrderSn(String storeId, int orderType,Date createTime) throws ArgumentMissingException, NumberOutOfRangeException, NormalException {
+    public String getOrderSn(String storeId, int orderType, Date createTime) throws ArgumentMissingException, NumberOutOfRangeException, NormalException {
         if (orderType < 1 || orderType > orderTypeSn.length + 1) {
             throw new ArgumentMissingException("参数orderType超过了规则下标，无法生成单据ID");
         }
-        String resOrderSn = this.generateOrderSnWithoutOrderType(storeId,createTime);
+        String resOrderSn = this.generateOrderSnWithoutOrderType(storeId, createTime);
 
         logger.info("------本次分配到的订单号是：" + resOrderSn + "------");
 
@@ -195,6 +201,8 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
             OrderSn orderSn = orderSnRepository.findTopByStoreIdOrderByIdDesc(storeId);
             if (null == orderSn) {
                 logger.error("没找到门店ID为:" + storeId + " 的单据规则数据，无法生成单据ID");
+                //新增门店成功后需要添加一个orderSn规则
+                storeService.generateOrderSn(storeId);
             } else {
                 String dateNumber = orderSn.getDateNumber();
                 String storeSn = orderSn.getStoreSn();

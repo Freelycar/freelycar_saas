@@ -6,12 +6,13 @@ import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.PageableTools;
 import com.freelycar.saas.basic.wrapper.ResultCode;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
-import com.freelycar.saas.exception.ArgumentMissingException;
-import com.freelycar.saas.exception.NumberOutOfRangeException;
-import com.freelycar.saas.exception.ObjectNotFoundException;
-import com.freelycar.saas.exception.UpdateDataErrorException;
+import com.freelycar.saas.exception.*;
+import com.freelycar.saas.permission.entity.SysUser;
+import com.freelycar.saas.permission.repository.SysUserRepository;
+import com.freelycar.saas.permission.service.SysUserService;
 import com.freelycar.saas.project.entity.CardService;
 import com.freelycar.saas.project.entity.*;
+import com.freelycar.saas.project.model.StoreAccount;
 import com.freelycar.saas.project.model.StoreInfo;
 import com.freelycar.saas.project.repository.OrderSnRepository;
 import com.freelycar.saas.project.repository.SpecialOfferRepository;
@@ -64,13 +65,13 @@ public class StoreService {
     @Autowired
     private OrderSnRepository orderSnRepository;
 
+    @Autowired
+    private SysUserService sysUserService;
 
-    /**
-     * 新增或更新
-     *
-     * @param store 门店对象
-     * @return Store
-     */
+    @Autowired
+    private SysUserRepository sysUserRepository;
+
+
     public Store saveOrUpdate(Store store) throws ArgumentMissingException, ObjectNotFoundException, NumberOutOfRangeException {
         if (null == store) {
             throw new ArgumentMissingException("store对象为空值，门店新增/修改失败");
@@ -94,6 +95,73 @@ public class StoreService {
             return storeRepository.saveAndFlush(store);
         }
     }
+
+    /**
+     * 新增或更新
+     *
+     * @param storeAccount 门店-账户对象
+     * @return Store
+     */
+    @Transactional
+    public StoreAccount saveOrUpdate(StoreAccount storeAccount) throws ArgumentMissingException, ObjectNotFoundException, NumberOutOfRangeException, UnknownException, DataIsExistException {
+        if (null == storeAccount) {
+            throw new ArgumentMissingException("storeAccount对象为空值，网点新增/修改失败");
+        }
+        String storeId = storeAccount.getStoreId();
+        Long sysUserId = storeAccount.getSysUserId();
+        if (StringUtils.isEmpty(storeId) && StringUtils.isEmpty(sysUserId)) {
+            //新增网点与账号:开通账号
+            Store store = storeAccount.toStore();
+            store.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+            store.setCreateTime(new Timestamp(System.currentTimeMillis()));
+            store.setSort(this.generateSort());
+
+            Store res = storeRepository.save(store);
+            //新增门店成功后需要添加一个orderSn规则
+            generateOrderSn(res.getId());
+
+            SysUser user = storeAccount.toUser();
+            user.setStoreId(res.getId());
+            user.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+            SysUser sysUser = sysUserService.addOrModify(user);
+            storeAccount = getStoreAccount(res, user);
+            return storeAccount;
+        } else {
+            //修改网点与账号：账号的开通与关闭保持
+            Store source = storeRepository.findById(storeId).orElse(null);
+            if (null == source) {
+                throw new ObjectNotFoundException("未找到id为：" + storeId + " 的store对象，修改失败");
+            }
+            Store store = storeAccount.toStore();
+            UpdateTool.copyNullProperties(source, store);
+            store = storeRepository.saveAndFlush(store);
+
+            Optional<SysUser> userOptional = sysUserRepository.findById(sysUserId);
+            SysUser user = storeAccount.toUser();
+            if (userOptional.isPresent()) {
+                SysUser userSource = userOptional.get();
+                UpdateTool.copyNullProperties(userSource, user);
+                user = sysUserService.addOrModify(user);
+            }
+            storeAccount = getStoreAccount(store, user);
+            return storeAccount;
+        }
+    }
+
+    private StoreAccount getStoreAccount(Store store, SysUser user) {
+        StoreAccount sa = new StoreAccount();
+        sa.setStoreId(store.getId());
+        sa.setName(store.getName());
+        sa.setAddress(store.getAddress());
+        sa.setRemark(store.getRemark());
+
+        sa.setSysUserId(user.getId());
+        sa.setUsername(user.getUsername());
+        sa.setDelStatus(user.getDelStatus());
+
+        return sa;
+    }
+
 
     public void generateOrderSn(String storeId) throws ArgumentMissingException, NumberOutOfRangeException {
         if (StringUtils.isEmpty(storeId)) {

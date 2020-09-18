@@ -4,11 +4,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.aop.LoggerManage;
 import com.freelycar.saas.basic.wrapper.PaginationRJO;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
-import com.freelycar.saas.exception.ArgumentMissingException;
-import com.freelycar.saas.exception.NumberOutOfRangeException;
-import com.freelycar.saas.exception.ObjectNotFoundException;
-import com.freelycar.saas.exception.UpdateDataErrorException;
+import com.freelycar.saas.exception.*;
+import com.freelycar.saas.permission.service.SysUserService;
 import com.freelycar.saas.project.entity.Store;
+import com.freelycar.saas.project.model.StoreAccount;
 import com.freelycar.saas.project.model.StoreInfo;
 import com.freelycar.saas.project.service.StoreService;
 import io.swagger.annotations.Api;
@@ -36,14 +35,17 @@ public class StoreController {
     @Autowired
     private StoreService storeService;
 
+    @Autowired
+    private SysUserService sysUserService;
+
 
     /**
      * 新增/修改门店
      *
-     * @param store
+     * @param storeAccount 门店-账号
      * @return
      */
-    @ApiOperation(value = "新增/修改门店", produces = "application/json")
+    /*@ApiOperation(value = "新增/修改门店", produces = "application/json")
     @PostMapping("/modify")
     @LoggerManage(description = "调用方法：新增/修改门店")
     public ResultJsonObject modify(@RequestBody Store store) {
@@ -51,6 +53,20 @@ public class StoreController {
         try {
             storeRes = storeService.saveOrUpdate(store);
         } catch (ArgumentMissingException | ObjectNotFoundException | NumberOutOfRangeException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
+        return ResultJsonObject.getDefaultResult(storeRes);
+    }*/
+    @ApiOperation(value = "新增/修改门店", produces = "application/json")
+    @PostMapping("/modify")
+    @LoggerManage(description = "调用方法：新增/修改门店")
+    public ResultJsonObject modify(@RequestBody StoreAccount storeAccount) {
+        StoreAccount storeRes;
+        try {
+            storeRes  = storeService.saveOrUpdate(storeAccount);
+        } catch (ArgumentMissingException | ObjectNotFoundException | NumberOutOfRangeException | UnknownException | DataIsExistException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());

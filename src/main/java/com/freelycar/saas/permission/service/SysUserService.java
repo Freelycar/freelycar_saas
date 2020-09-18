@@ -1,6 +1,9 @@
 package com.freelycar.saas.permission.service;
 
 import com.freelycar.saas.basic.wrapper.*;
+import com.freelycar.saas.exception.ArgumentMissingException;
+import com.freelycar.saas.exception.DataIsExistException;
+import com.freelycar.saas.exception.UnknownException;
 import com.freelycar.saas.permission.entity.SysUser;
 import com.freelycar.saas.permission.repository.SysUserRepository;
 import com.freelycar.saas.util.UpdateTool;
@@ -111,7 +114,7 @@ public class SysUserService {
      * @param sysUser
      * @return
      */
-    public ResultJsonObject addOrModify(SysUser sysUser) {
+    /*public ResultJsonObject addOrModify(SysUser sysUser) {
         if (null == sysUser) {
             return ResultJsonObject.getErrorResult(null, "保存失败，sysUser" + ResultCode.PARAM_NOT_COMPLETE.message());
         }
@@ -123,6 +126,19 @@ public class SysUserService {
             return ResultJsonObject.getErrorResult(null, "保存失败，" + ResultCode.UNKNOWN_ERROR.message());
         }
         return ResultJsonObject.getDefaultResult(res.getId());
+    }*/
+    public SysUser addOrModify(SysUser sysUser) throws ArgumentMissingException, DataIsExistException, UnknownException {
+        if (null == sysUser) {
+            throw new ArgumentMissingException(ResultCode.PARAM_NOT_COMPLETE.message());
+        }
+        if (this.checkRepeat(sysUser)) {
+            throw new DataIsExistException(ResultCode.USER_HAS_EXISTED.message());
+        }
+        SysUser res = this.saveOrUpdate(sysUser);
+        if (null == res) {
+            throw new UnknownException(ResultCode.UNKNOWN_ERROR.message());
+        }
+        return res;
     }
 
     /**
@@ -136,7 +152,21 @@ public class SysUserService {
         if (res == 1) {
             return ResultJsonObject.getDefaultResult(id);
         }
-        return ResultJsonObject.getErrorResult(id, "删除失败！");
+        return ResultJsonObject.getErrorResult(id, "关闭失败！");
+    }
+
+    /**
+     * 开通某账号
+     *
+     * @param id
+     * @return
+     */
+    public ResultJsonObject openAccountById(long id) {
+        int res = sysUserRepository.openById(id);
+        if (res == 1) {
+            return ResultJsonObject.getDefaultResult(id);
+        }
+        return ResultJsonObject.getErrorResult(id, "开通失败！");
     }
 
     /**

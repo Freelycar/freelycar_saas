@@ -18,8 +18,8 @@ public class RegisterController {
     @Autowired
     private RegisterServcie registerServcie;
 
-    @RequestMapping(value = "/registerUser",method = RequestMethod.POST)
+    /*@RequestMapping(value = "/registerUser",method = RequestMethod.POST)
     public ResultJsonObject register(@RequestBody SysUser sysUser) {
         return registerServcie.register(sysUser);
-    }
+    }*/
 }

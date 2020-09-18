@@ -8,6 +8,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Arrays;
@@ -18,6 +19,7 @@ import java.util.Arrays;
 @SpringBootApplication(exclude = {org.springframework.boot.autoconfigure.gson.GsonAutoConfiguration.class})
 @EnableCaching
 @EnableScheduling
+@EnableJpaAuditing
 public class BootApplication extends SpringBootServletInitializer {
 
     private static Logger logger = LoggerFactory.getLogger(BootApplication.class);

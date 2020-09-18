@@ -5,6 +5,9 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -22,6 +25,7 @@ import java.util.List;
 @DynamicInsert
 @DynamicUpdate
 @Data
+@EntityListeners(AuditingEntityListener.class)
 public class Staff implements Serializable {
     private static final long serialVersionUID = 3L;
 
@@ -37,6 +41,15 @@ public class Staff implements Serializable {
 
     @Column(nullable = false, columnDefinition = "datetime default NOW()")
     private Timestamp createTime;
+
+    @LastModifiedDate
+    private Timestamp modifiedTime;
+
+    /**
+     * 所属服务商realServiceProvider
+     */
+    @Column
+    private String rspId;
 
     @Column
     private String openId;

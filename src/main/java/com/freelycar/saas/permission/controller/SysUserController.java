@@ -24,10 +24,10 @@ public class SysUserController {
      * @param sysUser
      * @return
      */
-    @PostMapping("/modify")
+    /*@PostMapping("/modify")
     public ResultJsonObject modify(@RequestBody SysUser sysUser) {
         return sysUserService.addOrModify(sysUser);
-    }
+    }*/
 
     /**
      * 删除某一个账号
@@ -39,6 +39,29 @@ public class SysUserController {
     public ResultJsonObject delete(@RequestParam long id) {
         return sysUserService.deleteById(id);
     }
+
+    /**
+     * 关闭账号
+     * @param id
+     * @return
+     */
+    @GetMapping("/close")
+    public ResultJsonObject close(@RequestParam long id) {
+        return sysUserService.deleteById(id);
+    }
+
+    /**
+     * 开通账号
+     * @param id
+     * @return
+     */
+    @GetMapping("/open")
+    public ResultJsonObject open(@RequestParam long id) {
+        return sysUserService.openAccountById(id);
+    }
+
+
+
 
     /**
      * 批量删除
