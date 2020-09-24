@@ -134,6 +134,10 @@ public class SysUserService {
         if (this.checkRepeat(sysUser)) {
             throw new DataIsExistException(ResultCode.USER_HAS_EXISTED.message());
         }
+        List<SysUser> sysUserList = sysUserRepository.findByStoreId(sysUser.getStoreId());
+        if (StringUtils.isEmpty(sysUser.getId()) && sysUserList.size() > 0) {
+            throw new DataIsExistException(ResultCode.ACCOUNT_HAS_EXISTED.message());
+        }
         SysUser res = this.saveOrUpdate(sysUser);
         if (null == res) {
             throw new UnknownException(ResultCode.UNKNOWN_ERROR.message());
@@ -142,7 +146,7 @@ public class SysUserService {
     }
 
     /**
-     * 删除某个账号
+     * 删除/关闭某个账号
      *
      * @param id
      * @return

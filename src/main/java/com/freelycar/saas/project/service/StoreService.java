@@ -25,6 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -109,43 +112,45 @@ public class StoreService {
         }
         String storeId = storeAccount.getStoreId();
         Long sysUserId = storeAccount.getSysUserId();
-        if (StringUtils.isEmpty(storeId) && StringUtils.isEmpty(sysUserId)) {
+        Store source = null;
+        SysUser userSource = null;
+        if (StringUtils.isEmpty(storeId)) {
             //新增网点与账号:开通账号
             Store store = storeAccount.toStore();
             store.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             store.setCreateTime(new Timestamp(System.currentTimeMillis()));
             store.setSort(this.generateSort());
 
-            Store res = storeRepository.save(store);
+            source = storeRepository.save(store);
             //新增门店成功后需要添加一个orderSn规则
-            generateOrderSn(res.getId());
-
-            SysUser user = storeAccount.toUser();
-            user.setStoreId(res.getId());
-            user.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            SysUser sysUser = sysUserService.addOrModify(user);
-            storeAccount = getStoreAccount(res, user);
-            return storeAccount;
+            generateOrderSn(source.getId());
         } else {
             //修改网点与账号：账号的开通与关闭保持
-            Store source = storeRepository.findById(storeId).orElse(null);
+            source = storeRepository.findById(storeId).orElse(null);
             if (null == source) {
                 throw new ObjectNotFoundException("未找到id为：" + storeId + " 的store对象，修改失败");
             }
             Store store = storeAccount.toStore();
             UpdateTool.copyNullProperties(source, store);
-            store = storeRepository.saveAndFlush(store);
+            source = storeRepository.saveAndFlush(store);
 
+        }
+        if (StringUtils.isEmpty(sysUserId)) {
+            SysUser user = storeAccount.toUser();
+            user.setStoreId(source.getId());
+            user.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+            userSource = sysUserService.addOrModify(user);
+        } else {
             Optional<SysUser> userOptional = sysUserRepository.findById(sysUserId);
             SysUser user = storeAccount.toUser();
             if (userOptional.isPresent()) {
-                SysUser userSource = userOptional.get();
-                UpdateTool.copyNullProperties(userSource, user);
-                user = sysUserService.addOrModify(user);
+                UpdateTool.copyNullProperties(userOptional.get(), user);
+                userSource = sysUserService.addOrModify(user);
             }
-            storeAccount = getStoreAccount(store, user);
-            return storeAccount;
+
         }
+        storeAccount = getStoreAccount(source, userSource);
+        return storeAccount;
     }
 
     private StoreAccount getStoreAccount(Store store, SysUser user) {
@@ -155,10 +160,11 @@ public class StoreService {
         sa.setAddress(store.getAddress());
         sa.setRemark(store.getRemark());
 
-        sa.setSysUserId(user.getId());
-        sa.setUsername(user.getUsername());
-        sa.setDelStatus(user.getDelStatus());
-
+        if (user != null) {
+            sa.setSysUserId(user.getId());
+            sa.setUsername(user.getUsername());
+            sa.setDelStatus(user.getDelStatus());
+        }
         return sa;
     }
 
@@ -206,6 +212,8 @@ public class StoreService {
             return ResultJsonObject.getErrorResult(null, "删除失败：id" + ResultCode.PARAM_NOT_COMPLETE.message());
         }
         int res = storeRepository.delById(id);
+
+//        sysUserService.deleteById()
         if (res == 1) {
             return ResultJsonObject.getDefaultResult(id);
         }
@@ -241,6 +249,22 @@ public class StoreService {
         return storeRepository.findStoreByDelStatusAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
     }
 
+    public Page<StoreAccount> listStoreAccount(String name, Integer currentPage, Integer pageSize) {
+        Page<StoreAccount> storeAccountPage = null;
+        Page<Store> storePage = storeRepository.findStoreByDelStatusAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
+        List<StoreAccount> storeAccountList = new ArrayList<>();
+        for (Store store :
+                storePage.getContent()) {
+            List<SysUser> sysUserList = sysUserRepository.findByStoreId(store.getId());
+            if (sysUserList.size() == 1) {
+                StoreAccount storeAccount = getStoreAccount(store, sysUserList.get(0));
+                storeAccountList.add(storeAccount);
+            }
+        }
+        Pageable pageable = storePage.getPageable();
+        storeAccountPage = new PageImpl<StoreAccount>(storeAccountList, pageable, storePage.getTotalElements());
+        return storeAccountPage;
+    }
 
     /**
      * 查询所有门店信息（包含模糊查询）

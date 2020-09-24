@@ -122,7 +122,7 @@ public class StoreController {
         if (StringUtils.isEmpty(name)) {
             name = "";
         }
-        return ResultJsonObject.getDefaultResult(PaginationRJO.of(storeService.list(name, currentPage, pageSize)));
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(storeService.listStoreAccount(name, currentPage, pageSize)));
     }
 
     @ApiOperation(value = "修改门店信息（门店端）", produces = "application/json")
