@@ -8,6 +8,7 @@ import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.RealServiceProvider;
 import com.freelycar.saas.project.service.RealServiceProviderService;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+@Api(value = "服务商管理", description = "新的服务商管理接口", tags = "服务商管理接口")
 @RestController
 @RequestMapping("/sp")
 public class RealServiceProviderController {
@@ -27,6 +29,7 @@ public class RealServiceProviderController {
         this.realServiceProviderService = realServiceProviderService;
     }
 
+    @ApiOperation(value = "新增/修改服务商", produces = "application/json")
     @PostMapping(value = "/modify")
     @LoggerManage(description = "调用方法：服务商新增/修改")
     public ResultJsonObject saveOrUpdate(@RequestBody RealServiceProvider serviceProvider) {

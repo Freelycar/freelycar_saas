@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.util.StringUtils;
 
+import java.math.BigInteger;
+
 /**
  * Created with IntelliJ IDEA.
  * Description:
@@ -35,6 +37,10 @@ public class StoreAccount {
      */
     private String remark;
     /**
+     * 网点排序
+     */
+    private BigInteger sort;
+    /**
      * 账号id
      */
     private Long sysUserId;
@@ -49,7 +55,7 @@ public class StoreAccount {
     /**
      * 账号是否关闭
      */
-    private boolean delStatus;
+    private boolean openStatus;
 
     public Store toStore() {
         Store store = new Store();
@@ -59,6 +65,7 @@ public class StoreAccount {
         store.setName(this.name);
         store.setAddress(this.address);
         store.setRemark(this.remark);
+        store.setSort(this.sort);
         return store;
     }
 

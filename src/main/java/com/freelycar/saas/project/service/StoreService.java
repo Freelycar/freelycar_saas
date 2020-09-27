@@ -120,7 +120,6 @@ public class StoreService {
             store.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             store.setCreateTime(new Timestamp(System.currentTimeMillis()));
             store.setSort(this.generateSort());
-
             source = storeRepository.save(store);
             //新增门店成功后需要添加一个orderSn规则
             generateOrderSn(source.getId());
@@ -133,12 +132,12 @@ public class StoreService {
             Store store = storeAccount.toStore();
             UpdateTool.copyNullProperties(source, store);
             source = storeRepository.saveAndFlush(store);
-
         }
         if (StringUtils.isEmpty(sysUserId)) {
             SysUser user = storeAccount.toUser();
             user.setStoreId(source.getId());
             user.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+            user.setOpen(true);
             userSource = sysUserService.addOrModify(user);
         } else {
             Optional<SysUser> userOptional = sysUserRepository.findById(sysUserId);
@@ -155,15 +154,17 @@ public class StoreService {
 
     private StoreAccount getStoreAccount(Store store, SysUser user) {
         StoreAccount sa = new StoreAccount();
-        sa.setStoreId(store.getId());
-        sa.setName(store.getName());
-        sa.setAddress(store.getAddress());
-        sa.setRemark(store.getRemark());
-
+        if (store != null) {
+            sa.setStoreId(store.getId());
+            sa.setName(store.getName());
+            sa.setAddress(store.getAddress());
+            sa.setRemark(store.getRemark());
+            sa.setSort(store.getSort());
+        }
         if (user != null) {
             sa.setSysUserId(user.getId());
             sa.setUsername(user.getUsername());
-            sa.setDelStatus(user.getDelStatus());
+            sa.setOpenStatus(user.getOpen());
         }
         return sa;
     }
@@ -221,6 +222,25 @@ public class StoreService {
     }
 
     /**
+     * 删除门店
+     *
+     * @param id
+     * @return
+     */
+    public ResultJsonObject deleteStoreAndAccount(String id) {
+        if (StringUtils.isEmpty(id)) {
+            return ResultJsonObject.getErrorResult(null, "删除失败：id" + ResultCode.PARAM_NOT_COMPLETE.message());
+        }
+        int res = storeRepository.delById(id);
+        sysUserService.deleteByStoreId(id);
+//        sysUserService.deleteById()
+        if (res == 1) {
+            return ResultJsonObject.getDefaultResult(id);
+        }
+        return ResultJsonObject.getErrorResult(null, ResultCode.RESULT_DATA_NONE.message());
+    }
+
+    /**
      * 批量删除门店
      *
      * @param ids
@@ -233,6 +253,18 @@ public class StoreService {
         String[] idsList = ids.split(",");
         for (String id : idsList) {
             storeRepository.delById(id);
+        }
+        return ResultJsonObject.getDefaultResult(null);
+    }
+
+    public ResultJsonObject deleteStoreAndAccountByIds(String ids) {
+        if (StringUtils.isEmpty(ids)) {
+            return ResultJsonObject.getErrorResult(null, "删除失败：ids" + ResultCode.PARAM_NOT_COMPLETE.message());
+        }
+        String[] idsList = ids.split(",");
+        for (String id : idsList) {
+            storeRepository.delById(id);
+            sysUserService.deleteByStoreId(id);
         }
         return ResultJsonObject.getDefaultResult(null);
     }
@@ -250,19 +282,26 @@ public class StoreService {
     }
 
     public Page<StoreAccount> listStoreAccount(String name, Integer currentPage, Integer pageSize) {
-        Page<StoreAccount> storeAccountPage = null;
         Page<Store> storePage = storeRepository.findStoreByDelStatusAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
         List<StoreAccount> storeAccountList = new ArrayList<>();
         for (Store store :
                 storePage.getContent()) {
-            List<SysUser> sysUserList = sysUserRepository.findByStoreId(store.getId());
+            List<SysUser> sysUserList = sysUserRepository.findByStoreIdAndDelStatus(store.getId(), Constants.DelStatus.NORMAL.isValue());
+            StoreAccount storeAccount;
             if (sysUserList.size() == 1) {
-                StoreAccount storeAccount = getStoreAccount(store, sysUserList.get(0));
-                storeAccountList.add(storeAccount);
+                SysUser sysUser = sysUserList.get(0);
+                if (sysUser.getOpen() == null) {
+                    sysUser.setOpen(true);
+                    sysUserRepository.saveAndFlush(sysUser);
+                }
+                storeAccount = getStoreAccount(store, sysUser);
+            } else {
+                storeAccount = getStoreAccount(store, null);
             }
+            storeAccountList.add(storeAccount);
         }
         Pageable pageable = storePage.getPageable();
-        storeAccountPage = new PageImpl<StoreAccount>(storeAccountList, pageable, storePage.getTotalElements());
+        Page<StoreAccount> storeAccountPage = new PageImpl(storeAccountList, pageable, storePage.getTotalElements());
         return storeAccountPage;
     }
 

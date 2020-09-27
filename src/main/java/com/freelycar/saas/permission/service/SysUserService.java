@@ -134,7 +134,7 @@ public class SysUserService {
         if (this.checkRepeat(sysUser)) {
             throw new DataIsExistException(ResultCode.USER_HAS_EXISTED.message());
         }
-        List<SysUser> sysUserList = sysUserRepository.findByStoreId(sysUser.getStoreId());
+        List<SysUser> sysUserList = sysUserRepository.findByStoreIdAndDelStatus(sysUser.getStoreId(), Constants.DelStatus.NORMAL.isValue());
         if (StringUtils.isEmpty(sysUser.getId()) && sysUserList.size() > 0) {
             throw new DataIsExistException(ResultCode.ACCOUNT_HAS_EXISTED.message());
         }
@@ -146,13 +146,42 @@ public class SysUserService {
     }
 
     /**
-     * 删除/关闭某个账号
+     * 删除某个账号
      *
      * @param id
      * @return
      */
     public ResultJsonObject deleteById(long id) {
         int res = sysUserRepository.delById(id);
+        if (res == 1) {
+            return ResultJsonObject.getDefaultResult(id);
+        }
+        return ResultJsonObject.getErrorResult(id, "关闭失败！");
+    }
+
+    /**
+     * 删除某个门店账号
+     *
+     * @param storeId
+     * @return
+     */
+    public void deleteByStoreId(String storeId) {
+        List<SysUser> sysUserList = sysUserRepository.findByStoreIdAndDelStatus(storeId, Constants.DelStatus.NORMAL.isValue());
+        for (SysUser user :
+                sysUserList) {
+            int res = sysUserRepository.delById(user.getId());
+        }
+    }
+
+
+    /**
+     * 删除某个账号
+     *
+     * @param id
+     * @return
+     */
+    public ResultJsonObject closeById(long id) {
+        int res = sysUserRepository.closeById(id);
         if (res == 1) {
             return ResultJsonObject.getDefaultResult(id);
         }

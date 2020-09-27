@@ -8,6 +8,7 @@ import com.freelycar.saas.exception.BatchDeleteException;
 import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.project.entity.RSPProject;
 import com.freelycar.saas.project.service.RSPProjectService;
+import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
  * Date: 2020-09-10
  * Time: 16:58
  */
+@Api(value = "服务商项目", description = "服务商项目接口", tags = "服务商项目接口")
 @RestController
 @RequestMapping("/sp/project")
 public class RSPProjectController {
@@ -30,6 +32,7 @@ public class RSPProjectController {
         this.rspProjectService = rspProjectService;
     }
 
+    @ApiOperation(value = "服务商项目新增", produces = "application/json")
     @PostMapping(value = "/add")
     @LoggerManage(description = "调用方法：服务商项目新增")
     public ResultJsonObject add(@RequestBody RSPProject project) {

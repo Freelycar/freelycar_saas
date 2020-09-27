@@ -21,6 +21,7 @@ public class SysUser implements UserDetails {
     private Long id;
     private String username;
     private String password;
+    private Boolean isOpen;
 
     @ManyToMany(cascade = {CascadeType.REFRESH}, fetch = FetchType.EAGER)
     private List<SysRole> roles;
@@ -109,6 +110,14 @@ public class SysUser implements UserDetails {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public Boolean getOpen() {
+        return isOpen;
+    }
+
+    public void setOpen(Boolean open) {
+        isOpen = open;
     }
 
     @Override

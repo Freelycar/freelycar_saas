@@ -42,16 +42,18 @@ public class SysUserController {
 
     /**
      * 关闭账号
+     *
      * @param id
      * @return
      */
     @GetMapping("/close")
     public ResultJsonObject close(@RequestParam long id) {
-        return sysUserService.deleteById(id);
+        return sysUserService.closeById(id);
     }
 
     /**
      * 开通账号
+     *
      * @param id
      * @return
      */
@@ -59,8 +61,6 @@ public class SysUserController {
     public ResultJsonObject open(@RequestParam long id) {
         return sysUserService.openAccountById(id);
     }
-
-
 
 
     /**

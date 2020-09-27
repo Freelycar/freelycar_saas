@@ -65,7 +65,7 @@ public class StoreController {
     public ResultJsonObject modify(@RequestBody StoreAccount storeAccount) {
         StoreAccount storeRes;
         try {
-            storeRes  = storeService.saveOrUpdate(storeAccount);
+            storeRes = storeService.saveOrUpdate(storeAccount);
         } catch (ArgumentMissingException | ObjectNotFoundException | NumberOutOfRangeException | UnknownException | DataIsExistException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
@@ -85,7 +85,7 @@ public class StoreController {
     @GetMapping("/delete")
     @LoggerManage(description = "调用方法：单个删除门店信息")
     public ResultJsonObject delete(String id) {
-        return storeService.delete(id);
+        return storeService.deleteStoreAndAccount(id);
     }
 
     /**
@@ -101,11 +101,11 @@ public class StoreController {
         if (null == ids) {
             return ResultJsonObject.getErrorResult(null, "ids参数为NULL");
         }
-        return storeService.delByIds(ids.getString("ids"));
+        return storeService.deleteStoreAndAccountByIds(ids.getString("ids"));
     }
 
     /**
-     * 获取门店列表（分页）
+     * 获取网点列表（分页）
      *
      * @param name
      * @param currentPage
@@ -116,6 +116,27 @@ public class StoreController {
     @GetMapping("/list")
     @LoggerManage(description = "调用方法：获取门店列表（分页）")
     public ResultJsonObject list(
+            @RequestParam(required = false) String name,
+            @RequestParam Integer currentPage,
+            @RequestParam(required = false) Integer pageSize) {
+        if (StringUtils.isEmpty(name)) {
+            name = "";
+        }
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(storeService.list(name, currentPage, pageSize)));
+    }
+
+    /**
+     * 获取网点账号列表（分页）
+     *
+     * @param name
+     * @param currentPage
+     * @param pageSize
+     * @return
+     */
+    @ApiOperation(value = "获取网点账号列表（分页）", produces = "application/json")
+    @GetMapping("/listStoreAccount")
+    @LoggerManage(description = "调用方法：获取门店列表（分页）")
+    public ResultJsonObject listStoreAccount(
             @RequestParam(required = false) String name,
             @RequestParam Integer currentPage,
             @RequestParam(required = false) Integer pageSize) {
