@@ -168,7 +168,7 @@ public class WechatTemplateMessage {
             String remark = "客户姓名：" + clientName
                     + "\n车牌：" + licensePlate
                     + "\n智能柜网格：" + door.getArkSn() + "-" + door.getDoorSn()
-                    + "\n智能柜名称：" + ark.getName()
+                    + "\n智能柜名称：" + ark.getLocation()
                     + "\n智能柜地址：" + ark.getLocation();
 
             JSONObject params = new JSONObject();
@@ -230,7 +230,7 @@ public class WechatTemplateMessage {
         //详情
         data.put("keyword5", keywordFactory("智能柜：" + door.getArkSn() + "-" + door.getDoorSn(), "#173177"));
 
-        data.put("remark", keywordFactory("智能柜名称：" + ark.getName() + "\n地址：" + ark.getLocation() + "\n请前往对应的智能柜扫码查看（取车）"));
+        data.put("remark", keywordFactory("智能柜位置：" + ark.getLocation() + "\n车辆停放位置：" + consumerOrder.getParkingLocation() + "\n请前往对应的智能柜扫码查看（取车）"));
         params.put("data", data);
         String result = invokeTemplateMessage(params);
         log.info("微信订单更新模版消息结果：" + result);
