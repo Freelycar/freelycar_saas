@@ -191,6 +191,15 @@ public class StaffService {
     }
 
     /**
+     * 查询服务商下员工列表
+     */
+
+    public PaginationRJO list(String storeName,String staffName,Integer currentPage, Integer pageSize) {
+        Page<Staff> staffPage = null;
+        return PaginationRJO.of(staffPage);
+    }
+
+    /**
      * 删除操作（软删除）
      *
      * @param id

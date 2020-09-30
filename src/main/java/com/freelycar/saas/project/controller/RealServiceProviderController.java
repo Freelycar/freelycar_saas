@@ -52,6 +52,7 @@ public class RealServiceProviderController {
     @LoggerManage(description = "调用方法：删除服务商信息")
     public ResultJsonObject delete(@RequestBody String[] ids) {
         try {
+            //TODO 禁用服务商下技师账号
             return realServiceProviderService.delete(ids);
         } catch (BatchDeleteException e) {
 //            e.printStackTrace();

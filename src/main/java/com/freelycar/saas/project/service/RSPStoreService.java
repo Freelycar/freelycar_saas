@@ -3,11 +3,9 @@ package com.freelycar.saas.project.service;
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.PageableTools;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
-import com.freelycar.saas.permission.entity.SysUser;
 import com.freelycar.saas.project.entity.RSPStore;
 import com.freelycar.saas.project.entity.Store;
 import com.freelycar.saas.project.model.RspStoreModel;
-import com.freelycar.saas.project.model.StoreAccount;
 import com.freelycar.saas.project.repository.RSPStoreRepository;
 import com.freelycar.saas.project.repository.StoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +14,6 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,6 +68,12 @@ public class RSPStoreService {
         Pageable pageable = storePage.getPageable();
         Page<RspStoreModel> rspStorePage = new PageImpl(rspStoreModelList, pageable, storePage.getTotalElements());
         return rspStorePage;
+    }
+
+    public List<Store> listStore(String rspId) {
+        Set<String> storeIdSet = rspStoreRepository.findByRspId(rspId);
+        List<Store> storeList = storeRepository.findByDelStatusAndIdIn(Constants.DelStatus.NORMAL.isValue(), new ArrayList<>(storeIdSet));
+        return storeList;
     }
 
     public ResultJsonObject openArk(String[] ids, String rspId) {

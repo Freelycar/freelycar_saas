@@ -42,6 +42,14 @@ public class RSPStoreController {
         return ResultJsonObject.getDefaultResult(PaginationRJO.of(rspStoreService.list(rspId, name, currentPage, pageSize)));
     }
 
+    @ApiOperation(value = "获取服务商网点列表", produces = "application/json")
+    @GetMapping("/listStore")
+    @LoggerManage(description = "调用方法：获取服务商网点列表")
+    public ResultJsonObject listStore(
+            @RequestParam String rspId) {
+        return ResultJsonObject.getDefaultResult(rspStoreService.listStore(rspId));
+    }
+
     @ApiOperation(value = "关闭服务商网点智能柜服务", produces = "application/json")
     @PostMapping(value = "/close")
     @LoggerManage(description = "调用方法：关闭服务商网点智能柜服务")

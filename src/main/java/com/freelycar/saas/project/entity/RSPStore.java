@@ -17,7 +17,8 @@ import java.io.Serializable;
 
 /**
  * Created with IntelliJ IDEA.
- * Description:
+ * Description: 服务商与网点，服务商是否开通网点智能柜功能
+ * 存在rspId-storeId即表示服务商开通该门店智能柜服务
  * User: Ting
  * Date: 2020-09-25
  * Time: 14:49
