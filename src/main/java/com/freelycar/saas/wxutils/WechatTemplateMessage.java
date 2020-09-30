@@ -5,6 +5,7 @@ import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.project.entity.Ark;
 import com.freelycar.saas.project.entity.ConsumerOrder;
 import com.freelycar.saas.project.entity.Door;
+import com.freelycar.saas.project.entity.Store;
 import com.freelycar.saas.util.RoundTool;
 import org.apache.http.entity.StringEntity;
 import org.apache.logging.log4j.LogManager;
@@ -21,6 +22,8 @@ public class WechatTemplateMessage {
     private static final String ORDER_CHANGED_FOR_CLIENT_ID = "PeRe0M0iEbm7TpN6NOThhBUjwzy_aHsi6r2E7Pa8J1A";
     private static final String ORDER_CHANGED_FOR_STAFF_ID = "il1UVsHA-GesQsFHERczQP9zPvz-od-q240c3fqd9vM";
     private static final String ORDER_CREATE_ID = "C-m3oRNedo3vM6ugQXBa4RhOtW3qwqM7tjWNKuAgYe8";
+    //关注提醒下单
+    private static final String REMIND_TO_ORDER = "";
 
     private static final Logger log = LogManager.getLogger(WechatTemplateMessage.class);
 
@@ -34,6 +37,36 @@ public class WechatTemplateMessage {
                 entity, null);
         log.debug("微信模版消息结果：" + result);
         return result;
+    }
+
+    /**
+     * 用户扫码推送
+     * {{first.DATA}}
+     * 订单编号： {{OrderSn.DATA}}
+     * 订单状态： {{OrderStatus.DATA}}
+     * {{remark.DATA}}
+     */
+    public static void remindToOrder(Ark ark, Store store, String openId) {
+        String url = "https://www.freelycar.com/wechat/role-select/" + ark.getSn();
+        String storeName = store.getName();
+        String arkLocation = ark.getLocation();
+        JSONObject params = new JSONObject();
+        params.put("touser", openId);
+        params.put("template_id", REMIND_TO_ORDER);
+        params.put("url", url);
+
+        JSONObject data = new JSONObject();
+        String first = "感谢您的关注，请点击开始下单~";
+
+        data.put("first", keywordFactory(first, "#173177"));
+        /*data.put("OrderSn", keywordFactory(consumerOrder.getId(), "#173177"));
+        data.put("OrderStatus", keywordFactory(stateString, "#173177"));*/
+        data.put("remark", keywordFactory("开始下单"));
+        params.put("data", data);
+
+        String result = invokeTemplateMessage(params);
+        log.info("微信订单更新模版消息结果：" + result);
+
     }
 
     /**
