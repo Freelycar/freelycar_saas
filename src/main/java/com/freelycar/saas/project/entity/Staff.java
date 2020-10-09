@@ -90,6 +90,9 @@ public class Staff implements Serializable {
     @Transient
     private String storeName;
 
+    @Transient
+    private List<Store> stores;
+
     @ManyToMany(cascade = {CascadeType.REFRESH}, fetch = FetchType.EAGER)
     private List<Project> projects;
 

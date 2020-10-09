@@ -39,6 +39,18 @@ public class StaffController {
         return staffService.modify(staff);
     }
 
+    @ApiOperation(value = "新增/修改服务商员工信息", produces = "application/json")
+    @PostMapping(value = "/modifyRspStaff")
+    @LoggerManage(description = "调用方法：新增/修改员工信息")
+    public ResultJsonObject saveOrUpdateForRsp(@RequestBody Staff staff) {
+        if (null == staff) {
+            String errorMsg = "接收到的参数：员工为NULL";
+            logger.error(errorMsg);
+            return ResultJsonObject.getErrorResult(null, errorMsg);
+        }
+        return staffService.modifyRspStaff(staff);
+    }
+
     /**
      * 获取员工类型对象
      *

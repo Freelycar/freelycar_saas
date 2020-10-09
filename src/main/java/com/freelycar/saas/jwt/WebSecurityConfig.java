@@ -1,6 +1,5 @@
 package com.freelycar.saas.jwt;
 
-import okhttp3.WebSocket;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;

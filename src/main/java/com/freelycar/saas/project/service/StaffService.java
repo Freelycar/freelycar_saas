@@ -1,12 +1,11 @@
 package com.freelycar.saas.project.service;
 
+import com.alibaba.fastjson.parser.deserializer.StringFieldDeserializer;
 import com.freelycar.saas.basic.wrapper.*;
 import com.freelycar.saas.jwt.TokenAuthenticationUtil;
 import com.freelycar.saas.project.entity.*;
 import com.freelycar.saas.project.model.StaffInfo;
-import com.freelycar.saas.project.repository.ArkRepository;
-import com.freelycar.saas.project.repository.EmployeeRepository;
-import com.freelycar.saas.project.repository.StaffRepository;
+import com.freelycar.saas.project.repository.*;
 import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wechat.model.WeChatStaff;
 import com.freelycar.saas.wxutils.WechatTemplateMessage;
@@ -19,9 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.freelycar.saas.basic.wrapper.ResultCode.RESULT_DATA_NONE;
 
@@ -41,6 +38,19 @@ public class StaffService {
 
     @Autowired
     private ConsumerProjectInfoService consumerProjectInfoService;
+
+    private RspStaffStoreRepository rspStaffStoreRepository;
+    private StoreRepository storeRepository;
+
+    @Autowired
+    public void setRspStaffStoreRepository(RspStaffStoreRepository rspStaffStoreRepository) {
+        this.rspStaffStoreRepository = rspStaffStoreRepository;
+    }
+
+    @Autowired
+    public void setStoreRepository(StoreRepository storeRepository) {
+        this.storeRepository = storeRepository;
+    }
 
     /**
      * 新增/修改员工对象
@@ -113,6 +123,98 @@ public class StaffService {
         }
     }
 
+    /**
+     * 新增/修改服务商员工对象
+     *
+     * @param staff
+     * @return
+     */
+    public ResultJsonObject modifyRspStaff(Staff staff) {
+        String phone = staff.getPhone();
+        if (StringUtils.isEmpty(phone)) {
+            return ResultJsonObject.getErrorResult(null, "手机号必填，用于作为员工唯一编号");
+        }
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
+        try {
+            //验重
+            if (this.checkRepeatRspStaffPhone(staff)) {
+                return ResultJsonObject.getErrorResult(null, "已包含手机号为：“" + phone + "”的数据，不能重复添加。");
+            }
+            //是否有ID，判断时新增还是修改
+            String id = staff.getId();
+            if (StringUtils.isEmpty(id)) {
+                //新增服务商技师
+                staff.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+                staff.setCreateTime(currentTime);
+                staff.setIsArk(true);//默认开通智能柜功能
+                //技师服务的门店
+            } else {
+                Optional<Staff> optional = staffRepository.findById(id);
+                //判断数据库中是否有该对象
+                if (!optional.isPresent()) {
+                    logger.error("修改失败，原因：" + Staff.class + "中不存在id为 " + id + " 的对象");
+                    return ResultJsonObject.getErrorResult(null);
+                }
+                Staff source = optional.get();
+                //将目标对象（projectType）中的null值，用源对象中的值替换
+                UpdateTool.copyNullProperties(source, staff);
+            }
+
+
+            //如果在employee表中查询不到手机号，则视为第一次录入员工，则员工保存成功后需要在employee表中生成一条数据
+            Employee employee = getEmployeeByPhone(phone);
+            if (null == employee) {
+                Employee newEmployee = new Employee();
+                newEmployee.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+                newEmployee.setTrueName(staff.getName());
+                newEmployee.setNotification(false);
+                newEmployee.setPhone(phone);
+                newEmployee.setAccount(phone);
+                newEmployee.setPassword(staff.getPassword());
+                newEmployee.setCreateTime(currentTime);
+                employeeRepository.save(newEmployee);
+            } else {
+                //如果已有数据，则统一其智能柜登录账户密码
+                String account = employee.getAccount();
+                String password = employee.getPassword();
+                if (StringUtils.hasText(account)) {
+                    staff.setAccount(account);
+                    staff.setPassword(password);
+                    if (null != password) {
+                        staff.setIsArk(true);
+                    }
+                    staff.setOpenId(employee.getOpenId());
+                }
+            }
+            Staff staffNew = staffRepository.saveAndFlush(staff);
+            List<Store> storeList = staff.getStores();
+            rspStaffStoreRepository.deleteByStaffId(staffNew.getId());
+            List<RspStaffStore> staffStoreList = new ArrayList<>();
+            for (Store store : storeList) {
+                RspStaffStore staffStore = new RspStaffStore(staffNew.getId(), store.getId());
+                staffStoreList.add(staffStore);
+            }
+            rspStaffStoreRepository.saveAll(staffStoreList);
+            //执行保存/修改
+            return ResultJsonObject.getDefaultResult(getRspStaff(staffNew.getId()));
+        } catch (Exception e) {
+//            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null);
+        }
+    }
+
+    public Staff getRspStaff(String staffId) {
+        Staff result = null;
+        Optional<Staff> staffOptional = staffRepository.findById(staffId);
+        if (staffOptional.isPresent()) {
+            result = staffOptional.get();
+            Set<String> storeIds = rspStaffStoreRepository.findByStaffId(staffId);
+            List<Store> storeList = storeRepository.findByDelStatusAndIdIn(Constants.DelStatus.NORMAL.isValue(), new ArrayList<>(storeIds));
+            result.setStores(storeList);
+        }
+        return result;
+    }
+
 
     /**
      * 验证员工是否重复（手机号唯一）
@@ -127,6 +229,22 @@ public class StaffService {
             staffList = staffRepository.checkRepeatPhone(staff.getId(), staff.getPhone(), staff.getStoreId());
         } else {
             staffList = staffRepository.checkRepeatPhone(staff.getPhone(), staff.getStoreId());
+        }
+        return staffList.size() != 0;
+    }
+
+    /**
+     * 验证服务商员工是否重复（手机号唯一）
+     *
+     * @param staff
+     * @return
+     */
+    private boolean checkRepeatRspStaffPhone(Staff staff) {
+        List<Staff> staffList;
+        if (null != staff.getId()) {
+            staffList = staffRepository.checkRepeatRspStaffPhone(staff.getId(), staff.getPhone(), staff.getRspId());
+        } else {
+            staffList = staffRepository.checkRepeatRspStaffPhone(staff.getPhone(), staff.getRspId());
         }
         return staffList.size() != 0;
     }
@@ -194,8 +312,27 @@ public class StaffService {
      * 查询服务商下员工列表
      */
 
-    public PaginationRJO list(String storeName,String staffName,Integer currentPage, Integer pageSize) {
+    public PaginationRJO list(String rspId, String storeName, String staffName, Integer currentPage, Integer pageSize) {
         Page<Staff> staffPage = null;
+        if (StringUtils.isEmpty(storeName)) {
+            staffPage = staffRepository.findAllByDelStatusAndRspIdAndNameContaining(Constants.DelStatus.NORMAL.isValue(), rspId, staffName, PageableTools.basicPage(currentPage, pageSize));
+            for (Staff staff :
+                    staffPage.getContent()) {
+                staff = getRspStaff(staff.getId());
+            }
+        } else {
+            List<Store> storeList = storeRepository.findByNameContainingAndDelStatus(storeName, Constants.DelStatus.NORMAL.isValue());
+            Set<String> storeIds = new HashSet<>();
+            for (Store store : storeList) {
+                storeIds.add(store.getId());
+            }
+            Set<String> staffIds = rspStaffStoreRepository.findByStoreIdIn(storeIds);
+            staffPage = staffRepository.findAllByDelStatusAndRspIdAndNameContainingAndIdIn(Constants.DelStatus.NORMAL.isValue(), rspId, staffName, staffIds, PageableTools.basicPage(currentPage, pageSize));
+            for (Staff staff :
+                    staffPage.getContent()) {
+                staff = getRspStaff(staff.getId());
+            }
+        }
         return PaginationRJO.of(staffPage);
     }
 
@@ -285,6 +422,24 @@ public class StaffService {
         return staffList.size() != 0;
     }
 
+    /**
+     * 智能柜技师开通
+     *
+     * @param id
+     * @return
+     */
+    public ResultJsonObject openArk(String id) {
+
+        Optional<Staff> optionalStaff = staffRepository.findById(id);
+        if (optionalStaff.isPresent()) {
+            Staff staff = optionalStaff.get();
+            staff.setIsArk(true);
+            staffRepository.saveAndFlush(staff);
+            return ResultJsonObject.getDefaultResult(getRspStaff(id));
+        }
+        return ResultJsonObject.getErrorResult(null, "id:" + id + "不存在！");
+
+    }
 
     /**
      * 智能柜技师关闭
@@ -297,11 +452,9 @@ public class StaffService {
         Optional<Staff> optionalStaff = staffRepository.findById(id);
         if (optionalStaff.isPresent()) {
             Staff staff = optionalStaff.get();
-//            staff.setAccount(null);
-//            staff.setPassword(null);
             staff.setIsArk(false);
-
-            return ResultJsonObject.getDefaultResult(staffRepository.saveAndFlush(staff));
+            staffRepository.saveAndFlush(staff);
+            return ResultJsonObject.getDefaultResult(getRspStaff(id));
         }
         return ResultJsonObject.getErrorResult(null, "id:" + id + "不存在！");
 

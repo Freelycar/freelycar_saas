@@ -70,6 +70,12 @@ public class RSPStoreService {
         return rspStorePage;
     }
 
+    /**
+     * 获取服务商下开通智能柜功能的网点列表
+     *
+     * @param rspId
+     * @return
+     */
     public List<Store> listStore(String rspId) {
         Set<String> storeIdSet = rspStoreRepository.findByRspId(rspId);
         List<Store> storeList = storeRepository.findByDelStatusAndIdIn(Constants.DelStatus.NORMAL.isValue(), new ArrayList<>(storeIdSet));

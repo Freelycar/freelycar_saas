@@ -39,4 +39,6 @@ public interface StoreRepository extends JpaRepository<Store, String> {
     List<Store> findByDelStatusAndIdIn(boolean delStatus, List<String> id);
 
     Store findByNameAndDelStatus(String name, boolean delStatus);
+
+    List<Store> findByNameContainingAndDelStatus(String name, boolean delStatus);
 }

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * @author tangwei - Toby
@@ -26,6 +27,10 @@ public interface StaffRepository extends JpaRepository<Staff, String> {
 
 
     Page<Staff> findAllByDelStatusAndStoreIdAndIdContainingAndNameContaining(boolean delStatus, String storeId, String id, String name, Pageable pageable);
+
+    Page<Staff> findAllByDelStatusAndRspIdAndNameContaining(boolean delStatus, String rspId, String name, Pageable pageable);
+
+    Page<Staff> findAllByDelStatusAndRspIdAndNameContainingAndIdIn(boolean delStatus, String rspId, String name, Set<String> ids, Pageable pageable);
 
     @Transactional
     @Modifying(clearAutomatically = true)
@@ -68,6 +73,18 @@ public interface StaffRepository extends JpaRepository<Staff, String> {
     @Query(value = "select * from staff where id != :id and storeId = :storeId and delStatus = 0 and phone = :phone", nativeQuery = true)
     List<Staff> checkRepeatPhone(@Param("id") String id, @Param("phone") String phone, @Param("storeId") String storeId);
 
+
+    /**
+     * 验证服务商中员工手机号唯一（排除数据本身）
+     *
+     * @param id
+     * @param phone
+     * @param rspId
+     * @return
+     */
+    @Query(value = "select * from staff where id != :id and rspId = :rspId and delStatus = 0 and phone = :phone", nativeQuery = true)
+    List<Staff> checkRepeatRspStaffPhone(@Param("id") String id, @Param("phone") String phone, @Param("rspId") String rspId);
+
     /**
      * 验证门店中手机号唯一性（不排除数据本身）
      *
@@ -77,6 +94,16 @@ public interface StaffRepository extends JpaRepository<Staff, String> {
      */
     @Query(value = "select * from staff where storeId = :storeId and delStatus = 0 and phone = :phone", nativeQuery = true)
     List<Staff> checkRepeatPhone(@Param("phone") String phone, @Param("storeId") String storeId);
+
+    /**
+     * 验证服务商中员工手机号唯一（不排除数据本身）
+     *
+     * @param phone
+     * @param rspId
+     * @return
+     */
+    @Query(value = "select * from staff where rspId = :rspId and delStatus = 0 and phone = :phone", nativeQuery = true)
+    List<Staff> checkRepeatRspStaffPhone(@Param("phone") String phone, @Param("rspId") String rspId);
 
     List<Staff> findByNameAndDelStatusAndIsArk(String name, boolean delStatus, boolean isArk);
 
