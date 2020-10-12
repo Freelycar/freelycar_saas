@@ -1884,7 +1884,7 @@ public class ConsumerOrderService {
         return PaginationRJO.of(page);
     }
 
-    public JSONArray getMongthlyIncomeByYear(String year) {
+    public List getMongthlyIncomeByYear(String year) {
         String startTime = year;
         String endTime = (Integer.valueOf(year) + 1) + "";
         startTime += "-01-01 00:00:00";
@@ -1902,7 +1902,7 @@ public class ConsumerOrderService {
         @SuppressWarnings({"unused", "unchecked"})
         List res = nativeQuery.getResultList();
         em.close();
-        return JSONArray.parseArray(JSON.toJSONString(res));
+        return res;
     }
 
 
