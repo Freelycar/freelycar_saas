@@ -22,5 +22,7 @@ public interface RealServiceProviderRepository extends JpaRepository<RealService
     @Query(value = "update realServiceProvider set delStatus = 1 where id in :ids", nativeQuery = true)
     int delById(Set<String> ids);
 
+    Optional<RealServiceProvider> findByIdAndDelStatus(String id, boolean delStatus);
+
     Page<RealServiceProvider> findByDelStatusAndNameContainingOrderByIdAsc(boolean delStatus, String name, Pageable pageable);
 }

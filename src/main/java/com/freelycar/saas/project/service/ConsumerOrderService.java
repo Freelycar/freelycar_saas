@@ -1,5 +1,7 @@
 package com.freelycar.saas.project.service;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.*;
 import com.freelycar.saas.exception.*;
@@ -1880,6 +1882,27 @@ public class ConsumerOrderService {
         Page<OrderRecordObject> page = new PageImpl(orderParticulars, pageable, total);
 
         return PaginationRJO.of(page);
+    }
+
+    public JSONArray getMongthlyIncomeByYear(String year) {
+        String startTime = year;
+        String endTime = (Integer.valueOf(year) + 1) + "";
+        startTime += "-01-01 00:00:00";
+        endTime += "-01-01 00:00:00";
+        StringBuffer sql = new StringBuffer();
+        sql.append("SELECT DATE_FORMAT(createTime,\"%Y-%m\") as createDate,SUM(totalPrice) as orderCount FROM `consumerorder` \n" +
+                "WHERE delstatus=0 and orderType=2 and state<4  AND createTime >= \'" + startTime + "\' and createTime < \'" + endTime +
+                "\' GROUP BY createDate order by createDate DESC");
+
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery = em.createNativeQuery(sql.toString());
+
+        nativeQuery.unwrap(NativeQuery.class);
+
+        @SuppressWarnings({"unused", "unchecked"})
+        List res = nativeQuery.getResultList();
+        em.close();
+        return JSONArray.parseArray(JSON.toJSONString(res));
     }
 
 

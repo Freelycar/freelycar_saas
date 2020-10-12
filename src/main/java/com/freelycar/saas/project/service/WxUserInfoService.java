@@ -9,6 +9,7 @@ import com.freelycar.saas.project.entity.Car;
 import com.freelycar.saas.project.entity.Client;
 import com.freelycar.saas.project.entity.Store;
 import com.freelycar.saas.project.entity.WxUserInfo;
+import com.freelycar.saas.project.model.CumulateOrder;
 import com.freelycar.saas.project.model.CumulateThree;
 import com.freelycar.saas.project.repository.*;
 import com.freelycar.saas.util.NicknameFilter;
@@ -32,8 +33,9 @@ import javax.persistence.Query;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.Optional;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * @author tangwei
@@ -499,6 +501,56 @@ public class WxUserInfoService {
         return res.longValue();
     }
 
+    /**
+     * 计算当月注册人数
+     *
+     * @param refDate
+     * @return
+     */
+    public Long countMonthRegister(String refDate) throws ParseException {
+        SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM");
+        SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy-MM-dd");
+        Date currentMonthDate = sdf1.parse(refDate);
+        Calendar rightNow = Calendar.getInstance();
+        rightNow.setTime(currentMonthDate);
+        rightNow.add(Calendar.MONTH, 1);
+        rightNow.add(Calendar.DAY_OF_YEAR, -1);
+        String start = sdf2.format(currentMonthDate);
+        String end = sdf2.format(rightNow.getTime());
+        StringBuffer sql = new StringBuffer();
+        sql.append("select count(1) as num from wxuserinfo wui where wui.delStatus=0 ")
+                .append(" and wui.createTime >\"").append(start).append(" 00:00:00\" ")
+                .append(" and wui.createTime <\"").append(end).append(" 23:59:59\" ");
+
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery = em.createNativeQuery(sql.toString());
+
+        nativeQuery.unwrap(NativeQuery.class);
+
+        @SuppressWarnings({"unused", "unchecked"})
+        BigInteger res = (BigInteger) nativeQuery.getSingleResult();
+
+        em.close();
+        return res.longValue();
+    }
+
+    public List countLatest12Order() {
+        StringBuffer sql = new StringBuffer();
+        sql.append("SELECT DATE_FORMAT(createTime,\"%Y-%m\") as createDate,count(id) as orderCount FROM `consumerorder` \n" +
+                "WHERE delstatus=0 and orderType=2 and state<4  \n" +
+                "GROUP BY createDate order by createDate DESC limit 12");
+
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery = em.createNativeQuery(sql.toString());
+
+        nativeQuery.unwrap(NativeQuery.class);
+
+        @SuppressWarnings({"unused", "unchecked"})
+        List res = nativeQuery.getResultList();
+        em.close();
+        return res;
+    }
+
 
     /**
      * 系统三项统计查询
@@ -541,5 +593,50 @@ public class WxUserInfoService {
         cumulateThree.setCumulateUserCount(countCumulateUser);
 
         return cumulateThree;
+    }
+
+    /**
+     * 获取首页关注与订单数折线图
+     */
+    public ResultJsonObject getCumulateChart() throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM");
+        Date now = new Date();
+        String currentMonth = sdf.format(now);
+        Date currentMonthDate = sdf.parse(currentMonth);
+        Calendar rightNow = Calendar.getInstance();
+        rightNow.setTime(currentMonthDate);
+        List cumulateOrderList = this.countLatest12Order();
+        //检查日期是否为最近12月
+        List<CumulateOrder> cumulateOrderList1 = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            if (i > 0) rightNow.add(Calendar.MONTH, -1);
+            Date monthDate = rightNow.getTime();
+            String month = sdf.format(monthDate);
+            boolean flag = true;//标记是否需要添加空值
+            for (Object object :
+                    cumulateOrderList) {
+                Object[] objectArray = (Object[]) object;
+                CumulateOrder cumulateOrder = new CumulateOrder();
+                cumulateOrder.setCreateDate((String) objectArray[0]);
+                BigInteger count = (BigInteger) objectArray[1];
+                cumulateOrder.setOrderCount(count.longValue());
+                if (month.equals(cumulateOrder.getCreateDate())) {
+                    cumulateOrderList1.add(cumulateOrder);
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag) {
+                CumulateOrder cumulateOrder = new CumulateOrder();
+                cumulateOrder.setOrderCount(0l);
+                cumulateOrder.setCreateDate(month);
+                cumulateOrderList1.add(cumulateOrder);
+            }
+        }
+        for (CumulateOrder cumulateOrder :
+                cumulateOrderList1) {
+            cumulateOrder.setRegisterUserCount(this.countMonthRegister(cumulateOrder.getCreateDate()));
+        }
+        return ResultJsonObject.getDefaultResult(cumulateOrderList1);
     }
 }

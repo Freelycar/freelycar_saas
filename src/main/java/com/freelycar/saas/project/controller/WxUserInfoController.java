@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.text.ParseException;
+
 /**
  * @author tangwei
  * @date 2018/9/25
@@ -43,6 +45,23 @@ public class WxUserInfoController {
         try {
             return ResultJsonObject.getDefaultResult(wxUserInfoService.getCumulateThree(storeId, refDate));
         } catch (ArgumentMissingException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
+    }
+
+    /**
+     * 最近12月的当月注册数与订单总数
+     * @return
+     */
+    @ApiOperation(value = "获取首页关注与订单数折线图")
+    @GetMapping("/getCumulateChart")
+    @LoggerManage(description = "调用方法：获取首页关注与订单数折线图")
+    public ResultJsonObject getCumulateChart() {
+        try {
+            return wxUserInfoService.getCumulateChart();
+        } catch (ParseException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());

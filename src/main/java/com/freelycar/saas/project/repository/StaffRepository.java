@@ -32,6 +32,8 @@ public interface StaffRepository extends JpaRepository<Staff, String> {
 
     Page<Staff> findAllByDelStatusAndRspIdAndNameContainingAndIdIn(boolean delStatus, String rspId, String name, Set<String> ids, Pageable pageable);
 
+    List<Staff> findByDelStatusAndRspId(boolean delStatus, String rspId);
+
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "update staff set delStatus = 1 where id=:id", nativeQuery = true)

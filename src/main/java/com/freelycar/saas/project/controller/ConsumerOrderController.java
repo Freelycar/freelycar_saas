@@ -1,5 +1,6 @@
 package com.freelycar.saas.project.controller;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.aop.LoggerManage;
 import com.freelycar.saas.basic.wrapper.PaginationRJO;
@@ -320,5 +321,66 @@ public class ConsumerOrderController {
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());
         }
+    }
+
+    @ApiOperation(value = "获取营业汇总-时间", produces = "application/json")
+    @LoggerManage(description = "调用方法：获取营业汇总-时间")
+    @GetMapping("/getIncomeByYear")
+    public ResultJsonObject getIncomeByYear(@RequestParam String year) {
+        JSONArray year1 = consumerOrderService.getMongthlyIncomeByYear(year);
+        //计算当年总额
+        double sum = 0;
+        for (int i = 0; i < year1.size(); i++) {
+            Object[] objs = (Object[]) year1.get(i);
+            sum += (double) objs[1];
+        }
+        JSONArray year2 = consumerOrderService.getMongthlyIncomeByYear((Integer.valueOf(year) - 1) + "");
+        //计算环比
+        JSONArray m2m = new JSONArray();
+        for (int i = 0; i < year1.size(); i++) {
+            Object[] objs1 = (Object[]) year1.get(i);
+            String month1 = (String) objs1[0];
+            double value1 = (double) objs1[1];
+            double value2 = 0;
+            if (i < year1.size() - 1) {
+                Object[] objs2 = (Object[]) year1.get(i + 1);
+                String month2 = (String) objs2[0];
+                if (Integer.valueOf(month2.split("-")[1]) == (Integer.valueOf(month1.split("-")[1]) - 1)) {
+                    value2 = (double) objs2[1];
+                }
+            } else {
+                Object[] objs2 = (Object[]) year2.get(0);
+                String month2 = (String) objs2[0];
+                if (Integer.valueOf(month2.split("-")[1]) == 12) {
+                    value2 = (double) objs2[1];
+                }
+            }
+            double value = 0;
+            if (value2 > 0) {
+                value = (double) Math.round((value1 - value2) / value2 * 100) / 100;
+            }
+            Object[] res = {month1, value};
+            m2m.add(res);
+        }
+        //计算同比
+        JSONArray y2y = new JSONArray();
+        for (int i = 0; i < year1.size(); i++) {
+            Object[] objs1 = (Object[]) year1.get(i);
+            String month1 = (String) objs1[0];
+            double value1 = (double) objs1[1];
+            String month = month1.split("-")[1];
+            for (int j = 0; j < year2.size(); j++) {
+                Object[] objs2 = (Object[]) year2.get(j);
+                String month2 = (String) objs2[0];
+//                if (month2.split("-")[1].equals(month))
+
+            }
+        }
+        JSONObject res = new JSONObject();
+        res.put("sum", sum);
+        res.put("year", year1);
+        res.put("M2M", m2m);
+//        res.put("Y2Y", );
+        return ResultJsonObject.getDefaultResult(res);
     }
 }

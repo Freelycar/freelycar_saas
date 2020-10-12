@@ -4,9 +4,13 @@ import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.PageableTools;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.project.entity.RSPStore;
+import com.freelycar.saas.project.entity.RspStaffStore;
+import com.freelycar.saas.project.entity.Staff;
 import com.freelycar.saas.project.entity.Store;
 import com.freelycar.saas.project.model.RspStoreModel;
 import com.freelycar.saas.project.repository.RSPStoreRepository;
+import com.freelycar.saas.project.repository.RspStaffStoreRepository;
+import com.freelycar.saas.project.repository.StaffRepository;
 import com.freelycar.saas.project.repository.StoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -15,9 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -34,6 +36,10 @@ public class RSPStoreService {
     private RSPStoreRepository rspStoreRepository;
 
     private StoreRepository storeRepository;
+
+    private StaffRepository staffRepository;
+
+    private RspStaffStoreRepository rspStaffStoreRepository;
 
     @Autowired
     public void setStoreRepository(StoreRepository storeRepository) {
@@ -94,11 +100,35 @@ public class RSPStoreService {
         return ResultJsonObject.getDefaultResult(null);
     }
 
+    /**
+     * 关闭服务商相关网点智能柜功能：
+     * 1.关闭服务商网点智能柜功能
+     * 2.删除服务商下技师所选服务网点
+     *
+     * @param ids
+     * @param rspId
+     * @return
+     */
     public ResultJsonObject closeArk(String[] ids, String rspId) {
         List<RSPStore> rspStoreList = new ArrayList<>();
         for (int i = 0; i < ids.length; i++) {
             rspStoreList.addAll(rspStoreRepository.findByStoreIdAndRspId(ids[i], rspId));
         }
+        //服务商下技师
+        /*Set<String> idSet = new HashSet<>(Arrays.asList(ids));//待删除门店id
+        List<Staff> staffList = staffRepository.findByDelStatusAndRspId(Constants.DelStatus.NORMAL.isValue(), rspId);
+        if (staffList.size() > 0) {
+            for (Staff staff :
+                    staffList) {
+                Set<String> storeIds = rspStaffStoreRepository.findByStaffId(staff.getId());
+                for (String storeId :
+                        storeIds) {
+                    if (idSet.contains(storeId)) {
+                        rspStaffStoreRepository.deleteByStaffIdAndStoreId(staff.getId(), storeId);
+                    } else continue;
+                }
+            }
+        }*/
         rspStoreRepository.deleteAll(rspStoreList);
         return ResultJsonObject.getDefaultResult(null);
     }

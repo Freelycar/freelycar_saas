@@ -83,7 +83,7 @@ public class RealServiceProviderService {
         if (result == 0) {
             return ResultJsonObject.getErrorResult(ids, "删除失败," + RESULT_DATA_NONE);
         }
-        if (result != ids.length){
+        if (result != ids.length) {
             throw new BatchDeleteException("部分id不存在");
         }
         return ResultJsonObject.getDefaultResult(ids, "删除成功");
@@ -99,5 +99,22 @@ public class RealServiceProviderService {
      */
     public Page<RealServiceProvider> list(String name, Integer currentPage, Integer pageSize) {
         return realServiceProviderRepository.findByDelStatusAndNameContainingOrderByIdAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
+    }
+
+    /**
+     * 切换服务商状态
+     *
+     * @param id
+     * @return
+     */
+    public ResultJsonObject changeServiceStatus(String id) {
+        Optional<RealServiceProvider> optional = realServiceProviderRepository.findByIdAndDelStatus(id, Constants.DelStatus.NORMAL.isValue());
+        if (optional.isPresent()) {
+            RealServiceProvider provider = optional.get();
+            boolean oldStatus = provider.getServiceStatus();
+            provider.setServiceStatus(!oldStatus);
+            realServiceProviderRepository.saveAndFlush(provider);
+            return ResultJsonObject.getDefaultResult(provider);
+        } else return ResultJsonObject.getErrorResult(null, "id:" + id + "不存在！");
     }
 }

@@ -21,6 +21,8 @@ public interface RspStaffStoreRepository extends JpaRepository<RspStaffStore, St
 
     int deleteByStaffId(String staffId);
 
+    int deleteByStaffIdAndStoreId(String staffId, String storeId);
+
     @Query(value = "select staffId from RspStaffStore where storeId in :storeIds", nativeQuery = true)
     Set<String> findByStoreIdIn(Set<String> storeIds);
 }

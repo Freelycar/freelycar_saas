@@ -6,7 +6,6 @@ import com.freelycar.saas.basic.wrapper.PaginationRJO;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.*;
 import com.freelycar.saas.permission.service.SysUserService;
-import com.freelycar.saas.project.entity.Store;
 import com.freelycar.saas.project.model.StoreAccount;
 import com.freelycar.saas.project.model.StoreInfo;
 import com.freelycar.saas.project.service.StoreService;
@@ -123,6 +122,23 @@ public class StoreController {
             name = "";
         }
         return ResultJsonObject.getDefaultResult(PaginationRJO.of(storeService.list(name, currentPage, pageSize)));
+    }
+
+    /**
+     * 获取网点列表
+     *
+     * @param name
+     * @return
+     */
+    @ApiOperation(value = "获取门店列表", produces = "application/json")
+    @GetMapping("/listAll")
+    @LoggerManage(description = "调用方法：获取门店列表")
+    public ResultJsonObject list(
+            @RequestParam(required = false) String name) {
+        if (StringUtils.isEmpty(name)) {
+            name = "";
+        }
+        return ResultJsonObject.getDefaultResult(storeService.list(name));
     }
 
     /**

@@ -80,4 +80,18 @@ public class RealServiceProviderController {
         }
         return ResultJsonObject.getDefaultResult(PaginationRJO.of(realServiceProviderService.list(name, currentPage, pageSize)));
     }
+
+    /**
+     * 切换服务商状态
+     *
+     * @param id
+     * @return
+     */
+    @ApiOperation(value = "切换服务商状态", produces = "application/json")
+    @GetMapping("/changeServiceStatus")
+    @LoggerManage(description = "调用方法：切换服务商状态")
+    public ResultJsonObject changeServiceStatus(
+            @RequestParam String id) {
+        return realServiceProviderService.changeServiceStatus(id);
+    }
 }

@@ -281,6 +281,15 @@ public class StoreService {
         return storeRepository.findStoreByDelStatusAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
     }
 
+    /**
+     * 门店列表（包含“门店名称”的模糊查询）
+     * @param name
+     * @return
+     */
+    public List<Store> list(String name) {
+        return storeRepository.findByNameContainingAndDelStatus(name, Constants.DelStatus.NORMAL.isValue());
+    }
+
     public Page<StoreAccount> listStoreAccount(String name, Integer currentPage, Integer pageSize) {
         Page<Store> storePage = storeRepository.findStoreByDelStatusAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
         List<StoreAccount> storeAccountList = new ArrayList<>();
