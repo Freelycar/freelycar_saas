@@ -1,20 +1,19 @@
 package com.freelycar.saas.project.service;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.*;
 import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.*;
-import com.freelycar.saas.project.repository.ProjectRepository;
-import com.freelycar.saas.project.repository.ProjectTypeRepository;
-import com.freelycar.saas.util.UpdateTool;
+import com.freelycar.saas.project.repository.*;
 import org.hibernate.query.NativeQuery;
 import org.hibernate.transform.Transformers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Service;
@@ -44,6 +43,15 @@ public class ProjectService {
 
     @Autowired
     private StaffService staffService;
+
+    @Autowired
+    private RSPProjectRepository rspProjectRepository;
+
+    @Autowired
+    private RSPStoreRepository rspStoreRepository;
+
+    @Autowired
+    private RealServiceProviderRepository realServiceProviderRepository;
 
     /**
      * 新增/修改项目对象
@@ -311,6 +319,15 @@ public class ProjectService {
         return projectRepository.findAllByStoreIdAndDelStatusAndSaleStatusOrderBySortAsc(storeId, Constants.DelStatus.NORMAL.isValue(), true);
     }
 
+    private List<RSPProject> getRspProjects(String storeId) throws ArgumentMissingException {
+        if (StringUtils.isEmpty(storeId)) {
+            throw new ArgumentMissingException("参数storeId值为空");
+        }
+        List<String> rspIds = rspStoreRepository.findByStoreId(storeId);
+        List<RSPProject> projectList = rspProjectRepository.findByRspIdInAndDelStatus(rspIds, Constants.DelStatus.NORMAL.isValue());
+        return projectList;
+    }
+
     /**
      * 门店下 全部 未删除 已上架 项目 按照创建时间排序
      * 对新用户显示：新用户专享项目
@@ -352,6 +369,61 @@ public class ProjectService {
             }
         }
 
+        return res;
+    }
+
+    /**
+     * 服务商项目列表
+     *
+     * @param storeId
+     * @param preferential
+     * @return 数据格式：
+     * rspId，name
+     * rspprojectId，name，price，comment
+     * @throws ArgumentMissingException
+     */
+    public List<JSONObject> getRspProjects(String storeId, boolean preferential) throws ArgumentMissingException {
+        List<JSONObject> res = new ArrayList<>();
+        List<RSPProject> rspProjectList = getRspProjects(storeId);
+        //按服务商返回数据
+        //服务商id数据
+        Set<String> rspIdSet = new HashSet<>();
+        for (RSPProject project :
+                rspProjectList) {
+            String rspId = project.getRspId();
+            if (rspIdSet.contains(rspId)) {
+                continue;
+            } else {
+                rspIdSet.add(rspId);
+            }
+        }
+        //检查服务商数据是否存在并返回
+        for (String rspId :
+                rspIdSet) {
+            Optional<RealServiceProvider> optional = realServiceProviderRepository.findByIdAndDelStatus(rspId, Constants.DelStatus.NORMAL.isValue());
+            if (optional.isPresent()) {
+                RealServiceProvider realServiceProvider = optional.get();
+                JSONObject rspData = new JSONObject();
+                rspData.put("rspId", rspId);
+                rspData.put("name", realServiceProvider.getName());
+                JSONArray array = new JSONArray();
+                for (RSPProject project :
+                        rspProjectList) {
+                    if (!rspId.equals(project.getRspId())) {
+                        continue;
+                    } else {
+                        JSONObject projectData = new JSONObject();
+                        projectData.put("id",project.getId());
+                        projectData.put("name",project.getName());
+                        projectData.put("price",project.getPrice());
+                        projectData.put("comment",project.getComment());
+                        array.add(projectData);
+                    }
+                }
+                rspData.put("projects",array);
+                res.add(rspData);
+            }
+        }
         return res;
     }
 

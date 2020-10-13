@@ -23,10 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author tangwei - Toby
@@ -328,6 +325,38 @@ public class ConsumerOrderController {
     @GetMapping("/getIncomeByYear")
     public ResultJsonObject getIncomeByYear(@RequestParam String year) {
         List year1 = consumerOrderService.getMongthlyIncomeByYear(year);
+        List yearList = new ArrayList();
+        //验证数据完整性，1-12月数据是否完全
+        for (int i = 0; i < 12; i++) {
+            int month = 12 - i;
+            String month_year = year + "-" + (month < 10 ? ("0" + month) : month + "");
+            boolean flag = true;//是否需要添加时间
+            for (int j = 0; j < year1.size(); j++) {
+                Object[] obj = (Object[]) year1.get(j);
+                String month1 = (String) obj[0];
+                if (month_year.equals(month1)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag) {
+                Object[] obj = {month_year, 0.0};
+                year1.add(obj);
+            }
+        }
+        //月数据重新排序
+        for (int i = 0; i < year1.size(); i++) {
+            int month = 12 - i;
+            String month_year = year + "-" + (month < 10 ? ("0" + month) : month + "");
+            for (int j = 0; j < year1.size(); j++) {
+                Object[] obj = (Object[]) year1.get(j);
+                String month1 = (String) obj[0];
+                if (month_year.equals(month1)) {
+                    yearList.add(year1.get(j));
+                    break;
+                }
+            }
+        }
         //计算当年总额
         double sum = 0;
         for (int i = 0; i < year1.size(); i++) {
@@ -337,19 +366,19 @@ public class ConsumerOrderController {
         List year2 = consumerOrderService.getMongthlyIncomeByYear((Integer.valueOf(year) - 1) + "");
         //计算环比
         JSONArray m2m = new JSONArray();
-        for (int i = 0; i < year1.size(); i++) {
-            Object[] objs1 = (Object[]) year1.get(i);
+        for (int i = 0; i < yearList.size(); i++) {
+            Object[] objs1 = (Object[]) yearList.get(i);
             String month1 = (String) objs1[0];
             double value1 = (double) objs1[1];
             double value2 = 0;
-            if (i < year1.size() - 1) {
-                Object[] objs2 = (Object[]) year1.get(i + 1);
+            if (i < yearList.size() - 1) {
+                Object[] objs2 = (Object[]) yearList.get(i + 1);
                 String month2 = (String) objs2[0];
                 if (Integer.valueOf(month2.split("-")[1]) == (Integer.valueOf(month1.split("-")[1]) - 1)) {
                     value2 = (double) objs2[1];
                 }
             } else {
-                if (year2.size()>0){
+                if (year2.size() > 0) {
                     Object[] objs2 = (Object[]) year2.get(0);
                     String month2 = (String) objs2[0];
                     if (Integer.valueOf(month2.split("-")[1]) == 12) {
@@ -358,7 +387,7 @@ public class ConsumerOrderController {
                 }
             }
             double value = 0;
-            if (value2 > 0) {
+            if (value2 > 0 && value1 > 0) {
                 value = (double) Math.round((value1 - value2) / value2 * 100) / 100;
             }
             Object[] res = {month1, value};
@@ -366,8 +395,8 @@ public class ConsumerOrderController {
         }
         //计算同比
         JSONArray y2y = new JSONArray();
-        for (int i = 0; i < year1.size(); i++) {
-            Object[] objs1 = (Object[]) year1.get(i);
+        for (int i = 0; i < yearList.size(); i++) {
+            Object[] objs1 = (Object[]) yearList.get(i);
             String month1 = (String) objs1[0];
             double value1 = (double) objs1[1];
             double value2 = 0;
@@ -389,7 +418,7 @@ public class ConsumerOrderController {
         }
         JSONObject res = new JSONObject();
         res.put("sum", sum);
-        res.put("year", year1);
+        res.put("year", yearList);
         res.put("M2M", m2m);
         res.put("Y2Y", y2y);
         return ResultJsonObject.getDefaultResult(res);

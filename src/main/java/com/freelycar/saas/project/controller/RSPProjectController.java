@@ -6,6 +6,7 @@ import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.BatchDeleteException;
 import com.freelycar.saas.exception.DataIsExistException;
+import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.RSPProject;
 import com.freelycar.saas.project.service.RSPProjectService;
 import io.swagger.annotations.Api;
@@ -32,13 +33,13 @@ public class RSPProjectController {
         this.rspProjectService = rspProjectService;
     }
 
-    @ApiOperation(value = "服务商项目新增", produces = "application/json")
-    @PostMapping(value = "/add")
-    @LoggerManage(description = "调用方法：服务商项目新增")
+    @ApiOperation(value = "服务商项目新增/修改", produces = "application/json")
+    @PostMapping(value = "/modify")
+    @LoggerManage(description = "调用方法：服务商项目新增/修改")
     public ResultJsonObject add(@RequestBody RSPProject project) {
         try {
             return ResultJsonObject.getDefaultResult(rspProjectService.add(project));
-        } catch (DataIsExistException|ArgumentMissingException e) {
+        } catch (DataIsExistException | ArgumentMissingException | ObjectNotFoundException e) {
             return ResultJsonObject.getErrorResult(null, e.getMessage());
         }
     }
@@ -68,11 +69,12 @@ public class RSPProjectController {
     @LoggerManage(description = "调用方法：获取服务商列表（分页）")
     public ResultJsonObject list(
             @RequestParam(required = false) String name,
+            @RequestParam String rspId,
             @RequestParam Integer currentPage,
             @RequestParam(required = false) Integer pageSize) {
         if (StringUtils.isEmpty(name)) {
             name = "";
         }
-        return ResultJsonObject.getDefaultResult(PaginationRJO.of(rspProjectService.list(name, currentPage, pageSize)));
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(rspProjectService.list(name,currentPage, pageSize,rspId)));
     }
 }

@@ -21,4 +21,7 @@ public interface RSPStoreRepository extends JpaRepository<RSPStore, String> {
     Set<String> findByRspId(String rspId);
 
     List<RSPStore> findByStoreIdAndRspId(String storeId, String rspId);
+
+    @Query(value = "SELECT DISTINCT(rspId) FROM `rspstore` WHERE storeId = :storeId", nativeQuery = true)
+    List<String> findByStoreId(String storeId);
 }

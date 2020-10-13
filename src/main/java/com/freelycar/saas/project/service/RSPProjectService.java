@@ -10,16 +10,16 @@ import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.RSPProject;
 import com.freelycar.saas.project.entity.RealServiceProvider;
 import com.freelycar.saas.project.repository.RSPProjectRepository;
+import com.freelycar.saas.util.UpdateTool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.task.DelegatingSecurityContextAsyncTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import static com.freelycar.saas.basic.wrapper.ResultCode.RESULT_DATA_NONE;
 
@@ -41,13 +41,26 @@ public class RSPProjectService {
     }
 
     /**
-     * 添加项目
+     * 服务商项目新增/修改
      */
-    public RSPProject add(RSPProject project) throws DataIsExistException, ArgumentMissingException {
-        if (project != null && project.getName() != null && !project.getName().equals("")) {
+    public RSPProject add(RSPProject project) throws DataIsExistException, ArgumentMissingException, ObjectNotFoundException {
+        if (project != null && !StringUtils.isEmpty(project.getId())) {
+            String projectId = project.getId();
+            //修改
+            Optional<RSPProject> rspProjectOptional = rspProjectRepository.findByIdAndDelStatus(projectId, Constants.DelStatus.NORMAL.isValue());
+            if (rspProjectOptional.isPresent()) {
+                RSPProject source = rspProjectOptional.get();
+                UpdateTool.copyNullProperties(source, project);
+                rspProjectRepository.saveAndFlush(project);
+                return project;
+            } else throw new ObjectNotFoundException("操作失败，未找到id为：" + projectId + " 的RSPProject对象");
+        } else if (project != null
+                && !StringUtils.isEmpty(project.getName())
+                && !StringUtils.isEmpty(project.getRspId())) {
+            //新增
             String name = project.getName();
-            Optional<RSPProject> optionalRSPProject = rspProjectRepository.findByName(name);
-            if (optionalRSPProject.isPresent()) {
+            List<RSPProject> rspProjectList = rspProjectRepository.findByNameAndRspIdAndDelStatus(name,project.getRspId(),Constants.DelStatus.NORMAL.isValue());
+            if (rspProjectList.size() > 0) {
                 throw new DataIsExistException("已包含名称为：“" + name + "”的数据，不能重复添加。");
             } else {
                 project.setCreateTime(new Timestamp(System.currentTimeMillis()));
@@ -55,7 +68,7 @@ public class RSPProjectService {
                 project = rspProjectRepository.save(project);
                 return project;
             }
-        }else {
+        } else {
             throw new ArgumentMissingException("参数不完整");
         }
     }
@@ -70,7 +83,7 @@ public class RSPProjectService {
         if (result == 0) {
             return ResultJsonObject.getErrorResult(ids, "删除失败," + RESULT_DATA_NONE);
         }
-        if (result != ids.length){
+        if (result != ids.length) {
             throw new BatchDeleteException("部分id不存在");
         }
         return ResultJsonObject.getDefaultResult(ids, "删除成功");
@@ -79,7 +92,7 @@ public class RSPProjectService {
     /**
      * 服务商下项目列表
      */
-    public Page<RSPProject> list(String name, Integer currentPage, Integer pageSize) {
-        return rspProjectRepository.findByDelStatusAndNameContainingOrderByIdAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
+    public Page<RSPProject> list(String name, Integer currentPage, Integer pageSize, String rspId) {
+        return rspProjectRepository.findByDelStatusAndNameContainingAndRspIdOrderByIdAsc(Constants.DelStatus.NORMAL.isValue(), name, rspId, PageableTools.basicPage(currentPage, pageSize));
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -22,10 +23,16 @@ import java.util.Set;
 public interface RSPProjectRepository extends JpaRepository<RSPProject, String> {
     Optional<RSPProject> findByName(String name);
 
+    List<RSPProject> findByNameAndRspIdAndDelStatus(String name, String rspId, boolean delStatus);
+
+    List<RSPProject> findByRspIdInAndDelStatus(List<String> rspIds, boolean delStatus);
+
+    Optional<RSPProject> findByIdAndDelStatus(String id, boolean delStatus);
+
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "update RSPProject set delStatus = 1 where id in :ids", nativeQuery = true)
     int delById(Set<String> ids);
 
-    Page<RSPProject> findByDelStatusAndNameContainingOrderByIdAsc(boolean delStatus, String name, Pageable pageable);
+    Page<RSPProject> findByDelStatusAndNameContainingAndRspIdOrderByIdAsc(boolean delStatus, String name, String rspId, Pageable pageable);
 }

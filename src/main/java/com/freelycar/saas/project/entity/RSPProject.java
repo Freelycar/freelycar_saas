@@ -37,7 +37,16 @@ public class RSPProject implements Serializable {
     private String id;
 
     @Column
+    private String rspId;
+
+    @Column
     private String name;
+
+    @Column
+    private Double price;
+
+    @Column
+    private String comment;
 
     @Column(nullable = false, columnDefinition = "bit default 0")
     private Boolean delStatus;

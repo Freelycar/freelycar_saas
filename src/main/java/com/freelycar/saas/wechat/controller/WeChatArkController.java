@@ -91,6 +91,21 @@ public class WeChatArkController {
         }
     }
 
+    @GetMapping("/getRspProjects")
+    public ResultJsonObject getRspProjects(@RequestParam String storeId, @RequestParam(required = false) Boolean newUser) {
+        if (null == newUser) {
+            newUser = false;
+        }
+
+        try {
+            return ResultJsonObject.getDefaultResult(projectService.getRspProjects(storeId, newUser));
+        } catch (ArgumentMissingException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null);
+        }
+    }
+
     @GetMapping("/orderFinish")
     public ResultJsonObject orderFinish(@RequestParam String id) {
         logger.info("arkOrderLog:用户取车，订单完结接口----------");
