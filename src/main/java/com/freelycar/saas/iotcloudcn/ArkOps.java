@@ -13,22 +13,22 @@ import java.io.IOException;
 public class ArkOps {
 
     public static void main(String[] args) throws IOException {
-        String deviceId = "867378032515720";
+        String deviceId = "861510035330048";
 
-        int boxId = 9;
+        int boxId = 12;
 
         int boxCount = 16;
 
         //打开一个柜门
-//        openBox(deviceId,boxId);
+        openBox(deviceId,boxId);
 
         //打开所有柜门
-        openAllBox(deviceId, boxCount);
+//        openAllBox(deviceId, boxCount);
 
         //查询某个柜门状态
-//        queryBox(deviceId, boxId);
+        queryBox(deviceId, boxId);
         //查询某个柜子所有柜门
-        queryBoard(deviceId);
+//        queryBoard(deviceId);
     }
 
     private static void openBox(String deviceId, int boxId) {

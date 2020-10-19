@@ -5,6 +5,7 @@ import cn.afterturn.easypoi.excel.ExcelImportUtil;
 import cn.afterturn.easypoi.excel.entity.ExportParams;
 import cn.afterturn.easypoi.excel.entity.ImportParams;
 import cn.afterturn.easypoi.excel.entity.enmus.ExcelType;
+import cn.afterturn.easypoi.excel.entity.params.ExcelExportEntity;
 import com.freelycar.saas.exception.NormalException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -14,9 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 /**
  * 使用别人造的轮子：easypoi
@@ -26,6 +25,11 @@ import java.util.NoSuchElementException;
  * @email toby911115@gmail.com
  */
 public class ExcelTool {
+    public static void exportExcel(List<Map<String, Object>> list, List<ExcelExportEntity> columnList, String title, String sheetName, String fileName, HttpServletResponse response) throws NormalException {
+        ExportParams exportParams = new ExportParams(title, sheetName);
+        defaultExport(list, columnList, fileName, response, exportParams);
+    }
+
     public static void exportExcel(List<?> list, String title, String sheetName, Class<?> pojoClass, String fileName, boolean isCreateHeader, HttpServletResponse response) throws NormalException {
         ExportParams exportParams = new ExportParams(title, sheetName);
         exportParams.setCreateHeadRows(isCreateHeader);
@@ -42,6 +46,12 @@ public class ExcelTool {
 
     private static void defaultExport(List<?> list, Class<?> pojoClass, String fileName, HttpServletResponse response, ExportParams exportParams) throws NormalException {
         Workbook workbook = ExcelExportUtil.exportExcel(exportParams, pojoClass, list);
+        if (workbook != null) ;
+        downLoadExcel(fileName, response, workbook);
+    }
+
+    private static void defaultExport(List<?> list, List<ExcelExportEntity> columnList, String fileName, HttpServletResponse response, ExportParams exportParams) throws NormalException {
+        Workbook workbook = ExcelExportUtil.exportExcel(exportParams, columnList, list);
         if (workbook != null) ;
         downLoadExcel(fileName, response, workbook);
     }
@@ -102,6 +112,19 @@ public class ExcelTool {
     }
 
     public static void main(String[] args) {
+        List<ExcelExportEntity> columnList = new ArrayList<ExcelExportEntity>();
+        ExcelExportEntity colEntity1 = new ExcelExportEntity("时间", "time");
+        colEntity1.setNeedMerge(true);
+        columnList.add(colEntity1);
+
+        ExcelExportEntity colEntity2 = new ExcelExportEntity("2020-09", "2020-09");
+        colEntity2.setNeedMerge(true);
+        columnList.add(colEntity2);
+
+        List<Map<String, Object>> dataList = new ArrayList<Map<String, Object>>();
+        Map<String, Object> map1 = new HashMap<>();
+        map1.put("time", "营业额");
+        map1.put("2020-09", 100);
 
     }
 }

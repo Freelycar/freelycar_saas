@@ -3,10 +3,7 @@ package com.freelycar.saas.wechat.controller;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.*;
 import com.freelycar.saas.project.model.OrderObject;
-import com.freelycar.saas.project.service.ArkService;
-import com.freelycar.saas.project.service.ConsumerOrderService;
-import com.freelycar.saas.project.service.DoorService;
-import com.freelycar.saas.project.service.ProjectService;
+import com.freelycar.saas.project.service.*;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +34,9 @@ public class WeChatArkController {
 
     @Autowired
     private DoorService doorService;
+
+    @Autowired
+    private RSPProjectService rspProjectService;
 
     @GetMapping("/getActiveOrder")
     public ResultJsonObject getActiveOrder(@RequestParam String clientId) {
@@ -96,9 +96,8 @@ public class WeChatArkController {
         if (null == newUser) {
             newUser = false;
         }
-
         try {
-            return ResultJsonObject.getDefaultResult(projectService.getRspProjects(storeId, newUser));
+            return ResultJsonObject.getDefaultResult(rspProjectService.getRspProjects(storeId, newUser));
         } catch (ArgumentMissingException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();

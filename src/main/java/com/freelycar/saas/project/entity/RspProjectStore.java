@@ -17,11 +17,10 @@ import java.io.Serializable;
 
 /**
  * Created with IntelliJ IDEA.
- * Description: 服务商与网点，服务商是否开通网点智能柜功能
- * 存在rspId-storeId即表示服务商开通该门店智能柜服务
+ * Description: 网点中项目的上架情况
  * User: Ting
- * Date: 2020-09-25
- * Time: 14:49
+ * Date: 2020-10-14
+ * Time: 15:03
  */
 @Entity
 @Table
@@ -30,14 +29,15 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RSPStore implements Serializable {
-    private static final long serialVersionUID = -7935437724873296229L;
+public class RspProjectStore implements Serializable {
+    private static final long serialVersionUID = 5726475377155590536L;
+
     @Id
     @GenericGenerator(name = "uuid", strategy = "uuid")
     @GeneratedValue(generator = "uuid")
     @NotNull
     @Length(max = 50)
     private String id;
+    private String rspProjectId;
     private String storeId;
-    private String rspId;
 }

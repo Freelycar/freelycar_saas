@@ -59,6 +59,9 @@ public class PaginationRJO {
         this.pageCount = pageResult.getTotalPages();
     }
 
+    public PaginationRJO() {
+    }
+
     public int getPageSize() {
         return pageSize;
     }

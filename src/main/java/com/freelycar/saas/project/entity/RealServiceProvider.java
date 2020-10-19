@@ -11,6 +11,7 @@ import org.hibernate.validator.constraints.Length;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 
 @Entity
@@ -72,8 +73,14 @@ public class RealServiceProvider implements Serializable {
     @Column
     private String comment;
 
-    @Column(name = "service_status",nullable = false,columnDefinition = "bit default 0")
+    @Column
+    private BigInteger sort;
+
+    @Column(name = "service_status", nullable = false, columnDefinition = "bit default 0")
     private Boolean serviceStatus;
+
+    @Transient
+    private boolean staffReady = false;//项目是否有技师接单
 
 
 }

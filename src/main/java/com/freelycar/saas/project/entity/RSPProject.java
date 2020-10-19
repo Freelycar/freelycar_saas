@@ -1,5 +1,6 @@
 package com.freelycar.saas.project.entity;
 
+import com.freelycar.saas.project.model.RspProjectModel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,8 @@ import org.hibernate.validator.constraints.Length;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Timestamp;
 
 /**
@@ -48,9 +51,21 @@ public class RSPProject implements Serializable {
     @Column
     private String comment;
 
+    @Column
+    private BigDecimal sort;
+
     @Column(nullable = false, columnDefinition = "bit default 0")
     private Boolean delStatus;
 
     @Column(nullable = false, columnDefinition = "datetime default NOW()")
     private Timestamp createTime;
+
+    public RspProjectModel toModel() {
+        RspProjectModel model = new RspProjectModel();
+        model.setId(this.id);
+        model.setName(this.name);
+        model.setPrice(this.price);
+        model.setComment(this.comment);
+        return model;
+    }
 }

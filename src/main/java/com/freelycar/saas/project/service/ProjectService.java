@@ -48,9 +48,6 @@ public class ProjectService {
     private RSPProjectRepository rspProjectRepository;
 
     @Autowired
-    private RSPStoreRepository rspStoreRepository;
-
-    @Autowired
     private RealServiceProviderRepository realServiceProviderRepository;
 
     /**
@@ -109,13 +106,14 @@ public class ProjectService {
 
     public boolean switchLocation(Map<String, BigInteger> map) {
         Set<String> projectIds = map.keySet();
-        for (String projectId : projectIds) {
+        /*for (String projectId : projectIds) {
             System.out.println(projectId + ":" + map.get(projectId));
 
-        }
+        }*/
         List<Project> projects = projectRepository.findByDelStatusAndIdIn(Constants.DelStatus.NORMAL.isValue(), projectIds);
-        if (projectIds.size() != projectIds.size()) return false;
-        else {
+        if (projectIds.size() != projectIds.size()) {
+            return false;
+        } else {
             for (Project project : projects) {
                 project.setSort(map.get(project.getId()));
                 projectRepository.saveAndFlush(project);
@@ -319,14 +317,6 @@ public class ProjectService {
         return projectRepository.findAllByStoreIdAndDelStatusAndSaleStatusOrderBySortAsc(storeId, Constants.DelStatus.NORMAL.isValue(), true);
     }
 
-    private List<RSPProject> getRspProjects(String storeId) throws ArgumentMissingException {
-        if (StringUtils.isEmpty(storeId)) {
-            throw new ArgumentMissingException("参数storeId值为空");
-        }
-        List<String> rspIds = rspStoreRepository.findByStoreId(storeId);
-        List<RSPProject> projectList = rspProjectRepository.findByRspIdInAndDelStatus(rspIds, Constants.DelStatus.NORMAL.isValue());
-        return projectList;
-    }
 
     /**
      * 门店下 全部 未删除 已上架 项目 按照创建时间排序
@@ -372,60 +362,6 @@ public class ProjectService {
         return res;
     }
 
-    /**
-     * 服务商项目列表
-     *
-     * @param storeId
-     * @param preferential
-     * @return 数据格式：
-     * rspId，name
-     * rspprojectId，name，price，comment
-     * @throws ArgumentMissingException
-     */
-    public List<JSONObject> getRspProjects(String storeId, boolean preferential) throws ArgumentMissingException {
-        List<JSONObject> res = new ArrayList<>();
-        List<RSPProject> rspProjectList = getRspProjects(storeId);
-        //按服务商返回数据
-        //服务商id数据
-        Set<String> rspIdSet = new HashSet<>();
-        for (RSPProject project :
-                rspProjectList) {
-            String rspId = project.getRspId();
-            if (rspIdSet.contains(rspId)) {
-                continue;
-            } else {
-                rspIdSet.add(rspId);
-            }
-        }
-        //检查服务商数据是否存在并返回
-        for (String rspId :
-                rspIdSet) {
-            Optional<RealServiceProvider> optional = realServiceProviderRepository.findByIdAndDelStatus(rspId, Constants.DelStatus.NORMAL.isValue());
-            if (optional.isPresent()) {
-                RealServiceProvider realServiceProvider = optional.get();
-                JSONObject rspData = new JSONObject();
-                rspData.put("rspId", rspId);
-                rspData.put("name", realServiceProvider.getName());
-                JSONArray array = new JSONArray();
-                for (RSPProject project :
-                        rspProjectList) {
-                    if (!rspId.equals(project.getRspId())) {
-                        continue;
-                    } else {
-                        JSONObject projectData = new JSONObject();
-                        projectData.put("id",project.getId());
-                        projectData.put("name",project.getName());
-                        projectData.put("price",project.getPrice());
-                        projectData.put("comment",project.getComment());
-                        array.add(projectData);
-                    }
-                }
-                rspData.put("projects",array);
-                res.add(rspData);
-            }
-        }
-        return res;
-    }
 
     private List<Project> staffReadyHandler(List<Project> projects, String storeId) throws ArgumentMissingException {
         if (null == projects) {

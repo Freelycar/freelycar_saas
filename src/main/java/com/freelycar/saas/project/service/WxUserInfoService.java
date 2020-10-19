@@ -128,12 +128,12 @@ public class WxUserInfoService {
             if (StringUtils.hasLength(clientId)) {
                 carList = carRepository.findByClientIdAndDelStatus(clientId, Constants.DelStatus.NORMAL.isValue());
 
-                //查询对应门店会员卡的余额
+                /*//查询对应门店会员卡的余额
                 Float balance = cardRepository.sumBalanceByClientId(clientId);
                 if (null != balance) {
                     //格式化精度
                     carBalance = RoundTool.round(balance, 2, BigDecimal.ROUND_HALF_UP);
-                }
+                }*/
             } else {
                 carList = carRepository.listCarsByStoreIdAndPhone(defaultStoreId, phone);
             }

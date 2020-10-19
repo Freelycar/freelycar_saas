@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -24,5 +25,11 @@ public interface RealServiceProviderRepository extends JpaRepository<RealService
 
     Optional<RealServiceProvider> findByIdAndDelStatus(String id, boolean delStatus);
 
-    Page<RealServiceProvider> findByDelStatusAndNameContainingOrderByIdAsc(boolean delStatus, String name, Pageable pageable);
+    Optional<RealServiceProvider> findByIdAndDelStatusAndServiceStatus(String id, boolean delStatus,boolean serviceStatus);
+
+    Page<RealServiceProvider> findByDelStatusAndNameContainingOrderBySortAsc(boolean delStatus, String name, Pageable pageable);
+
+    RealServiceProvider findTopByDelStatusAndSortIsNotNullOrderBySortDesc(boolean delStatus);
+
+    List<RealServiceProvider> findByIdInAndDelStatus(Set<String> ids,boolean delStatus);
 }

@@ -16,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigInteger;
+import java.util.Map;
+
 @Api(value = "服务商管理", description = "新的服务商管理接口", tags = "服务商管理接口")
 @RestController
 @RequestMapping("/sp")
@@ -44,6 +47,27 @@ public class RealServiceProviderController {
             logger.error(e.getMessage(), e);
 //            e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
+    }
+
+    /**
+     * 修改网点下服务商列表位置
+     *
+     * @param map
+     * @return
+     */
+    @ApiOperation(value = "修改网点下服务商列表位置", produces = "application/json")
+    @PostMapping(value = "/switchLocation")
+    @LoggerManage(description = "调用方法：修改网点下服务商列表位置")
+    public ResultJsonObject switchLocation(
+            @RequestParam String storeId,
+            @RequestBody Map<String, BigInteger> map
+    ) {
+        boolean result = realServiceProviderService.switchLocation(storeId,map);
+        if (result) {
+            return ResultJsonObject.getDefaultResult(null);
+        } else {
+            return ResultJsonObject.getErrorResult(null, "项目数据有误");
         }
     }
 
@@ -93,5 +117,16 @@ public class RealServiceProviderController {
     public ResultJsonObject changeServiceStatus(
             @RequestParam String id) {
         return realServiceProviderService.changeServiceStatus(id);
+    }
+
+    @ApiOperation(value = "获取门店下服务商列表（分页）", produces = "application/json")
+    @GetMapping("/listByStore")
+    @LoggerManage(description = "调用方法：获取门店下服务商列表（分页）")
+    public ResultJsonObject listByStore(
+            @RequestParam String storeId,
+            @RequestParam Integer currentPage,
+            @RequestParam(required = false) Integer pageSize
+    ) {
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(realServiceProviderService.listByStore(storeId, currentPage, pageSize)));
     }
 }

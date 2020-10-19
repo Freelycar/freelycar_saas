@@ -4,6 +4,8 @@ import com.freelycar.saas.basic.wrapper.ResultCode;
 import com.freelycar.saas.jwt.bean.GrantedAuthorityImpl;
 import com.freelycar.saas.permission.entity.SysUser;
 import com.freelycar.saas.permission.service.SysUserService;
+import com.freelycar.saas.project.entity.Store;
+import com.freelycar.saas.project.repository.StoreRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -14,6 +16,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 /**
  * @author tangwei - Toby
@@ -23,6 +26,8 @@ import java.util.ArrayList;
 class CustomAuthenticationProvider implements AuthenticationProvider {
     @Autowired
     private SysUserService sysUserService;
+    @Autowired
+    private StoreRepository storeRepository;
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -35,10 +40,14 @@ class CustomAuthenticationProvider implements AuthenticationProvider {
         }
 
         SysUser sysUser = sysUserService.login(name, password);
-
         // 认证逻辑
         if (null != sysUser) {
-
+            if (!StringUtils.isEmpty(sysUser.getStoreId())) {
+                Optional<Store> storeOptional = storeRepository.findById(sysUser.getStoreId());
+                if (!storeOptional.isPresent() || storeOptional.get().getDelStatus() == true) {
+                    throw new BadCredentialsException(ResultCode.USER_LOGIN_ERROR.message());
+                }
+            }
             // 这里设置权限和角色
             // TODO 这里第二版需要改成从库里面去关联
             ArrayList<GrantedAuthority> authorities = new ArrayList<>();

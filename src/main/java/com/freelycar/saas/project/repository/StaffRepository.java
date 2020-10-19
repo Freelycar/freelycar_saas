@@ -50,6 +50,8 @@ public interface StaffRepository extends JpaRepository<Staff, String> {
 
     List<Staff> findAllByDelStatusAndIsArkAndStoreId(boolean delStatus, boolean isArk, String storeId);
 
+    List<Staff> findAllByDelStatusAndIsArkAndRspId(boolean delStatus, boolean isArk, String rspId);
+
     /**
      * 查找某个手机号对应的所有员工信息（理应只有storeId不同）
      *

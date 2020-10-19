@@ -69,7 +69,6 @@ public class StaffService {
             if (this.checkRepeatPhone(staff)) {
                 return ResultJsonObject.getErrorResult(null, "已包含手机号为：“" + phone + "”的数据，不能重复添加。");
             }
-
             //是否有ID，判断时新增还是修改
             String id = staff.getId();
             if (StringUtils.isEmpty(id)) {
@@ -499,7 +498,6 @@ public class StaffService {
             //更新openId到数据库（用于推送消息）
             staff.setOpenId(openId);
             modify(staff);
-
             String jwt = TokenAuthenticationUtil.generateAuthentication(staff.getId());
             return ResultJsonObject.getDefaultResult(new WeChatStaff(jwt, staff));
         }
@@ -534,6 +532,16 @@ public class StaffService {
      */
     public List<Staff> getAllArkStaffInStore(String storeId) {
         return staffRepository.findAllByDelStatusAndIsArkAndStoreId(Constants.DelStatus.NORMAL.isValue(), true, storeId);
+    }
+
+    /**
+     * 获取服务商下所有有智能柜账号的员工
+     *
+     * @param rspId
+     * @return
+     */
+    public List<Staff> getAllArkStaffInRsp(String rspId) {
+        return staffRepository.findAllByDelStatusAndIsArkAndRspId(Constants.DelStatus.NORMAL.isValue(), true, rspId);
     }
 
     /**

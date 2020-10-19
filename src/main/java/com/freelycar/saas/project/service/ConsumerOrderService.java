@@ -792,7 +792,7 @@ public class ConsumerOrderService {
 
         //订单状态条件查询
         if (null != orderState) {
-            sql.append(" AND co.orderState = ").append(orderState).append(" ");
+            sql.append(" AND co.state = ").append(orderState).append(" ");
         }
         //订单类型条件查询（如果没传，默认是查询出非办卡类的）
         if (null != orderType) {
@@ -1130,6 +1130,7 @@ public class ConsumerOrderService {
             // 向接单司机发送短信链接
             edaijiaService.sendTemplate(EorderId);
         } else {//2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
+            //更新:给项目相关的技师推送微信消息模板
             staffService.sendWeChatMessageToStaff(consumerOrderRes, emptyDoor, null);
             // 推送微信公众号消息，通知用户订单生成成功
             sendWeChatMsg(consumerOrderRes);
@@ -1903,6 +1904,145 @@ public class ConsumerOrderService {
         List res = nativeQuery.getResultList();
         em.close();
         return res;
+    }
+
+    public JSONObject getIncomeByYear(String year) {
+        List year1 = getMongthlyIncomeByYear(year);
+        List yearList = new ArrayList();
+        //验证数据完整性，1-12月数据是否完全
+        for (int i = 0; i < 12; i++) {
+            int month = 12 - i;
+            String month_year = year + "-" + (month < 10 ? ("0" + month) : month + "");
+            boolean flag = true;//是否需要添加时间
+            for (int j = 0; j < year1.size(); j++) {
+                Object[] obj = (Object[]) year1.get(j);
+                String month1 = (String) obj[0];
+                if (month_year.equals(month1)) {
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag) {
+                Object[] obj = {month_year, 0.0};
+                year1.add(obj);
+            }
+        }
+        //月数据重新排序
+        for (int i = 0; i < year1.size(); i++) {
+            int month = 12 - i;
+            String month_year = year + "-" + (month < 10 ? ("0" + month) : month + "");
+            for (int j = 0; j < year1.size(); j++) {
+                Object[] obj = (Object[]) year1.get(j);
+                String month1 = (String) obj[0];
+                if (month_year.equals(month1)) {
+                    yearList.add(year1.get(j));
+                    break;
+                }
+            }
+        }
+        //计算当年总额
+        double sum = 0;
+        for (int i = 0; i < year1.size(); i++) {
+            Object[] objs = (Object[]) year1.get(i);
+            sum += (double) objs[1];
+        }
+        List year2 = getMongthlyIncomeByYear((Integer.valueOf(year) - 1) + "");
+        //计算环比
+        JSONArray m2m = new JSONArray();
+        for (int i = 0; i < yearList.size(); i++) {
+            Object[] objs1 = (Object[]) yearList.get(i);
+            String month1 = (String) objs1[0];
+            double value1 = (double) objs1[1];
+            double value2 = 0;
+            if (i < yearList.size() - 1) {
+                Object[] objs2 = (Object[]) yearList.get(i + 1);
+                String month2 = (String) objs2[0];
+                if (Integer.valueOf(month2.split("-")[1]) == (Integer.valueOf(month1.split("-")[1]) - 1)) {
+                    value2 = (double) objs2[1];
+                }
+            } else {
+                if (year2.size() > 0) {
+                    Object[] objs2 = (Object[]) year2.get(0);
+                    String month2 = (String) objs2[0];
+                    if (Integer.valueOf(month2.split("-")[1]) == 12) {
+                        value2 = (double) objs2[1];
+                    }
+                }
+            }
+            double value = 0;
+            if (value2 > 0 && value1 > 0) {
+                value = (double) Math.round((value1 - value2) / value2 * 100) / 100;
+            }
+            Object[] res = {month1, value};
+            m2m.add(res);
+        }
+        //计算同比
+        JSONArray y2y = new JSONArray();
+        for (int i = 0; i < yearList.size(); i++) {
+            Object[] objs1 = (Object[]) yearList.get(i);
+            String month1 = (String) objs1[0];
+            double value1 = (double) objs1[1];
+            double value2 = 0;
+            String month = month1.split("-")[1];
+            for (int j = 0; j < year2.size(); j++) {
+                Object[] objs2 = (Object[]) year2.get(j);
+                String month2 = (String) objs2[0];
+                if (month2.split("-")[1].equals(month)) {
+                    value2 = (double) objs2[1];
+                    break;
+                }
+            }
+            double value = 0;
+            if (value2 > 0) {
+                value = (double) Math.round((value1 - value2) / value2 * 100) / 100;
+            }
+            Object[] res = {month1, value};
+            y2y.add(res);
+        }
+        JSONObject res = new JSONObject();
+        res.put("sum", sum);
+        res.put("year", yearList);
+        res.put("M2M", m2m);
+        res.put("Y2Y", y2y);
+        return res;
+    }
+
+
+    public List<Map<String, Object>> exportIncomeByYearExcel(String year) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        JSONObject data = getIncomeByYear(year);
+
+        List yearList = (List) data.get("year");
+        Map<String, Object> yearMap = new HashMap<>();
+        yearMap.put("time", "营业额");
+        for (int i = 0; i < yearList.size(); i++) {
+            Object[] res = (Object[]) yearList.get(i);
+            String month = (String) res[0];
+            yearMap.put(month, res[1]);
+        }
+        result.add(yearMap);
+
+        JSONArray m2m = (JSONArray) data.get("M2M");
+        Map<String, Object> m2mMap = new HashMap<>();
+        m2mMap.put("time", "环比增长率");
+        for (int i = 0; i < m2m.size(); i++) {
+            Object[] res = (Object[]) m2m.get(i);
+            String month = (String) res[0];
+            m2mMap.put(month, res[1]);
+        }
+        result.add(m2mMap);
+
+        JSONArray y2y = (JSONArray) data.get("Y2Y");
+        Map<String, Object> y2yMap = new HashMap<>();
+        y2yMap.put("time", "同比增长率");
+        for (int i = 0; i < y2y.size(); i++) {
+            Object[] res = (Object[]) y2y.get(i);
+            String month = (String) res[0];
+            y2yMap.put(month, res[1]);
+        }
+        result.add(y2yMap);
+
+        return result;
     }
 
 

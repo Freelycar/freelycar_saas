@@ -1,7 +1,6 @@
 package com.freelycar.saas.project.repository;
 
 import com.freelycar.saas.project.entity.RSPProject;
-import com.freelycar.saas.project.entity.RealServiceProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -27,6 +26,8 @@ public interface RSPProjectRepository extends JpaRepository<RSPProject, String> 
 
     List<RSPProject> findByRspIdInAndDelStatus(List<String> rspIds, boolean delStatus);
 
+    List<RSPProject> findByIdInAndDelStatus(Set<String> ids, boolean delStatus);
+
     Optional<RSPProject> findByIdAndDelStatus(String id, boolean delStatus);
 
     @Transactional
@@ -34,5 +35,7 @@ public interface RSPProjectRepository extends JpaRepository<RSPProject, String> 
     @Query(value = "update RSPProject set delStatus = 1 where id in :ids", nativeQuery = true)
     int delById(Set<String> ids);
 
-    Page<RSPProject> findByDelStatusAndNameContainingAndRspIdOrderByIdAsc(boolean delStatus, String name, String rspId, Pageable pageable);
+    RSPProject findTopByRspIdAndDelStatusAndSortIsNotNullOrderBySortDesc(String rspId, boolean delStatus);
+
+    Page<RSPProject> findByDelStatusAndNameContainingAndRspIdOrderBySortAsc(boolean delStatus, String name, String rspId, Pageable pageable);
 }

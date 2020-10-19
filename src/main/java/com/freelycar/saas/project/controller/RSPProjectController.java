@@ -15,6 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Created with IntelliJ IDEA.
  * Description:
@@ -57,7 +62,7 @@ public class RSPProjectController {
     }
 
     /**
-     * 获取服务商列表（分页）
+     * 获取服务商下项目列表（分页）
      *
      * @param name
      * @param currentPage
@@ -66,7 +71,7 @@ public class RSPProjectController {
      */
     @ApiOperation(value = "获取服务商项目列表（分页）", produces = "application/json")
     @GetMapping("/list")
-    @LoggerManage(description = "调用方法：获取服务商列表（分页）")
+    @LoggerManage(description = "调用方法：获取服务商项目列表（分页）")
     public ResultJsonObject list(
             @RequestParam(required = false) String name,
             @RequestParam String rspId,
@@ -75,6 +80,72 @@ public class RSPProjectController {
         if (StringUtils.isEmpty(name)) {
             name = "";
         }
-        return ResultJsonObject.getDefaultResult(PaginationRJO.of(rspProjectService.list(name,currentPage, pageSize,rspId)));
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(rspProjectService.list(name, currentPage, pageSize, rspId)));
+    }
+
+    /**
+     * 修改服务商项目列表位置
+     *
+     * @param map
+     * @return
+     */
+    @ApiOperation(value = "修改服务商项目列表位置", produces = "application/json")
+    @PostMapping(value = "/switchLocation")
+    @LoggerManage(description = "调用方法：修改服务商项目列表位置")
+    public ResultJsonObject switchLocation(@RequestBody Map<String, BigDecimal> map) {
+        boolean result = rspProjectService.switchLocation(map);
+        if (result) {
+            return ResultJsonObject.getDefaultResult(null);
+        } else {
+            return ResultJsonObject.getErrorResult(null, "项目数据有误");
+        }
+    }
+
+    /**
+     * 获取网点下项目列表（分页）
+     *
+     * @param name
+     * @param currentPage
+     * @param pageSize
+     * @return
+     */
+    @ApiOperation(value = "获取网点下项目列表（分页）", produces = "application/json")
+    @GetMapping("/listByStore")
+    @LoggerManage(description = "调用方法：获取网点下项目列表（分页）")
+    public ResultJsonObject listByStore(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String rspName,
+            @RequestParam String storeId,
+            @RequestParam Integer currentPage,
+            @RequestParam(required = false) Integer pageSize) {
+        if (StringUtils.isEmpty(name)) {
+            name = "";
+        }
+        if (StringUtils.isEmpty(rspName)) {
+            rspName = "";
+        }
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(rspProjectService.listByStore(name, rspName, currentPage, pageSize, storeId)));
+    }
+
+    @ApiOperation(value = "在网点下上架服务商项目", produces = "application/json")
+    @PostMapping(value = "/bookOnlineProject")
+    @LoggerManage(description = "调用方法：在网点下上架服务商项目")
+    public ResultJsonObject storeBookOnlineProject(
+            @RequestParam String storeId,
+            @RequestBody List<String> rspProjectIds
+            ){
+        rspProjectService.storeBookOnlineProject(storeId,rspProjectIds);
+        return ResultJsonObject.getDefaultResult(null);
+    }
+
+    @ApiOperation(value = "在网点下下架服务商项目", produces = "application/json")
+    @PostMapping(value = "/bookOfflineProject")
+    @LoggerManage(description = "调用方法：在网点下下架服务商项目")
+    public ResultJsonObject storeBookOfflineProject(
+            @RequestParam String storeId,
+            @RequestBody List<String> rspProjectIds
+    ){
+        rspProjectService.storeBookOfflineProject(storeId,rspProjectIds);
+        return ResultJsonObject.getDefaultResult(null);
     }
 }
