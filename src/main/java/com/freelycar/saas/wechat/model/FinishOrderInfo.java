@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigInteger;
 import java.util.Date;
 
 /**
@@ -16,6 +17,8 @@ import java.util.Date;
 @AllArgsConstructor
 public class FinishOrderInfo {
     private String id;
+
+    private Integer state;
 
     private String clientName;
 
@@ -35,7 +38,11 @@ public class FinishOrderInfo {
 
     private Date pickTime;
 
+    private Date orderTakingTime;
+
     private String userKeyLocationSn;
 
     private String userKeyLocation;
+
+    private String parkingLocation;
 }

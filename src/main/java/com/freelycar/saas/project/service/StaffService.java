@@ -545,6 +545,32 @@ public class StaffService {
     }
 
     /**
+     * 获取服务商下对某个门店的全部可接单技师
+     *
+     * @param rspId
+     * @return
+     */
+    private List<Staff> staffReady(String rspId, String storeId) {
+        List<Staff> staffList = getAllArkStaffInRsp(rspId);
+        List<Staff> resList = new ArrayList<>();
+        for (Staff staff :
+                staffList) {
+            Set<String> storeIds = rspStaffStoreRepository.findByStaffId(staff.getId());
+            if (!storeIds.contains(storeId)) {
+                continue;
+            } else {
+                String phone = staff.getPhone();
+                Employee employee = getEmployeeByPhone(phone);
+                boolean notification = (null == employee.getNotification()) ? false : employee.getNotification();
+                if (notification) {
+                    resList.add(staff);
+                }
+            }
+        }
+        return resList;
+    }
+
+    /**
      * 给所有技师推送微信消息
      * （0：有用户预约了订单，通知该智能柜所有技师）
      * （1：有技师接单了，通知其余所有技师）
@@ -552,7 +578,7 @@ public class StaffService {
      *
      * @param consumerOrder
      * @param door
-     * @param exceptOpenId
+     * @param exceptOpenId  已接单技师openId
      */
     public void sendWeChatMessageToStaff(ConsumerOrder consumerOrder, Door door, String exceptOpenId) {
         String storeId = consumerOrder.getStoreId();
@@ -622,6 +648,71 @@ public class StaffService {
                 }
             }
 
+        }
+    }
+
+    /**
+     * 给所有技师推送微信消息(新)
+     * （0：有用户预约了订单，通知该智能柜所有技师）
+     * （1：有技师接单了，通知其余所有技师）
+     * （4：有用户取消了订单，通知所有技师）
+     *
+     * @param consumerOrder
+     * @param door
+     * @param exceptOpenId  已接单技师openId
+     * @param rspId         服务商id
+     */
+    public void sendWeChatMessageToStaff(ConsumerOrder consumerOrder, Door door, String exceptOpenId, String rspId) {
+        String storeId = consumerOrder.getStoreId();
+        Integer state = consumerOrder.getState();
+
+        //查询门店的地址
+        Ark ark = arkRepository.findTopBySnAndDelStatus(door.getArkSn(), Constants.DelStatus.NORMAL.isValue());
+        List<Staff> allStaffList = this.getAllArkStaffInStore(storeId);
+        logger.info("查询到storeId为" + storeId + "的门店有" + allStaffList.size() + "个技师");
+
+        //汽车服务项目通知特别字段
+        String projects = "汽车服务";
+        StringBuilder projectStr = new StringBuilder();
+        List<String> projectIds = new ArrayList<>();
+        //查询项目
+        List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(consumerOrder.getId());
+        for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+            String projectName = consumerProjectInfo.getProjectName();
+            if (StringUtils.hasText(projectName)) {
+                projectStr.append("，").append(projectName);
+            }
+            projectIds.add(consumerProjectInfo.getProjectId());
+        }
+        if (StringUtils.hasText(projectStr)) {
+            projects = projectStr.substring(1, projectStr.length());
+        }
+        // 筛选包含项目的技师
+        List<Staff> staffList = staffReady(rspId, storeId);
+        logger.info("包含项目：" + projects + "的技师有：" + staffList.size() + "个");
+        // 遍历符合条件的技师，给他们发送信息
+        for (Staff staff : staffList) {
+            //openId来源变更，采用employee表中的openId
+            String phone = staff.getPhone();
+            if (StringUtils.hasText(phone)) {
+                Employee employee = getEmployeeByPhone(phone);
+                if (null != employee) {
+                    boolean notification = employee.getNotification();
+                    String openId = employee.getOpenId();
+                    logger.info("技师openId：" + openId);
+                    if (notification && StringUtils.hasText(openId)) {
+                        if (state == Constants.OrderState.RESERVATION.getValue()) {
+                            WechatTemplateMessage.orderCreated(consumerOrder, projects, openId, door, ark);
+                        }
+                        if (state == Constants.OrderState.CANCEL.getValue()) {
+                            WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
+                        }
+                        if (state == Constants.OrderState.ORDER_TAKING.getValue() && !openId.equals(exceptOpenId)) {
+                            WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
+                        }
+                    }
+                }
+            }
         }
     }
 

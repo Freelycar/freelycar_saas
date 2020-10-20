@@ -38,6 +38,35 @@ public class WeChatArkController {
     @Autowired
     private RSPProjectService rspProjectService;
 
+    @GetMapping("/getProjects")
+    public ResultJsonObject getProjects(@RequestParam String storeId, @RequestParam(required = false) Boolean newUser) {
+        if (null == newUser) {
+            newUser = false;
+        }
+
+        try {
+            return ResultJsonObject.getDefaultResult(projectService.getProjects(storeId, newUser));
+        } catch (ArgumentMissingException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null);
+        }
+    }
+
+    @GetMapping("/getRspProjects")
+    public ResultJsonObject getRspProjects(@RequestParam String storeId, @RequestParam(required = false) Boolean newUser) {
+        if (null == newUser) {
+            newUser = false;
+        }
+        try {
+            return ResultJsonObject.getDefaultResult(rspProjectService.getRspProjects(storeId, newUser));
+        } catch (ArgumentMissingException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null);
+        }
+    }
+
     @GetMapping("/getActiveOrder")
     public ResultJsonObject getActiveOrder(@RequestParam String clientId) {
         try {
@@ -76,34 +105,6 @@ public class WeChatArkController {
         return ResultJsonObject.getErrorResult(null, errorMessage);
     }
 
-    @GetMapping("/getProjects")
-    public ResultJsonObject getProjects(@RequestParam String storeId, @RequestParam(required = false) Boolean newUser) {
-        if (null == newUser) {
-            newUser = false;
-        }
-
-        try {
-            return ResultJsonObject.getDefaultResult(projectService.getProjects(storeId, newUser));
-        } catch (ArgumentMissingException e) {
-            logger.error(e.getMessage(), e);
-            e.printStackTrace();
-            return ResultJsonObject.getErrorResult(null);
-        }
-    }
-
-    @GetMapping("/getRspProjects")
-    public ResultJsonObject getRspProjects(@RequestParam String storeId, @RequestParam(required = false) Boolean newUser) {
-        if (null == newUser) {
-            newUser = false;
-        }
-        try {
-            return ResultJsonObject.getDefaultResult(rspProjectService.getRspProjects(storeId, newUser));
-        } catch (ArgumentMissingException e) {
-            logger.error(e.getMessage(), e);
-            e.printStackTrace();
-            return ResultJsonObject.getErrorResult(null);
-        }
-    }
 
     @GetMapping("/orderFinish")
     public ResultJsonObject orderFinish(@RequestParam String id) {
@@ -115,6 +116,30 @@ public class WeChatArkController {
             e.printStackTrace();
         }
         return ResultJsonObject.getErrorResult(null, "用户取车出现异常，请稍后重试或联系门店。");
+    }
+
+    @GetMapping("/orderTaking")
+    public ResultJsonObject orderTaking(@RequestParam String orderId, @RequestParam String staffId) {
+        logger.info("arkOrderLog:技师接单接口----------");
+        try {
+            return consumerOrderService.orderTaking(orderId, staffId);
+        } catch (Exception e) {
+            logger.error("技师接单出现异常", e);
+            e.printStackTrace();
+        }
+        return ResultJsonObject.getErrorResult(null, "技师接单出现异常，请稍后重试或联系门店。");
+    }
+
+    @GetMapping("/cancelOrderTaking")
+    public ResultJsonObject cancelOrderTaking(@RequestParam String orderId, @RequestParam String staffId) {
+        logger.info("arkOrderLog:技师取消接单接口----------");
+        try {
+            return consumerOrderService.cancelOrderTaking(orderId, staffId);
+        } catch (Exception e) {
+            logger.error("技师取消接单出现异常", e);
+            e.printStackTrace();
+        }
+        return ResultJsonObject.getErrorResult(null, "技师取消接单出现异常，请稍后重试或联系门店。");
     }
 
     @GetMapping("/pickCar")
@@ -135,10 +160,6 @@ public class WeChatArkController {
         String errorMessage;
         try {
             return consumerOrderService.finishCar(orderObject);
-        } catch (NoEmptyArkException e1) {
-            errorMessage = "没有可用的空智能柜";
-            logger.error(errorMessage, e1);
-            e1.printStackTrace();
         } catch (Exception e) {
             errorMessage = "技师完工还车-智能柜服务出现异常";
             logger.error(errorMessage, e);

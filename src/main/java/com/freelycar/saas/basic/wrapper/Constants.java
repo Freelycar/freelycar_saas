@@ -113,6 +113,7 @@ public class Constants {
      */
     public enum OrderState {
         RESERVATION(0, "预约"),
+        ORDER_TAKING(-1,"接单"),//技师接单状态
         RECEIVE_CAR(1, "接车"),
         SERVICE_FINISH(2, "完工"),
         HAND_OVER(3, "交车"),

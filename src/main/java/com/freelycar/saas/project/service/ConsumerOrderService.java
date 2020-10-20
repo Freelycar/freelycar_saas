@@ -1,6 +1,5 @@
 package com.freelycar.saas.project.service;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.*;
@@ -120,6 +119,9 @@ public class ConsumerOrderService {
 
     @Autowired
     private ArkService arkService;
+
+    @Autowired
+    private RSPProjectRepository rspProjectRepository;
 
     /**
      * 保存和修改
@@ -280,6 +282,22 @@ public class ConsumerOrderService {
         return null;
     }
 
+    public List<BaseOrderInfo> findAllOrdersByClientId(String clientId) {
+        StringBuilder sql = new StringBuilder();
+        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select url from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0 order by soi.createTime desc limit 0,1) as staffOrderImgUrl FROM consumerOrder co WHERE co.delStatus = 0 ");
+        sql.append("AND (co.state = 3 or co.state = 4)AND co.clientId = '").append(clientId).append("' ORDER BY co.createTime DESC ");
+
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery = em.createNativeQuery(sql.toString());
+        nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(BaseOrderInfo.class));
+        @SuppressWarnings({"unused", "unchecked"})
+        List<BaseOrderInfo> baseOrderInfos = nativeQuery.getResultList();
+
+        //关闭entityManagerFactory
+        em.close();
+        return baseOrderInfos;
+    }
+
     public List<BaseOrderInfo> findAllOrdersByClientId(String clientId, String type) throws IllegalArgumentException {
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select url from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0 order by soi.createTime desc limit 0,1) as staffOrderImgUrl FROM consumerOrder co WHERE co.delStatus = 0 ");
@@ -398,7 +416,7 @@ public class ConsumerOrderService {
         List<FinishOrderInfo> finishOrderInfo = null;
         try {
             StringBuilder sql = new StringBuilder();
-            sql.append(" SELECT co.id, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, co.pickTime as pickTime, co.userKeyLocationSn, co.userKeyLocation FROM consumerOrder co WHERE co.delStatus = 0 AND co.orderType = 2 AND co.state = 1 ")
+            sql.append(" SELECT co.id,co.state,co.orderTakingTime, co.parkingLocation,co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, co.pickTime as pickTime, co.userKeyLocationSn, co.userKeyLocation FROM consumerOrder co WHERE co.delStatus = 0 AND co.orderType = 2 AND (co.state = -1 or co.state = 1) ")
                     .append(" AND co.storeId = '").append(storeId).append("' ")
                     // 添加staffId条件筛选，技师只能还自己接单的订单，不能其他技师代还
                     .append(" AND co.pickCarStaffId = '").append(staffId).append("' ");
@@ -445,16 +463,17 @@ public class ConsumerOrderService {
         List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(id);
 
         //获取配件
-        List<AutoParts> autoPartsList = autoPartsService.getAllAutoPartsByOrderId(id);
+//        List<AutoParts> autoPartsList = autoPartsService.getAllAutoPartsByOrderId(id);
 
         //获取用户上传的智能柜订单图片
-        ClientOrderImg clientOrderImg = clientOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(id, Constants.DelStatus.NORMAL.isValue());
-
+//        ClientOrderImg clientOrderImg = clientOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(id, Constants.DelStatus.NORMAL.isValue());
+        List<ClientOrderImg> clientOrderImgs = clientOrderImgRepository.findByOrderIdAndDelStatusOrderByCreateTimeDesc(id, Constants.DelStatus.NORMAL.isValue());
         //获取技师上传的智能柜订单图片
-        StaffOrderImg staffOrderImg = staffOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(id, Constants.DelStatus.NORMAL.isValue());
+//        StaffOrderImg staffOrderImg = staffOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(id, Constants.DelStatus.NORMAL.isValue());
+        List<StaffOrderImg> staffOrderImgs = staffOrderImgRepository.findByOrderIdAndDelStatusOrderByCreateTimeDesc(id, Constants.DelStatus.NORMAL.isValue());
 
         //获取相关的卡信息或券信息
-        if (Constants.OrderIdSn.CARD.getName().equals(id.substring(0, 1))) {
+        /*if (Constants.OrderIdSn.CARD.getName().equals(id.substring(0, 1))) {
             String cardOrCouponId = consumerOrder.getCardOrCouponId();
             if (StringUtils.hasText(cardOrCouponId)) {
                 Card card = cardRepository.findById(cardOrCouponId).orElse(null);
@@ -466,7 +485,7 @@ public class ConsumerOrderService {
                     orderObject.setCoupon(coupon);
                 }
             }
-        }
+        }*/
         String arkSn = consumerOrder.getUserKeyLocationSn();
         if (arkSn != null && arkSn.length() > 15) {
             arkSn = arkSn.substring(0, 15);
@@ -475,14 +494,22 @@ public class ConsumerOrderService {
         }
         orderObject.setConsumerOrder(consumerOrder);
         orderObject.setConsumerProjectInfos(consumerProjectInfos);
-        orderObject.setAutoParts(autoPartsList);
+//        orderObject.setAutoParts(autoPartsList);
 
-        if (null != clientOrderImg) {
+        /*if (null != clientOrderImg) {
             orderObject.setClientOrderImg(clientOrderImg);
+        }*/
+
+        if (null != clientOrderImgs) {
+            orderObject.setClientOrderImgs(clientOrderImgs);
         }
 
-        if (null != staffOrderImg) {
+        /*if (null != staffOrderImg) {
             orderObject.setStaffOrderImg(staffOrderImg);
+        }*/
+
+        if (null != staffOrderImgs) {
+            orderObject.setStaffOrderImgs(staffOrderImgs);
         }
 
         //查询接单的店员信息（包含头像、姓名、联系电话）
@@ -965,12 +992,13 @@ public class ConsumerOrderService {
     public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, NoEmptyArkException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException, UpdateDataErrorException, NormalException {
 //        logger.info("执行智能柜开单操作：---start---");
         String doorId = orderObject.getDoorId();
-        //获取提交过来的数据
+        //获取提交过来的数据：
+        //订单信息
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
 
         logger.info("arkOrderLog:前端提交过来的柜门id：" + doorId);
         logger.info("arkOrderLog:前端提交过来的订单表单数据对象：" + consumerOrder);
-
+        //订单项目
         List<ConsumerProjectInfo> consumerProjectInfos = orderObject.getConsumerProjectInfos();
 
         if (StringUtils.isEmpty(doorId)) {
@@ -1070,10 +1098,17 @@ public class ConsumerOrderService {
 
         String orderId = consumerOrder.getId();
 
-
+        String rspId = null;
         //保存订单项目信息
         if (null != consumerProjectInfos && !consumerProjectInfos.isEmpty()) {
             for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+                if (StringUtils.isEmpty(rspId)) {
+                    String rspProjectId = consumerProjectInfo.getProjectId();
+                    Optional<RSPProject> projectOptional = rspProjectRepository.findByIdAndDelStatus(rspProjectId, Constants.DelStatus.NORMAL.isValue());
+                    if (projectOptional.isPresent()) {
+                        rspId = projectOptional.get().getRspId();
+                    }
+                }
                 consumerProjectInfo.setConsumerOrderId(orderId);
                 consumerProjectInfoService.saveOrUpdate(consumerProjectInfo);
             }
@@ -1131,7 +1166,7 @@ public class ConsumerOrderService {
             edaijiaService.sendTemplate(EorderId);
         } else {//2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
             //更新:给项目相关的技师推送微信消息模板
-            staffService.sendWeChatMessageToStaff(consumerOrderRes, emptyDoor, null);
+            staffService.sendWeChatMessageToStaff(consumerOrderRes, emptyDoor, null, rspId);
             // 推送微信公众号消息，通知用户订单生成成功
             sendWeChatMsg(consumerOrderRes);
         }
@@ -1191,14 +1226,25 @@ public class ConsumerOrderService {
                 throw new ObjectNotFoundException("未找到对应的项目信息");
             }*/
         }
-
+        String rspId = null;
+        for (ConsumerProjectInfo project :
+                projectInfos) {
+            if (StringUtils.isEmpty(rspId)) {
+                String rspProjectId = project.getProjectId();
+                Optional<RSPProject> rspProjectOptional = rspProjectRepository.findByIdAndDelStatus(rspProjectId, Constants.DelStatus.NORMAL.isValue());
+                if (rspProjectOptional.isPresent()) {
+                    rspId = rspProjectOptional.get().getRspId();
+                }
+            } else {
+                break;
+            }
+        }
         if (orderType) {
             edaijiaService.cancelConsumerOrder(orderId);
         } else {
             //用户取消服务订单的时候推送消息给技师
-            staffService.sendWeChatMessageToStaff(consumerOrderRes, door, null);
+            staffService.sendWeChatMessageToStaff(consumerOrderRes, door, null, rspId);
         }
-
         logger.info("执行用户取消订单操作：---end---" + orderId);
         return ResultJsonObject.getDefaultResult(orderId);
     }
@@ -1302,6 +1348,115 @@ public class ConsumerOrderService {
     }
 
     /**
+     * 技师接单接口
+     *
+     * @param orderId
+     * @param staffId
+     * @return
+     */
+    public ResultJsonObject orderTaking(String orderId, String staffId) throws ObjectNotFoundException {
+        logger.info("执行技师接单操作：---start---" + orderId);
+        if (StringUtils.isEmpty(orderId)) {
+            return ResultJsonObject.getCustomResult("The param 'orderId' is null", ResultCode.PARAM_NOT_COMPLETE);
+        }
+        if (StringUtils.isEmpty(staffId)) {
+            return ResultJsonObject.getCustomResult("The param 'staffId' is null", ResultCode.PARAM_NOT_COMPLETE);
+        }
+        ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
+        if (null == consumerOrder) {
+            return ResultJsonObject.getCustomResult("Not found consumerOrder object by orderId : " + orderId, ResultCode.RESULT_DATA_NONE);
+        } else if (!consumerOrder.getState().equals(Constants.OrderState.RESERVATION.getValue())) {
+            return ResultJsonObject.getCustomResult("The consumerOrder can't been taken. The param 'orderId' is  " + orderId, ResultCode.ORDER_ACCEPTED);
+        }
+        Staff staff = staffService.findById(staffId);
+        if (null == staff) {
+            return ResultJsonObject.getCustomResult("Not found staff object by staffId : " + staffId, ResultCode.RESULT_DATA_NONE);
+        }
+        String staffName = staff.getName();
+        consumerOrder.setState(Constants.OrderState.ORDER_TAKING.getValue());
+        consumerOrder.setPickCarStaffId(staffId);
+        consumerOrder.setPickCarStaffName(staffName);
+        consumerOrder.setOrderTakingTime(new Timestamp(System.currentTimeMillis()));
+        ConsumerOrder orderRes = this.updateOrder(consumerOrder);
+        List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(orderId);
+        //服务商id
+        String rspId = null;
+        for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+            if (StringUtils.isEmpty(rspId)) {
+                String rspProjectId = consumerProjectInfo.getProjectId();
+                Optional<RSPProject> rspProjectOptional = rspProjectRepository.findByIdAndDelStatus(rspProjectId, Constants.DelStatus.NORMAL.isValue());
+                if (rspProjectOptional.isPresent()) {
+                    rspId = rspProjectOptional.get().getRspId();
+                }
+            } else {
+                break;
+            }
+        }
+        Door door = doorRepository.findTopByOrderId(orderId);
+        logger.info("arkOrderLog:智能柜柜门door信息：" + door);
+        //推送微信公众号消息，通知用户已开始受理服务
+        sendWeChatMsg(orderRes);
+        //通知其他技师，该订单已经受理
+        String staffOpenId = staff.getOpenId();
+        staffService.sendWeChatMessageToStaff(orderRes, door, staffOpenId, rspId);
+        logger.info("执行技师接单操作：---end---" + orderId);
+        return ResultJsonObject.getDefaultResult(orderId);
+    }
+
+    /**
+     * 技师取消接单:通知其他技师
+     *
+     * @param orderId
+     * @param staffId
+     */
+    public ResultJsonObject cancelOrderTaking(String orderId, String staffId) throws ObjectNotFoundException {
+        logger.info("执行技师取消接单操作：---start---" + orderId);
+        if (StringUtils.isEmpty(orderId)) {
+            return ResultJsonObject.getCustomResult("The param 'orderId' is null", ResultCode.PARAM_NOT_COMPLETE);
+        }
+        if (StringUtils.isEmpty(staffId)) {
+            return ResultJsonObject.getCustomResult("The param 'staffId' is null", ResultCode.PARAM_NOT_COMPLETE);
+        }
+        ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
+        if (null == consumerOrder) {
+            return ResultJsonObject.getCustomResult("Not found consumerOrder object by orderId : " + orderId, ResultCode.RESULT_DATA_NONE);
+        } else if (!consumerOrder.getState().equals(Constants.OrderState.ORDER_TAKING.getValue())) {
+            return ResultJsonObject.getCustomResult("The staff can't cancel the operation. The param 'orderId' is  " + orderId, ResultCode.ORDER_ACCEPTED);
+        }
+        Staff staff = staffService.findById(staffId);
+        if (null == staff) {
+            return ResultJsonObject.getCustomResult("Not found staff object by staffId : " + staffId, ResultCode.RESULT_DATA_NONE);
+        }
+        consumerOrder.setState(Constants.OrderState.RESERVATION.getValue());
+        consumerOrder.setPickCarStaffId(null);
+        consumerOrder.setPickCarStaffName(null);
+        ConsumerOrder orderRes = this.updateOrder(consumerOrder);
+        List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(orderId);
+        //服务商id
+        String rspId = null;
+        for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+            if (StringUtils.isEmpty(rspId)) {
+                String rspProjectId = consumerProjectInfo.getProjectId();
+                Optional<RSPProject> rspProjectOptional = rspProjectRepository.findByIdAndDelStatus(rspProjectId, Constants.DelStatus.NORMAL.isValue());
+                if (rspProjectOptional.isPresent()) {
+                    rspId = rspProjectOptional.get().getRspId();
+                }
+            } else {
+                break;
+            }
+        }
+        Door door = doorRepository.findTopByOrderId(orderId);
+        logger.info("arkOrderLog:智能柜柜门door信息：" + door);
+        //推送微信公众号消息，通知用户
+//        sendWeChatMsg(orderRes);
+        //通知其他技师，该订单已经取消
+        String staffOpenId = staff.getOpenId();
+        staffService.sendWeChatMessageToStaff(orderRes, door, staffOpenId, rspId);
+        logger.info("执行技师取消接单操作：---end---" + orderId);
+        return ResultJsonObject.getDefaultResult(orderId);
+    }
+
+    /**
      * 技师去取车，提醒用户订单已经被受理
      *
      * @param orderId
@@ -1319,8 +1474,8 @@ public class ConsumerOrderService {
         ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
         if (null == consumerOrder) {
             return ResultJsonObject.getCustomResult("Not found consumerOrder object by orderId : " + orderId, ResultCode.RESULT_DATA_NONE);
-        } else if (consumerOrder.getState().equals(Constants.OrderState.RECEIVE_CAR.getValue())) {
-            return ResultJsonObject.getCustomResult("The consumerOrder has been accepted. The param 'orderId' is  " + orderId, ResultCode.ORDER_ACCEPTED);
+        } else if (!consumerOrder.getState().equals(Constants.OrderState.ORDER_TAKING.getValue())) {
+            return ResultJsonObject.getCustomResult("Wrong state. The param 'orderId' is  " + orderId, ResultCode.ORDER_ACCEPTED);
         }
 
         Staff staff = staffService.findById(staffId);
@@ -1343,6 +1498,19 @@ public class ConsumerOrderService {
             consumerProjectInfo.setStaffName(staffName);
             consumerProjectInfoService.saveOrUpdate(consumerProjectInfo);
         }
+        //服务商id
+        String rspId = null;
+        for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+            if (StringUtils.isEmpty(rspId)) {
+                String rspProjectId = consumerProjectInfo.getProjectId();
+                Optional<RSPProject> rspProjectOptional = rspProjectRepository.findByIdAndDelStatus(rspProjectId, Constants.DelStatus.NORMAL.isValue());
+                if (rspProjectOptional.isPresent()) {
+                    rspId = rspProjectOptional.get().getRspId();
+                }
+            } else {
+                break;
+            }
+        }
 
         //更新door表数据状态
         Door door = doorRepository.findTopByOrderId(orderId);
@@ -1358,7 +1526,7 @@ public class ConsumerOrderService {
 
         //通知其他技师，该订单已经受理
         String staffOpenId = staff.getOpenId();
-        staffService.sendWeChatMessageToStaff(orderRes, door, staffOpenId);
+        staffService.sendWeChatMessageToStaff(orderRes, door, staffOpenId, rspId);
 
         logger.info("执行技师接车操作：---end---" + orderId);
         return ResultJsonObject.getDefaultResult(orderId);
@@ -1370,7 +1538,7 @@ public class ConsumerOrderService {
      * @param orderObject
      * @return
      */
-    public ResultJsonObject finishCar(OrderObject orderObject) throws ArgumentMissingException, NoEmptyArkException, ObjectNotFoundException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException {
+    public ResultJsonObject finishCar(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException {
         logger.info("执行技师还车操作：---start---");
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
         String doorId = orderObject.getDoorId();
@@ -2227,7 +2395,17 @@ public class ConsumerOrderService {
 
         StringBuilder sql = new StringBuilder();
 
-        sql.append(" select co.id, co.licensePlate, co.carColor, co.carImageUrl, co.carBrand, case co.payState when 1 then '待支付' else '已交付' end as payState from consumerorder co where co.delStatus = 0 and co.pickCarStaffId = '").append(staffId).append("' ");
+        sql.append(" select co.id, co.clientName,\n" +
+                "co.licensePlate,\n" +
+                "co.carColor,\n" +
+                "co.carImageUrl, \n" +
+                "co.carBrand, \n" +
+                "co.finishTime,\n" +
+                "co.staffKeyLocation as keyLocation,\n" +
+                "co.parkingLocation,\n" +
+                "case co.payState when 1 then '待支付' else '已交付' end as payState ,\n" +
+                "concat_ws(',',(SELECT cpi.projectName FROM consumerprojectinfo cpi WHERE consumerOrderId = co.id)) as projectNames" +
+                " from consumerorder co where co.delStatus = 0 and co.pickCarStaffId = '").append(staffId).append("' ");
         if (StringUtils.hasText(keyword)) {
             sql.append(" and (co.licensePlate like '%").append(keyword).append("%' or co.id like '%").append(keyword).append("%') ");
         }

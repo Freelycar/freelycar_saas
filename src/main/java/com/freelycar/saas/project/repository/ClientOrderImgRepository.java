@@ -3,6 +3,8 @@ package com.freelycar.saas.project.repository;
 import com.freelycar.saas.project.entity.ClientOrderImg;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 /**
  * @author tangwei - Toby
  * @date 2019-06-04
@@ -11,4 +13,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ClientOrderImgRepository extends JpaRepository<ClientOrderImg, Long> {
 
     ClientOrderImg findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(String orderId, boolean delStatus);
+
+    List<ClientOrderImg> findByOrderIdAndDelStatusOrderByCreateTimeDesc(String orderId, boolean delStatus);
 }

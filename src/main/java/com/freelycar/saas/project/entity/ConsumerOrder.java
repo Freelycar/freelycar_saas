@@ -123,6 +123,12 @@ public class ConsumerOrder implements Serializable {
     @Column
     private Timestamp pickTime;
 
+    /**
+     * 接单时间
+     */
+    @Column
+    private Timestamp orderTakingTime;
+
 
     /**
      * 上次里程

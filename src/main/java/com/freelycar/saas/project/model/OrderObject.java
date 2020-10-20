@@ -26,7 +26,11 @@ public class OrderObject {
 
     private ClientOrderImg clientOrderImg;
 
+    private List<ClientOrderImg> clientOrderImgs;
+
     private StaffOrderImg staffOrderImg;
+
+    private List<StaffOrderImg> staffOrderImgs;
 
     private StaffInfo staffInfo;
 
@@ -123,6 +127,22 @@ public class OrderObject {
 
     public void setArk(Ark ark) {
         this.ark = ark;
+    }
+
+    public List<ClientOrderImg> getClientOrderImgs() {
+        return clientOrderImgs;
+    }
+
+    public void setClientOrderImgs(List<ClientOrderImg> clientOrderImgs) {
+        this.clientOrderImgs = clientOrderImgs;
+    }
+
+    public List<StaffOrderImg> getStaffOrderImgs() {
+        return staffOrderImgs;
+    }
+
+    public void setStaffOrderImgs(List<StaffOrderImg> staffOrderImgs) {
+        this.staffOrderImgs = staffOrderImgs;
     }
 
     @Override

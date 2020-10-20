@@ -34,6 +34,12 @@ public class WeChatOrderController {
     @Autowired
     private ArkService arkService;
 
+    @GetMapping("/listOrdersByClient")
+    public ResultJsonObject ListOrdersByClientId(@RequestParam String clientId) {
+        List<BaseOrderInfo> res = consumerOrderService.findAllOrdersByClientId(clientId);
+        return ResultJsonObject.getDefaultResult(res);
+    }
+
     @GetMapping("/listOrders")
     public ResultJsonObject listOrders(
             @RequestParam String arkSn,
