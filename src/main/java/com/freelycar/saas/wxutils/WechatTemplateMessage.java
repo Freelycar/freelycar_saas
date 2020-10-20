@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class WechatTemplateMessage {
 
@@ -22,6 +23,7 @@ public class WechatTemplateMessage {
     private static final String ORDER_CHANGED_FOR_CLIENT_ID = "PeRe0M0iEbm7TpN6NOThhBUjwzy_aHsi6r2E7Pa8J1A";
     private static final String ORDER_CHANGED_FOR_STAFF_ID = "il1UVsHA-GesQsFHERczQP9zPvz-od-q240c3fqd9vM";
     private static final String ORDER_CREATE_ID = "C-m3oRNedo3vM6ugQXBa4RhOtW3qwqM7tjWNKuAgYe8";
+    private static final String SCAN_CODE_ID = "_1PB1dksRGKm4P1F-h4p6ZzdfFbjLPmX34DPQynUodU";
     //关注提醒下单
     private static final String REMIND_TO_ORDER = "";
 
@@ -42,8 +44,8 @@ public class WechatTemplateMessage {
     /**
      * 用户扫码推送
      * {{first.DATA}}
-     * 订单编号： {{OrderSn.DATA}}
-     * 订单状态： {{OrderStatus.DATA}}
+     * 扫码时间：{{keyword1.DATA}}
+     * 扫码地点：{{keyword2.DATA}}
      * {{remark.DATA}}
      */
     public static void remindToOrder(Ark ark, Store store, String openId) {
@@ -52,21 +54,20 @@ public class WechatTemplateMessage {
         String arkLocation = ark.getLocation();
         JSONObject params = new JSONObject();
         params.put("touser", openId);
-        params.put("template_id", REMIND_TO_ORDER);
+        params.put("template_id", SCAN_CODE_ID);
         params.put("url", url);
 
         JSONObject data = new JSONObject();
         String first = "感谢您的关注，请点击开始下单~";
-
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         data.put("first", keywordFactory(first, "#173177"));
-        /*data.put("OrderSn", keywordFactory(consumerOrder.getId(), "#173177"));
-        data.put("OrderStatus", keywordFactory(stateString, "#173177"));*/
-        data.put("remark", keywordFactory("开始下单"));
+        data.put("keyword1", keywordFactory(simpleDateFormat.format(new Date()), "#173177"));
+        data.put("keyword2", keywordFactory(arkLocation, "#173177"));
+        data.put("remark", keywordFactory("开始下单!"));
         params.put("data", data);
 
         String result = invokeTemplateMessage(params);
         log.info("微信订单更新模版消息结果：" + result);
-
     }
 
     /**
