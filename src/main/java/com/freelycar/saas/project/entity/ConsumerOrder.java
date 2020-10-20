@@ -36,6 +36,9 @@ public class ConsumerOrder implements Serializable {
     private Timestamp createTime;
 
     @Column
+    private String comment;
+
+    @Column
     private String storeId;
 
     /**

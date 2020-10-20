@@ -23,9 +23,6 @@ public class WechatTemplateMessage {
     private static final String ORDER_CREATE_ID = "C-m3oRNedo3vM6ugQXBa4RhOtW3qwqM7tjWNKuAgYe8";
     private static final String SCAN_CODE_ID = "_1PB1dksRGKm4P1F-h4p6ZzdfFbjLPmX34DPQynUodU";
 
-    public static void setScanCodeId(){
-
-    }
 
     private static final Logger log = LogManager.getLogger(WechatTemplateMessage.class);
 
@@ -52,7 +49,6 @@ public class WechatTemplateMessage {
         keyword.put("color", color);
         return keyword;
     }
-
 
 
     /**
