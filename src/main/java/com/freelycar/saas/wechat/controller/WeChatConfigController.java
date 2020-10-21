@@ -191,7 +191,10 @@ public class WeChatConfigController {
                     Optional<Store> storeOptional = storeRepository.findById(ark.getStoreId());
                     if (storeOptional.isPresent()) store = storeOptional.get();
                 }
+                //模板消息
                 WechatTemplateMessage.remindToOrder(ark, store, openId);
+                //客服消息
+                CustomMessage.remindToOrder(ark, openId);
             }
             out.close();
         } else {
