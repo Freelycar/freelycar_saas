@@ -192,10 +192,8 @@ public class WeChatConfigController {
                     if (storeOptional.isPresent()) store = storeOptional.get();
                 }
                 WechatTemplateMessage.remindToOrder(ark, store, openId);
-            } else {
-                out.print("");
-                out.close();
             }
+            out.close();
         } else {
             out.print("");
             out.close();

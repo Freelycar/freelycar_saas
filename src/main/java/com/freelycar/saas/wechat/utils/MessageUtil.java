@@ -135,7 +135,7 @@ public class MessageUtil {
         if (parm != null && !parm.isEmpty()) {
             for (Map.Entry<String, String> entry : arrayList) {
                 strbuff.append("<").append(entry.getKey()).append(">");
-                if (isAddCDATA && !entry.getKey().equals("CreateTime")) {
+                if (isAddCDATA && (!entry.getKey().equals("CreateTime") || !entry.getKey().equals("MsgId"))) {
                     strbuff.append("<![CDATA[");
                     if (!StringUtils.isEmpty(entry.getValue())) {
                         strbuff.append(entry.getValue());
