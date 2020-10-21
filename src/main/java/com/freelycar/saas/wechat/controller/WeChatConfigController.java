@@ -192,7 +192,7 @@ public class WeChatConfigController {
                     if (storeOptional.isPresent()) store = storeOptional.get();
                 }
                 //模板消息
-                WechatTemplateMessage.remindToOrder(ark, store, openId);
+//                WechatTemplateMessage.remindToOrder(ark, store, openId);
                 //客服消息
                 CustomMessage.remindToOrder(ark, openId);
             }
