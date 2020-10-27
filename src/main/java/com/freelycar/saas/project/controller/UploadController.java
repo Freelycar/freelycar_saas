@@ -82,10 +82,10 @@ public class UploadController {
         }
     }
 
-    @ApiOperation(value = "上传Excel-门店项目导入", produces = "application/json")
+    /*@ApiOperation(value = "上传Excel-门店项目导入", produces = "application/json")
     @LoggerManage(description = "调用方法-上传Excel-门店项目导入")
     @PostMapping("/importProjects")
     public ResultJsonObject importProjects(String storeId, MultipartFile file, HttpServletRequest request) {
         return uploadService.importProjects(storeId, file, request);
-    }
+    }*/
 }

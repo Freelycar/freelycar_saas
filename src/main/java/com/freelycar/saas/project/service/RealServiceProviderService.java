@@ -208,7 +208,7 @@ public class RealServiceProviderService {
         sql.append("SELECT \n" +
                 "rsp.id,rsp.`name`,rsp.address,(SELECT sort FROM rspstoresort WHERE rspId = rsp.id AND storeId = '")
                 .append(storeId).append("') AS sort \n" +
-                "FROM realserviceprovider rsp WHERE \n" +
+                "FROM realserviceprovider rsp WHERE rsp.service_status = true and \n" +
                 "id IN (SELECT DISTINCT(rspId) FROM rspstoresort WHERE storeId = '").append(storeId).append("')\n" +
                 "ORDER BY sort ASC");
         EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();

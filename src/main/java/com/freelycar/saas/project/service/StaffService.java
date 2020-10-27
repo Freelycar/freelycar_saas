@@ -1,6 +1,5 @@
 package com.freelycar.saas.project.service;
 
-import com.alibaba.fastjson.parser.deserializer.StringFieldDeserializer;
 import com.freelycar.saas.basic.wrapper.*;
 import com.freelycar.saas.jwt.TokenAuthenticationUtil;
 import com.freelycar.saas.project.entity.*;
@@ -165,6 +164,7 @@ public class StaffService {
             if (null == employee) {
                 Employee newEmployee = new Employee();
                 newEmployee.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+                newEmployee.setDefaultStaffId(staff.getId());
                 newEmployee.setTrueName(staff.getName());
                 newEmployee.setNotification(false);
                 newEmployee.setPhone(phone);
@@ -570,6 +570,25 @@ public class StaffService {
         return resList;
     }
 
+    @Autowired
+    private RSPStoreService rspStoreService;
+
+    /**
+     * 根据技师id获取全部服务门店
+     *
+     * @param staffId
+     * @return
+     */
+    public List<Store> findServicingStoreByStaffId(String staffId) {
+        Staff staff = staffRepository.findById(staffId).orElse(null);
+        if (null != staff) {
+            String rspId = staff.getRspId();
+            List<Store> storeList = rspStoreService.listStore(rspId);
+            return storeList;
+        }
+        return null;
+    }
+
     /**
      * 给所有技师推送微信消息
      * （0：有用户预约了订单，通知该智能柜所有技师）
@@ -718,6 +737,14 @@ public class StaffService {
 
     public Staff findById(String id) {
         return staffRepository.findById(id).orElse(null);
+    }
+
+    public List<Staff> findByPhone(String phone) {
+        return staffRepository.findAllByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
+    }
+
+    public List<Staff> findByPhoneAndRspId(String phone, String rspId) {
+        return staffRepository.findByPhoneAndDelStatusAndIsArkAndRspId(phone, Constants.DelStatus.NORMAL.isValue(), true, rspId);
     }
 
     /**

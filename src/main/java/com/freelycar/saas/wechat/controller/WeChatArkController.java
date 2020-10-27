@@ -119,10 +119,10 @@ public class WeChatArkController {
     }
 
     @GetMapping("/orderTaking")
-    public ResultJsonObject orderTaking(@RequestParam String orderId, @RequestParam String staffId) {
+    public ResultJsonObject orderTaking(@RequestParam String orderId, @RequestParam String employeeId) {
         logger.info("arkOrderLog:技师接单接口----------");
         try {
-            return consumerOrderService.orderTaking(orderId, staffId);
+            return consumerOrderService.orderTaking(orderId, employeeId);
         } catch (Exception e) {
             logger.error("技师接单出现异常", e);
             e.printStackTrace();
@@ -131,10 +131,10 @@ public class WeChatArkController {
     }
 
     @GetMapping("/cancelOrderTaking")
-    public ResultJsonObject cancelOrderTaking(@RequestParam String orderId, @RequestParam String staffId) {
+    public ResultJsonObject cancelOrderTaking(@RequestParam String orderId, @RequestParam String employeeId) {
         logger.info("arkOrderLog:技师取消接单接口----------");
         try {
-            return consumerOrderService.cancelOrderTaking(orderId, staffId);
+            return consumerOrderService.cancelOrderTaking(orderId, employeeId);
         } catch (Exception e) {
             logger.error("技师取消接单出现异常", e);
             e.printStackTrace();
@@ -143,10 +143,10 @@ public class WeChatArkController {
     }
 
     @GetMapping("/pickCar")
-    public ResultJsonObject pickCar(@RequestParam String orderId, @RequestParam String staffId) {
+    public ResultJsonObject pickCar(@RequestParam String orderId, @RequestParam String employeeId) {
         logger.info("arkOrderLog:技师接车开始服务接口----------");
         try {
-            return consumerOrderService.pickCar(orderId, staffId);
+            return consumerOrderService.pickCar(orderId, employeeId);
         } catch (Exception e) {
             logger.error("技师取车出现异常", e);
             e.printStackTrace();

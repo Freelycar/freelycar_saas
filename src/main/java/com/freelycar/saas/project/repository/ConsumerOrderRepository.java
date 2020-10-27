@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.QueryHints;
 
 import javax.persistence.QueryHint;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +34,8 @@ public interface ConsumerOrderRepository extends JpaRepository<ConsumerOrder, St
     ConsumerOrder findTopByClientIdAndOrderTypeAndDelStatusAndStateLessThan(String clientId, int orderType, boolean delStatus, int state);
 
     List<ConsumerOrder> findAllByStoreIdAndOrderTypeAndStateAndDelStatusAndLicensePlateContainingOrderByCreateTimeAsc(String storeId, int orderType, int state, boolean delStatus, String licensePlate);
+
+    List<ConsumerOrder> findAllByStoreIdAndOrderTypeAndStateAndDelStatusAndCreateTimeBetween(String storeId, int orderType, int state, boolean delStatus, Date createTimeStart, Date createTimeEnd);
 
     List<ConsumerOrder> findAllByStoreIdAndOrderTypeAndStateAndDelStatusAndLicensePlateContainingOrderByPickTimeAsc(String storeId, int orderType, int state, boolean delStatus, String licensePlate);
 
@@ -64,11 +67,11 @@ public interface ConsumerOrderRepository extends JpaRepository<ConsumerOrder, St
 
     int countAllByPhoneAndDelStatusAndOrderTypeAndPayState(String phone, boolean delStatus, int orderType, int payState);
 
-    int countAllByUserKeyLocationSnContainsAndDelStatusAndStateLessThan(String userKeyLocationSn,boolean delStatus,int state);
+    int countAllByUserKeyLocationSnContainsAndDelStatusAndStateLessThan(String userKeyLocationSn, boolean delStatus, int state);
 
     @QueryHints(value = {@QueryHint(name = HINT_COMMENT, value = "a query for pageable")})
     @Query("select u from ConsumerOrder u where u.id in ?1 and u.delStatus = false and u.state =1")
-    Page<ConsumerOrder> findByIdIn(List<String> ids,Pageable page);
+    Page<ConsumerOrder> findByIdIn(List<String> ids, Pageable page);
 
     List<ConsumerOrder> findByDelStatusAndCreateTimeAfter(boolean delStatus, Timestamp createTime);
 

@@ -22,4 +22,6 @@ public interface ArkRepository extends JpaRepository<Ark, String> {
 
     List<Ark> findByDelStatusAndCreateTimeAfter(boolean delStatus, Timestamp createTime);
     List<Ark> findByDelStatusAndCreateTimeBefore(boolean delStatus, Timestamp createTime);
+
+    List<Ark> findByDelStatus(boolean delStatus);
 }

@@ -334,7 +334,6 @@ public class ProjectService {
         List<Project> actProjects = new ArrayList<>();
         List<Project> res = new ArrayList<>();
 
-        //TODO 每个项目都需要判断是否有在接单状态的技师
         projects = staffReadyHandler(projects, storeId);
 
         //将活动的项目置顶
@@ -370,7 +369,7 @@ public class ProjectService {
 
         List<List<Project>> allStaffProjects = new ArrayList<>();
 
-        //TODO 查找门店所有在服务的技师
+        // 查找门店所有在服务的技师
         logger.info("查找门店所有在服务的技师");
         List<Staff> staffs = staffService.getAllArkStaffInStore(storeId);
         if (null != staffs && !staffs.isEmpty()) {
@@ -379,7 +378,7 @@ public class ProjectService {
                 Employee employee = staffService.getEmployeeByPhone(phone);
                 boolean notification = (null == employee.getNotification()) ? false : employee.getNotification();
                 if (notification) {
-                    //TODO 获取staff对应的Project集合，并且对比当前项目列表中是否有包含
+                    // 获取staff对应的Project集合，并且对比当前项目列表中是否有包含
                     List<Project> staffProjects = staff.getProjects();
                     allStaffProjects.add(staffProjects);
                 }

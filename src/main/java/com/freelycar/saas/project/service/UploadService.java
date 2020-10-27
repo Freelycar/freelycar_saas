@@ -279,8 +279,8 @@ public class UploadService {
 
     }
 
-    public ResultJsonObject importProjects(String storeId, MultipartFile file, HttpServletRequest request) {
-        // TODO 上传Excel导入门店项目
+    /*public ResultJsonObject importProjects(String storeId, MultipartFile file, HttpServletRequest request) {
+        //  上传Excel导入门店项目
 
         //判断storeId和file文件是否为空
 
@@ -292,7 +292,7 @@ public class UploadService {
 
 
         return null;
-    }
+    }*/
 
     public static byte[] base64tobyte(String imageBase64) {
         byte[] b1 = null;

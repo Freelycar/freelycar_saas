@@ -40,7 +40,7 @@ public class WeChatEmployeeController {
         return employeeService.login(employee);
     }
 
-    @ApiOperation(value = "技师选择默认门店", produces = "application/json")
+   /* @ApiOperation(value = "技师选择默认门店", produces = "application/json")
     @PostMapping("/selectStore")
     @LoggerManage(description = "调用方法：技师选择默认门店")
     public ResultJsonObject selectStore(@RequestBody Employee employee) {
@@ -51,7 +51,7 @@ public class WeChatEmployeeController {
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());
         }
-    }
+    }*/
 
     @ApiOperation(value = "查询雇员的个人信息", produces = "application/json")
     @GetMapping("/detail")
@@ -82,11 +82,11 @@ public class WeChatEmployeeController {
     @ApiOperation(value = "获取技师历史订单", produces = "application/json")
     @GetMapping("/listHistoryOrders")
     @LoggerManage(description = "调用方法：获取技师历史订单")
-    public ResultJsonObject listHistoryOrders(@RequestParam String staffId, @RequestParam(required = false) String keyword) {
+    public ResultJsonObject listHistoryOrders(@RequestParam String employeeId, @RequestParam(required = false) String keyword) {
         try {
-            List<HistoryOrder> list = consumerOrderService.listHistoryOrder(staffId, keyword);
+            List<HistoryOrder> list = consumerOrderService.listHistoryOrder(employeeId, keyword);
             return ResultJsonObject.getDefaultResult(list);
-        } catch (ArgumentMissingException e) {
+        } catch (ArgumentMissingException | ObjectNotFoundException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, e.getMessage());

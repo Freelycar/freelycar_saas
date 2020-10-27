@@ -159,14 +159,14 @@ public class EmployeeService {
 
 
         //查询staff表中有几个对应的数据，列举出来供用户选择门店
-        List<Staff> staffList;
-        try {
+        List<Staff> staffList = null;
+        /*try {
             staffList = getStaffs(account);
         } catch (ArgumentMissingException | ObjectNotFoundException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, "登录成功，但" + e.getMessage() + "，请联系管理人员");
-        }
+        }*/
 
         String jwt = TokenAuthenticationUtil.generateAuthentication(employeeResult.getId());
 
@@ -219,19 +219,6 @@ public class EmployeeService {
      */
     public ResultJsonObject detail(String id) throws ArgumentMissingException, ObjectNotFoundException {
         Employee employee = this.findObjectById(id);
-
-        String defaultStaffId = employee.getDefaultStaffId();
-        String defaultStoreId = employee.getDefaultStoreId();
-
-        if (StringUtils.isEmpty(defaultStaffId)) {
-            throw new ArgumentMissingException("参数defaultStaffId缺失，无法查询相关信息");
-        }
-        if (StringUtils.isEmpty(defaultStoreId)) {
-            throw new ArgumentMissingException("参数defaultStoreId缺失，无法查询相关信息");
-        }
-//        Staff staff = staffRepository.getOne(defaultStaffId);
-//        Store store = storeRepository.getOne(defaultStoreId);
-
         EmployeeInfo employeeInfo = new EmployeeInfo();
         employeeInfo.setName(employee.getTrueName());
         employeeInfo.setCity(employee.getCity());
@@ -239,21 +226,7 @@ public class EmployeeService {
         employeeInfo.setNotification(employee.getNotification());
         employeeInfo.setHeadImgUrl(employee.getHeadImgUrl());
         employeeInfo.setGender(employee.getGender());
-        employeeInfo.setDefaultStaffId(employee.getDefaultStaffId());
-        employeeInfo.setDefaultStoreId(employee.getDefaultStoreId());
-
-        //查询历史订单条数
-        int res = 0;
-        try {
-            res = consumerOrderService.getStaffOrderServiced(defaultStaffId);
-        } catch (ArgumentMissingException e) {
-            logger.error(e.getMessage(), e);
-        }
-
-        employeeInfo.setHistoryOrderCount(res);
-
-
-        return ResultJsonObject.getDefaultResult(employeeInfo);
+        return ResultJsonObject.getDefaultResult(employee);
     }
 
     /**

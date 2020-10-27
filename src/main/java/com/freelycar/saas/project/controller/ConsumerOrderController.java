@@ -1,7 +1,6 @@
 package com.freelycar.saas.project.controller;
 
 import cn.afterturn.easypoi.excel.entity.params.ExcelExportEntity;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.aop.LoggerManage;
 import com.freelycar.saas.basic.wrapper.PaginationRJO;
@@ -23,6 +22,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -223,8 +223,6 @@ public class ConsumerOrderController {
         //模拟从数据库获取需要导出的数据
         @SuppressWarnings({"unused", "unchecked"})
         List<CustomerOrderListObject> list = (List<CustomerOrderListObject>) resultJsonObject.getData();
-
-
         //导出操作
         try {
             ExcelTool.exportExcel(list, "单据列表", "单据列表", CustomerOrderListObject.class, "小易车单据列表.xls", response);
@@ -256,6 +254,47 @@ public class ConsumerOrderController {
         JSONObject jsonResult = new JSONObject();
         jsonResult.put("pageResult", pageResult);
         jsonResult.put("totalAccount", totalAccount);
+
+        return ResultJsonObject.getDefaultResult(jsonResult);
+    }
+
+    @ApiOperation(value = "查询流水报表（分页）", produces = "application/json")
+    @LoggerManage(description = "调用方法：查询流水报表（分页）")
+    @GetMapping("/listOrderReport")
+    public ResultJsonObject listOrderReport(
+            @RequestParam(required = false) String storeId,
+            @RequestParam(required = false) String rspId,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            @RequestParam Integer currentPage,
+            @RequestParam(required = false) Integer pageSize
+    ) {
+        if (null == pageSize) {
+            pageSize = 10;
+        }
+        if (StringUtils.hasText(startTime)) {
+            startTime += " 00:00:00";
+        } else {
+            startTime = "2019-01-01 00:00:00";
+        }
+
+        if (StringUtils.hasText(endTime)) {
+            endTime += " 23:59:59";
+        } else {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            endTime = dateFormat.format(new Date());
+        }
+        JSONObject jsonResult = new JSONObject();
+
+        if (null == rspId) {
+            PaginationRJO pageResult = consumerOrderService.listOrderReport(storeId, rspId, startTime, endTime, currentPage, pageSize);
+            double totalAccount = consumerOrderService.sumOrderParticularsTotalAccount(storeId, startTime, endTime).doubleValue();
+            jsonResult.put("pageResult", pageResult);
+            jsonResult.put("totalAccount", totalAccount);
+        }else {
+
+        }
+
 
         return ResultJsonObject.getDefaultResult(jsonResult);
     }
@@ -343,7 +382,7 @@ public class ConsumerOrderController {
         columnList.add(colEntity1);
         for (int i = 1; i < 13; i++) {
             String month = i < 10 ? "0" + i : i + "";
-            String year_month = year+"-"+month;
+            String year_month = year + "-" + month;
             ExcelExportEntity colEntity = new ExcelExportEntity(year_month, year_month);
             colEntity1.setNeedMerge(false);
             columnList.add(colEntity);
@@ -352,6 +391,127 @@ public class ConsumerOrderController {
         try {
             ExcelTool.exportExcel(list, columnList, "营业汇总-" + year, year + "年", "小易爱车营业汇总" + year + ".xls", response);
         } catch (NormalException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+    }
+
+    @ApiOperation(value = "获取营业汇总-网点", produces = "application/json")
+    @LoggerManage(description = "调用方法：获取营业汇总-网点")
+    @GetMapping("/getIncomeByStore")
+    public ResultJsonObject getIncomeByStore(
+            @RequestParam(required = false) String storeId,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime
+    ) {
+        if (StringUtils.hasText(startTime)) {
+            startTime += " 00:00:00";
+        } else {
+            startTime = "2019-01-01 00:00:00";
+        }
+
+        if (StringUtils.hasText(endTime)) {
+            endTime += " 23:59:59";
+        } else {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            endTime = dateFormat.format(new Date());
+        }
+        JSONObject res = null;
+        try {
+            res = consumerOrderService.getIncomeByStore(storeId, startTime, endTime);
+            return ResultJsonObject.getDefaultResult(res);
+        } catch (ParseException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
+    }
+
+    @ApiOperation(value = "获取营业汇总-网点Excel导出", produces = "application/json")
+    @LoggerManage(description = "调用方法：获取营业汇总-网点Excel导出")
+    @GetMapping("/exportGetIncomeByStoreExcel")
+    public void exportGetIncomeByStoreExcel(
+            @RequestParam(required = false) String storeId,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            HttpServletResponse response
+    ) {
+        if (StringUtils.hasText(startTime)) {
+            startTime += " 00:00:00";
+        } else {
+            startTime = "2019-01-01 00:00:00";
+        }
+
+        if (StringUtils.hasText(endTime)) {
+            endTime += " 23:59:59";
+        } else {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            endTime = dateFormat.format(new Date());
+        }
+        JSONObject res = null;
+        try {
+            res = consumerOrderService.getIncomeByStore(storeId, startTime, endTime);
+            List<Map<String, Object>> list = new ArrayList<>();
+            List<ExcelExportEntity> columnList = new ArrayList<ExcelExportEntity>();
+            if (StringUtils.isEmpty(storeId)) {//各个网点营业额
+                ExcelExportEntity colEntity0 = new ExcelExportEntity("网点", "storeName");
+                colEntity0.setNeedMerge(true);
+                columnList.add(colEntity0);
+
+                ExcelExportEntity colEntity1 = new ExcelExportEntity("营业额", "sum");
+                colEntity1.setNeedMerge(true);
+                columnList.add(colEntity1);
+
+                ExcelExportEntity colEntity2 = new ExcelExportEntity("占比", "percent");
+                colEntity2.setNeedMerge(true);
+                columnList.add(colEntity2);
+
+                List resList = (List) res.get("list");
+                for (Object o :
+                        resList) {
+                    Object[] oo = (Object[]) o;
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("storeName", oo[0]);
+                    map.put("sum", oo[1]);
+                    map.put("percent", oo[2]);
+                    list.add(map);
+                }
+
+                ExcelTool.exportExcel(list, columnList, "营业汇总-网点", "网点营业汇总", "小易爱车网点营业汇总.xls", response);
+            } else {
+                ExcelExportEntity colEntity0 = new ExcelExportEntity("项目", "projectName");
+                colEntity0.setNeedMerge(true);
+                columnList.add(colEntity0);
+
+                ExcelExportEntity colEntity1 = new ExcelExportEntity("所属服务商", "serviceProviderName");
+                colEntity1.setNeedMerge(true);
+                columnList.add(colEntity1);
+
+                ExcelExportEntity colEntity2 = new ExcelExportEntity("营业额", "sum");
+                colEntity2.setNeedMerge(true);
+                columnList.add(colEntity2);
+
+                ExcelExportEntity colEntity3 = new ExcelExportEntity("占比", "percent");
+                colEntity3.setNeedMerge(true);
+                columnList.add(colEntity3);
+
+                List resList = (List) res.get("list");
+                for (Object o :
+                        resList) {
+                    Object[] oo = (Object[]) o;
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("projectName", oo[0]);
+                    map.put("serviceProviderName", oo[1]);
+                    map.put("sum", oo[2]);
+                    map.put("percent", oo[3]);
+                    list.add(map);
+                }
+
+                ExcelTool.exportExcel(list, columnList, "营业汇总-网点项目", "网点项目营业汇总", "小易爱车-网点项目-营业汇总.xls", response);
+            }
+
+
+        } catch (ParseException | NormalException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
         }

@@ -63,6 +63,8 @@ public interface StaffRepository extends JpaRepository<Staff, String> {
 
     List<Staff> findAllByPhoneAndDelStatusAndIsArk(String phone, boolean delStatus, boolean isArk);
 
+    List<Staff> findByPhoneAndDelStatusAndIsArkAndRspId(String phone, boolean delStatus, boolean isArk, String rspId);
+
     Staff findTopByStoreIdAndPhoneAndDelStatusAndIsArk(String storeId, String phone, boolean delStatus, boolean isArk);
 
 

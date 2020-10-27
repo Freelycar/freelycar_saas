@@ -77,7 +77,14 @@ public class WeChatOrderController {
         return consumerOrderService.getOrderObjectDetail(id);
     }
 
-    @GetMapping("/listReservationOrders")
+    /**
+     * 技师端接口：待服务接口
+     * @param licensePlate
+     * @param storeId
+     * @param staffId
+     * @return
+     */
+    /*@GetMapping("/listReservationOrders")
     public ResultJsonObject listReservationOrders(
             @RequestParam String licensePlate,
             @RequestParam String storeId,
@@ -91,20 +98,46 @@ public class WeChatOrderController {
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null);
         }
+    }*/
+
+    /**
+     * 技师端接口:待服务订单接口
+     *
+     * @param licensePlate
+     * @param employeeId
+     * @return
+     */
+    @GetMapping("/listReservationOrders")
+    public ResultJsonObject listReservationOrders(
+            @RequestParam String licensePlate,
+            @RequestParam String employeeId
+    ) {
+        try {
+            return ResultJsonObject.getDefaultResult(consumerOrderService.listReservationOrders(licensePlate, employeeId));
+        } catch (ArgumentMissingException | ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null);
+        }
     }
 
 
     @GetMapping("/listServicingOrders")
     public ResultJsonObject listServicingOrders(
             @RequestParam String licensePlate,
-            @RequestParam String storeId,
-            @RequestParam String staffId
+            @RequestParam String employeeId
     ) {
-        List<FinishOrderInfo> res = consumerOrderService.listServicingOrders(licensePlate, storeId, staffId);
-        if (null != res) {
-            return ResultJsonObject.getDefaultResult(res);
+        try {
+            List<FinishOrderInfo> res = consumerOrderService.listServicingOrders(licensePlate, employeeId);
+            if (null != res) {
+                return ResultJsonObject.getDefaultResult(res);
+            }
+            return ResultJsonObject.getErrorResult(null);
+        } catch (ArgumentMissingException | ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null);
         }
-        return ResultJsonObject.getErrorResult(null);
     }
 
 }

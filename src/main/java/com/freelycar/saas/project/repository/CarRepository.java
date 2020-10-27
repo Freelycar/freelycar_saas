@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tangwei - Toby
@@ -18,6 +19,8 @@ public interface CarRepository extends JpaRepository<Car, String> {
     List<Car> findByDelStatus(boolean delStatus);
 
     List<Car> findByClientIdAndDelStatus(String clientId, boolean delStatus);
+
+    List<Car> findByClientIdInAndDelStatus(Set<String> clientId, boolean delStatus);
 
     @Transactional
     @Modifying(clearAutomatically = true)
@@ -37,6 +40,10 @@ public interface CarRepository extends JpaRepository<Car, String> {
     List<Car> listCarsByStoreIdAndPhone(String storeId, String phone);
 
     Car findTopByLicensePlateAndStoreIdAndAndDelStatusOrderByCreateTimeDesc(String licensePlate, String storeId, boolean delStatus);
+
+    Car findTopByStoreIdAndClientIdAndDelStatus(String storeId, String clientId, boolean delStatus);
+
+    List<Car> findByStoreIdAndClientIdAndDelStatus(String storeId, String clientId, boolean delStatus);
 
     Car findByClientIdAndStoreIdAndDelStatus(String clientId, String storeId, boolean delStatus);
 }

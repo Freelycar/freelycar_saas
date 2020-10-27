@@ -31,6 +31,12 @@ public class WeChatWxUserInfoController {
         return wxUserInfoService.getPersonalInfo(id);
     }
 
+
+    @GetMapping("/getCurrentPersonalInfo")
+    public ResultJsonObject getCurrentPersonalInfo(@RequestParam String id) {
+        return wxUserInfoService.getCurrentPersonalInfo(id);
+    }
+
     @GetMapping("/getDetail")
     public ResultJsonObject getDetail(@RequestParam String id) {
         return wxUserInfoService.getDetail(id);

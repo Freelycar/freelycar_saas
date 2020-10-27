@@ -94,7 +94,43 @@ public class WxUserInfoService {
     }
 
     /**
+     * 获取当前微信用户+车牌号
+     *
+     * @param id 微信用户id
+     * @return
+     */
+    public ResultJsonObject getCurrentPersonalInfo(String id) {
+        //查找微信用户对象
+        WxUserInfo wxUserInfo = this.findById(id);
+        if (null == wxUserInfo) {
+            return ResultJsonObject.getErrorResult(id, "找不到id为：" + id + "的微信用户信息。");
+        }
+        //查找默认门店下的车辆信息
+        List<Car> carList = null;
+        String clientId = wxUserInfo.getDefaultClientId();
+        String storeId = wxUserInfo.getDefaultStoreId();
+        if (!StringUtils.isEmpty(clientId) && !StringUtils.isEmpty(storeId)) {
+            carList = carRepository.findByStoreIdAndClientIdAndDelStatus(storeId, clientId, Constants.DelStatus.NORMAL.isValue());
+        }
+        //查询这个用户有没有订单，如果有订单，则不享受新人优惠
+        boolean preferential = false;
+        String phone = wxUserInfo.getPhone();
+        try {
+            preferential = consumerOrderService.userHasPreferentialPolicy(phone);
+        } catch (ArgumentMissingException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+        PersonalInfo personalInfo = new PersonalInfo();
+        personalInfo.setWxUserInfo(wxUserInfo);
+        personalInfo.setCars(carList);
+        personalInfo.setNewUser(preferential);
+        return ResultJsonObject.getDefaultResult(personalInfo);
+    }
+
+    /**
      * 个人中心获取微信用户
+     * 下单页：用户名 车牌号
      *
      * @param id
      * @return
@@ -110,16 +146,24 @@ public class WxUserInfoService {
 
         //获取车辆信息
 
-        List<Car> carList;
-        Float carBalance = null;
+        List<Car> carList = null;
+//        Float carBalance = null;
         String defaultStoreId = wxUserInfo.getDefaultStoreId();
         String phone = wxUserInfo.getPhone();
         if (StringUtils.isEmpty(defaultStoreId)) {
             //未选择默认门店，查询出来的车辆是去重的，后续相关操作需要以车牌号为基准
+            //未选择默认门店，不显示
+            List<Client> clientList = clientRepository.findByPhoneAndDelStatusOrderByCreateTimeAsc(phone, Constants.DelStatus.NORMAL.isValue());
+            Set<String> clientIds = new HashSet<>();
+            for (Client client :
+                    clientList) {
+                clientIds.add(client.getId());
+            }
+            carList = carRepository.findByClientIdInAndDelStatus(clientIds, Constants.DelStatus.NORMAL.isValue());
             carList = carRepository.listCarsByStoreIdWithoutSamePlate(phone);
         } else {
             //查询对应的client对象
-            List<Client> clientList = clientRepository.findByPhoneAndStoreIdAndDelStatusOrderByCreateTimeAsc(phone, defaultStoreId, Constants.DelStatus.NORMAL.isValue());
+            List<Client> clientList = clientRepository.findByPhoneAndStoreIdAndDelStatus(phone, defaultStoreId, Constants.DelStatus.NORMAL.isValue());
             if (clientList.isEmpty()) {
                 return ResultJsonObject.getErrorResult(id, "找不到对应的client用户信息");
             }
@@ -127,13 +171,6 @@ public class WxUserInfoService {
             //提供名下车辆的两种查询方式
             if (StringUtils.hasLength(clientId)) {
                 carList = carRepository.findByClientIdAndDelStatus(clientId, Constants.DelStatus.NORMAL.isValue());
-
-                /*//查询对应门店会员卡的余额
-                Float balance = cardRepository.sumBalanceByClientId(clientId);
-                if (null != balance) {
-                    //格式化精度
-                    carBalance = RoundTool.round(balance, 2, BigDecimal.ROUND_HALF_UP);
-                }*/
             } else {
                 carList = carRepository.listCarsByStoreIdAndPhone(defaultStoreId, phone);
             }
@@ -150,7 +187,7 @@ public class WxUserInfoService {
 
         personalInfo.setWxUserInfo(wxUserInfo);
         personalInfo.setCars(carList);
-        personalInfo.setCardBalance(carBalance);
+//        personalInfo.setCardBalance(carBalance);
         personalInfo.setNewUser(preferential);
 
         return ResultJsonObject.getDefaultResult(personalInfo);
