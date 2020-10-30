@@ -286,17 +286,55 @@ public class ConsumerOrderController {
         }
         JSONObject jsonResult = new JSONObject();
 
-        if (null == rspId) {
-            PaginationRJO pageResult = consumerOrderService.listOrderReport(storeId, rspId, startTime, endTime, currentPage, pageSize);
+        if (StringUtils.isEmpty(rspId)) {
+            PaginationRJO pageResult = consumerOrderService.listOrderReport(storeId, startTime, endTime, currentPage, pageSize);
             double totalAccount = consumerOrderService.sumOrderParticularsTotalAccount(storeId, startTime, endTime).doubleValue();
             jsonResult.put("pageResult", pageResult);
             jsonResult.put("totalAccount", totalAccount);
-        }else {
+        } else {
+            PaginationRJO pageResult = consumerOrderService.listOrderReportByRspId(rspId, startTime, endTime, currentPage, pageSize);
+            double totalAccount = consumerOrderService.sumOrderParticularsTotalAccountByRspId(rspId, startTime, endTime).doubleValue();
+            jsonResult.put("pageResult", pageResult);
+            jsonResult.put("totalAccount", totalAccount);
+        }
+        return ResultJsonObject.getDefaultResult(jsonResult);
+    }
 
+    @ApiOperation(value = "查询流水报表-excel导出", produces = "application/json")
+    @LoggerManage(description = "调用方法：查询流水报表-excel导出")
+    @GetMapping("/exportListOrderReportExcel")
+    public void exportListOrderReportExcel(
+            @RequestParam(required = false) String storeId,
+            @RequestParam(required = false) String rspId,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            HttpServletResponse response
+    ) {
+        if (StringUtils.hasText(startTime)) {
+            startTime += " 00:00:00";
+        } else {
+            startTime = "2019-01-01 00:00:00";
         }
 
-
-        return ResultJsonObject.getDefaultResult(jsonResult);
+        if (StringUtils.hasText(endTime)) {
+            endTime += " 23:59:59";
+        } else {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            endTime = dateFormat.format(new Date());
+        }
+        List<OrderParticulars> orderParticulars;
+        if (null == rspId) {
+            orderParticulars = consumerOrderService.listOrderReport(storeId, startTime, endTime);
+        } else {
+            orderParticulars = consumerOrderService.listOrderReportByRspId(rspId, startTime, endTime);
+        }
+        //导出操作
+        try {
+            ExcelTool.exportExcel(orderParticulars, "流水明细", "流水明细", OrderParticulars.class, "小易车流水明细.xls", response);
+        } catch (NormalException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
     }
 
     @ApiOperation(value = "导出流水明细Excel", produces = "application/json")
@@ -515,5 +553,112 @@ public class ConsumerOrderController {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
         }
+    }
+
+    @ApiOperation(value = "获取营业汇总-服务商", produces = "application/json")
+    @LoggerManage(description = "调用方法：获取营业汇总-服务商")
+    @GetMapping("/getIncomeByRsp")
+    public ResultJsonObject getIncomeByRsp(
+            @RequestParam(required = false) String rspId,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime
+    ) {
+        if (StringUtils.hasText(startTime)) {
+            startTime += " 00:00:00";
+        } else {
+            startTime = "2019-01-01 00:00:00";
+        }
+
+        if (StringUtils.hasText(endTime)) {
+            endTime += " 23:59:59";
+        } else {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            endTime = dateFormat.format(new Date());
+        }
+        JSONObject res = null;
+        res = consumerOrderService.getIncomeByRsp(rspId, startTime, endTime);
+        return ResultJsonObject.getDefaultResult(res);
+    }
+
+    @ApiOperation(value = "获取营业汇总-服务商excel", produces = "application/json")
+    @LoggerManage(description = "调用方法：获取营业汇总-服务商excel")
+    @GetMapping("/exportGetIncomeByRspExcel")
+    public void exportGetIncomeByRspExcel(
+            @RequestParam(required = false) String rspId,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
+            HttpServletResponse response
+    ) {
+        if (StringUtils.hasText(startTime)) {
+            startTime += " 00:00:00";
+        } else {
+            startTime = "2019-01-01 00:00:00";
+        }
+
+        if (StringUtils.hasText(endTime)) {
+            endTime += " 23:59:59";
+        } else {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            endTime = dateFormat.format(new Date());
+        }
+        JSONObject res = null;
+        res = consumerOrderService.getIncomeByRsp(rspId, startTime, endTime);
+        List<Map<String, Object>> list = new ArrayList<>();
+        List<ExcelExportEntity> columnList = new ArrayList<ExcelExportEntity>();
+        try {
+            if (StringUtils.isEmpty(rspId)) {//各个服务商
+                ExcelExportEntity colEntity0 = new ExcelExportEntity("服务商", "rspName");
+                colEntity0.setNeedMerge(true);
+                columnList.add(colEntity0);
+
+                ExcelExportEntity colEntity1 = new ExcelExportEntity("营业额", "sum");
+                colEntity1.setNeedMerge(true);
+                columnList.add(colEntity1);
+
+                ExcelExportEntity colEntity2 = new ExcelExportEntity("占比", "percent");
+                colEntity2.setNeedMerge(true);
+                columnList.add(colEntity2);
+
+                List resList = (List) res.get("list");
+                for (Object o :
+                        resList) {
+                    Object[] oo = (Object[]) o;
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("rspName", oo[0]);
+                    map.put("sum", oo[1]);
+                    map.put("percent", oo[2]);
+                    list.add(map);
+                }
+                ExcelTool.exportExcel(list, columnList, "营业汇总-服务商", "网点营业汇总", "小易爱车网点营业汇总.xls", response);
+            } else {//各个网点
+                ExcelExportEntity colEntity0 = new ExcelExportEntity("网点", "storeName");
+                colEntity0.setNeedMerge(true);
+                columnList.add(colEntity0);
+
+                ExcelExportEntity colEntity1 = new ExcelExportEntity("营业额", "sum");
+                colEntity1.setNeedMerge(true);
+                columnList.add(colEntity1);
+
+                ExcelExportEntity colEntity2 = new ExcelExportEntity("占比", "percent");
+                colEntity2.setNeedMerge(true);
+                columnList.add(colEntity2);
+
+                List resList = (List) res.get("list");
+                for (Object o :
+                        resList) {
+                    Object[] oo = (Object[]) o;
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("storeName", oo[0]);
+                    map.put("sum", oo[1]);
+                    map.put("percent", oo[2]);
+                    list.add(map);
+                }
+                ExcelTool.exportExcel(list, columnList, "营业汇总-网点项目", "网点项目营业汇总", "小易爱车-网点项目-营业汇总.xls", response);
+            }
+        } catch (NormalException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+        }
+
     }
 }

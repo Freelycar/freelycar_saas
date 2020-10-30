@@ -76,8 +76,6 @@ public class OrderIDGenerator implements ApplicationRunner, DisposableBean {
                 }
 
                 orderSnCacheVariable.put(storeId, newOrderSn);
-
-
                 String resOrderSn = storeSn + dateNumber + newOrderSn;
                 String lastRes = resOrderSnCacheVariable.get(storeId);
                 resOrderSnCacheVariable.put(storeId, resOrderSn);

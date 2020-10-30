@@ -319,7 +319,7 @@ public class WxUserInfoService {
         String clientId = client.getId();
         wxUserInfo.setDefaultClientId(clientId);
         wxUserInfo.setDefaultStoreName(store.getName());
-
+        wxUserInfo.setDefaultStoreAddress(store.getAddress());
         WxUserInfo res = this.modify(wxUserInfo);
         if (null == res) {
             return ResultJsonObject.getErrorResult(null);

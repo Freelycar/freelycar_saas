@@ -187,13 +187,13 @@ public class ClientService {
         if (null != params) {
             name = (String) params.get("name");
             phone = (String) params.get("phone");
-            isMember = (Boolean) params.get("isMember");
+//            isMember = (Boolean) params.get("isMember");
             licensePlate = (String) params.get("licensePlate");
         }
-
-
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT client.id, client.name, client.phone, p.plates, p.brands, if(client.isMember=0,'否','是') as isMember, (select count(1) from consumerOrder co where co.clientId=client.id and co.delStatus=0) as totalCount, client.lastVisit as lastVisit, round((select sum(card.balance) from card where card.clientId=client.id and card.delStatus=0),2) as totalBalance FROM client LEFT JOIN (SELECT c.id, group_concat( car.licensePlate ) as plates, GROUP_CONCAT( carBrand ) as brands FROM car LEFT JOIN client c ON c.id = car.clientId WHERE car.delStatus = 0 GROUP BY c.id ) p ON p.id = client.id WHERE client.delStatus = 0 AND client.storeId = '").append(storeId).append("' ");
+        StringBuilder sql1 = new StringBuilder();
+        /*sql.append(" SELECT client.id, client.name, client.phone, p.plates, p.brands, if(client.isMember=0,'否','是') as isMember, (select count(1) from consumerOrder co where co.clientId=client.id and co.delStatus=0) as totalCount, client.lastVisit as lastVisit, round((select sum(card.balance) from card where card.clientId=client.id and card.delStatus=0),2) as totalBalance FROM client LEFT JOIN (SELECT c.id, group_concat( car.licensePlate ) as plates, GROUP_CONCAT( carBrand ) as brands FROM car LEFT JOIN client c ON c.id = car.clientId WHERE car.delStatus = 0 GROUP BY c.id ) p ON p.id = client.id WHERE client.delStatus = 0 AND client.storeId = '").append(storeId).append("' ");
         if (StringUtils.hasText(licensePlate)) {
             sql.append(" AND p.plates LIKE '%").append(licensePlate).append("%' ");
         }
@@ -212,10 +212,41 @@ public class ClientService {
             }
         }
 
-        sql.append(" ORDER BY client.createTime ASC ");
+        sql.append(" ORDER BY client.createTime ASC ");*/
+        sql1.append("SELECT \n" +
+                "c.id,\n" +
+                "c.name,\n" +
+                "c.phone,\n" +
+                "(SELECT GROUP_CONCAT(car.carBrand) FROM car WHERE car.clientId = c.id AND delStatus = FALSE) as brands,\n" +
+                "(SELECT GROUP_CONCAT(car.licensePlate) FROM car WHERE car.clientId = c.id AND delStatus = FALSE) as plates,\n" +
+                "(SELECT createTime FROM consumerorder co WHERE co.clientId = c.id AND co.delStatus = FALSE ORDER BY createTime ASC LIMIT 0,1) as lastVisit,\n" +
+                "(SELECT count(1) FROM consumerorder co WHERE co.clientId = c.id AND co.delStatus = FALSE) as totalCount,\n" +
+                "IF(c.isMember=0,'否','是') as isMember\n" +
+                "FROM client c \n" +
+                "WHERE c.storeId = '").append(storeId).append("' \n" +
+                "AND c.delStatus = FALSE\n" +
+                "ORDER BY c.createTime asc");
+        StringBuilder sql2 = new StringBuilder();
+        Query nativeQuery = null;
+        if (StringUtils.hasText(licensePlate) || StringUtils.hasText(name) || StringUtils.hasText(phone)) {
+            sql2.append("SELECT * FROM (").append(sql1).append(") as r \n" +
+                    "WHERE ");
+            StringBuilder sql3 = new StringBuilder();
+            if (StringUtils.hasText(licensePlate)) {
+                sql3.append("AND r.plates LIKE '%").append(licensePlate).append("%' ");
+            }
+            if (StringUtils.hasText(name)) {
+                sql3.append("AND r.name LIKE '%").append(name).append("%' ");
+            }
+            if (StringUtils.hasText(phone)) {
+                sql3.append("AND r.phone LIKE '%").append(phone).append("%'  ");
+            }
+            sql2.append(sql3.substring(3));
+            nativeQuery = em.createNativeQuery(sql2.toString());
+        } else {
+            nativeQuery = em.createNativeQuery(sql1.toString());
+        }
 
-        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
-        Query nativeQuery = em.createNativeQuery(sql.toString());
         nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(CustomerList.class));
 
         if (export) {

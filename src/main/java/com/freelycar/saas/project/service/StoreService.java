@@ -112,7 +112,7 @@ public class StoreService {
         }
         String storeId = storeAccount.getStoreId();
         Long sysUserId = storeAccount.getSysUserId();
-        Store source = null;
+        Store source;
         SysUser userSource = null;
         if (StringUtils.isEmpty(storeId)) {
             //新增网点与账号:开通账号
@@ -133,15 +133,17 @@ public class StoreService {
             UpdateTool.copyNullProperties(source, store);
             source = storeRepository.saveAndFlush(store);
         }
-        if (StringUtils.isEmpty(sysUserId)) {
+        if (StringUtils.isEmpty(sysUserId)) {//新增账号
             SysUser user = storeAccount.toUser();
             user.setStoreId(source.getId());
+            user.setStoreName(source.getName());
             user.setDelStatus(Constants.DelStatus.NORMAL.isValue());
             user.setOpen(true);
             userSource = sysUserService.addOrModify(user);
-        } else {
+        } else {//修改账号
             Optional<SysUser> userOptional = sysUserRepository.findById(sysUserId);
             SysUser user = storeAccount.toUser();
+            user.setStoreName(source.getName());
             if (userOptional.isPresent()) {
                 UpdateTool.copyNullProperties(userOptional.get(), user);
                 userSource = sysUserService.addOrModify(user);

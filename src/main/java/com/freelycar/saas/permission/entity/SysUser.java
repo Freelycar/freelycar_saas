@@ -44,6 +44,11 @@ public class SysUser implements UserDetails {
     private String storeId;
 
     /**
+     * 网点名称
+     */
+    private String storeName;
+
+    /**
      * 使用者姓名
      */
     private String staffName;
@@ -162,6 +167,14 @@ public class SysUser implements UserDetails {
 
     public void setStoreId(String storeId) {
         this.storeId = storeId;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
     }
 
     public String getStaffName() {

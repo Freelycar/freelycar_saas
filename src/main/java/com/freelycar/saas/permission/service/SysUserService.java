@@ -6,6 +6,8 @@ import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.UnknownException;
 import com.freelycar.saas.permission.entity.SysUser;
 import com.freelycar.saas.permission.repository.SysUserRepository;
+import com.freelycar.saas.project.entity.Store;
+import com.freelycar.saas.project.repository.StoreRepository;
 import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wxutils.MD5;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +33,9 @@ public class SysUserService {
     @Autowired
     private SysUserRepository sysUserRepository;
 
+    @Autowired
+    private StoreRepository storeRepository;
+
     /**
      * 登录验证
      *
@@ -50,7 +55,15 @@ public class SysUserService {
      * @return
      */
     public SysUser getUserInfoByUserName(String userName) {
-        return sysUserRepository.findTopByUsernameAndDelStatus(userName, Constants.DelStatus.NORMAL.isValue());
+        SysUser sysUser = sysUserRepository.findTopByUsernameAndDelStatus(userName, Constants.DelStatus.NORMAL.isValue());
+        if (sysUser != null && StringUtils.isEmpty(sysUser.getStoreName())) {
+            String storeId = sysUser.getStoreId();
+            Store store = storeRepository.findById(storeId).orElse(null);
+            if (null != store) {
+                sysUser.setStoreName(store.getName());
+            }
+        }
+        return sysUser;
     }
 
     /**

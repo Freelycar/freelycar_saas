@@ -291,7 +291,7 @@ public class ConsumerOrderService {
 
     public List<BaseOrderInfo> findAllOrdersByClientId(String clientId) {
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select url from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0 order by soi.createTime desc limit 0,1) as staffOrderImgUrl FROM consumerOrder co WHERE co.delStatus = 0 ");
+        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select GROUP_CONCAT(url) from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0) as staffOrderImgUrl FROM consumerOrder co WHERE co.delStatus = 0 ");
         sql.append("AND co.clientId = '").append(clientId).append("' ORDER BY co.state ASC ,co.payState ASC,co.createTime desc");
 
         EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
@@ -442,10 +442,18 @@ public class ConsumerOrderService {
                 for (ReservationOrderInfo orderInfo :
                         reservationOrderInfos) {
                     String orderId = orderInfo.getId();
-                    ClientOrderImg img = clientOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, false);
-                    if (img != null) {
-                        orderInfo.setCarImageUrl(img.getUrl());
+//                    ClientOrderImg img = clientOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, false);
+                    List<ClientOrderImg> imgs = clientOrderImgRepository.findByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, false);
+                    StringBuilder img = new StringBuilder("");
+                    for (ClientOrderImg clientOrderImg :
+                            imgs) {
+                        img.append(",").append(clientOrderImg.getUrl());
                     }
+//                    logger.info(img.toString());
+                    if (imgs.size() > 0) {
+                        orderInfo.setCarImageUrl(img.substring(1));
+                    }
+
                 }
                 //关闭em
                 em.close();
@@ -572,6 +580,19 @@ public class ConsumerOrderService {
             //关闭em
             em.close();
 
+        }
+        for (FinishOrderInfo info :
+                finishOrderInfo) {
+            String orderId = info.getId();
+            List<ClientOrderImg> imgs = clientOrderImgRepository.findByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, Constants.DelStatus.NORMAL.isValue());
+            if (imgs.size() > 0) {
+                StringBuilder imgSb = new StringBuilder("");
+                for (ClientOrderImg img :
+                        imgs) {
+                    imgSb.append(",").append(img.getUrl());
+                }
+                info.setClientOrderImgUrl(imgSb.substring(1));
+            }
         }
         return finishOrderInfo;
     }
@@ -1239,6 +1260,7 @@ public class ConsumerOrderService {
         //保存订单项目信息
         if (null != consumerProjectInfos && !consumerProjectInfos.isEmpty()) {
             for (ConsumerProjectInfo consumerProjectInfo : consumerProjectInfos) {
+                //服务商id
                 if (StringUtils.isEmpty(rspId)) {
                     String rspProjectId = consumerProjectInfo.getProjectId();
                     Optional<RSPProject> projectOptional = rspProjectRepository.findByIdAndDelStatus(rspProjectId, Constants.DelStatus.NORMAL.isValue());
@@ -1252,12 +1274,20 @@ public class ConsumerOrderService {
         }
 
         //关联用户上传的图片
-        ClientOrderImg clientOrderImg = orderObject.getClientOrderImg();
+        /*ClientOrderImg clientOrderImg = orderObject.getClientOrderImg();
         if (null != clientOrderImg) {
             clientOrderImg.setOrderId(orderId);
             clientOrderImg.setCreateTime(currentTime);
             clientOrderImgRepository.save(clientOrderImg);
+        }*/
+
+        List<ClientOrderImg> clientOrderImgs = orderObject.getClientOrderImgs();
+        for (ClientOrderImg img :
+                clientOrderImgs) {
+            img.setCreateTime(currentTime);
+            img.setOrderId(orderId);
         }
+        clientOrderImgRepository.saveAll(clientOrderImgs);
 
         //开门，放钥匙
         // door表数据更新，根据智能柜编号获取door对象，并更新状态为"预约状态"
@@ -1742,11 +1772,17 @@ public class ConsumerOrderService {
 
 
         //关联技师上传订单车辆图片
-        StaffOrderImg staffOrderImg = orderObject.getStaffOrderImg();
+        /*StaffOrderImg staffOrderImg = orderObject.getStaffOrderImg();
         if (null != staffOrderImg) {
             staffOrderImg.setOrderId(orderId);
             staffOrderImgRepository.save(staffOrderImg);
+        }*/
+        List<StaffOrderImg> staffOrderImgs = orderObject.getStaffOrderImgs();
+        for (StaffOrderImg img :
+                staffOrderImgs) {
+            img.setOrderId(orderId);
         }
+        staffOrderImgRepository.saveAll(staffOrderImgs);
 
 
         // 更新door表数据状态
@@ -2155,6 +2191,89 @@ public class ConsumerOrderService {
         return sql.toString();
     }
 
+    private String generateListOrderReportSQL(String storeId, String startTime, String endTime) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT \n" +
+                "co.id, \n" +
+                "co.carBrand, \n" +
+                "co.licensePlate, \n" +
+                "co.clientName, \n" +
+                "co.phone, \n" +
+                "IFNULL(( SELECT group_concat( cpi.projectName ) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ),'购卡/充值') AS projectNames, \n" +
+                "co.actualPrice AS cost, \n" +
+                "co.createTime AS serviceTime,  \n" +
+                "co.totalPrice AS orderCost\n" +
+                "FROM consumerorder co \n" +
+                "WHERE co.delStatus = 0 AND payState = 2 ");
+        if (StringUtils.hasText(storeId)) {
+            sql.append(" AND co.storeId = '").append(storeId).append("' ");
+        }
+        if (StringUtils.hasText(startTime)) {
+            sql.append(" AND co.createTime > '").append(startTime).append(" 00:00:00' ");
+        }
+        if (StringUtils.hasText(endTime)) {
+            sql.append(" AND co.createTime <= '").append(endTime).append(" 23:59:59' ");
+        }
+        return sql.toString();
+    }
+
+    private String generateListOrderReportByRspIdSQL(String rspId, String startTime, String endTime, Integer currentPage, Integer pageSize) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT \n" +
+                "co.id,\n" +
+                "co.carBrand,\n" +
+                "co.licensePlate,\n" +
+                "co.clientName,\n" +
+                "co.phone, \n" +
+                "IFNULL(( SELECT group_concat( cpi.projectName ) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ),'购卡/充值') AS projectNames,\n" +
+                "co.actualPrice AS cost,\n" +
+                "co.createTime AS serviceTime,  \n" +
+                "co.totalPrice AS orderCost\n" +
+                "FROM consumerorder co WHERE co.id \n" +
+                "IN(\n" +
+                "SELECT cpi.consumerOrderId FROM consumerprojectinfo cpi WHERE cpi.projectId \n" +
+                "IN (\n" +
+                "SELECT p.id FROM rspproject p WHERE p.rspId = '").append(rspId).append("')\n" +
+                ")" +
+                "and co.delStatus = 0 and co.payState = 2 AND co.state = 3 ");
+        if (StringUtils.hasText(startTime)) {
+            sql.append(" AND co.createTime > '").append(startTime).append(" 00:00:00' ");
+        }
+        if (StringUtils.hasText(endTime)) {
+            sql.append(" AND co.createTime <= '").append(endTime).append(" 23:59:59' ");
+        }
+        sql.append(" ORDER BY co.createTime DESC LIMIT ").append((currentPage - 1) * pageSize).append(",").append(pageSize);
+        return sql.toString();
+    }
+
+    private String generateListOrderReportByRspIdSQL(String rspId, String startTime, String endTime) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT \n" +
+                "co.id,\n" +
+                "co.carBrand,\n" +
+                "co.licensePlate,\n" +
+                "co.clientName,\n" +
+                "co.phone, \n" +
+                "IFNULL(( SELECT group_concat( cpi.projectName ) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ),'购卡/充值') AS projectNames,\n" +
+                "co.actualPrice AS cost,\n" +
+                "co.createTime AS serviceTime,  \n" +
+                "co.totalPrice AS orderCost\n" +
+                "FROM consumerorder co WHERE co.id \n" +
+                "IN(\n" +
+                "SELECT cpi.consumerOrderId FROM consumerprojectinfo cpi WHERE cpi.projectId \n" +
+                "IN (\n" +
+                "SELECT p.id FROM rspproject p WHERE p.rspId = '").append(rspId).append("')\n" +
+                ")" +
+                "and co.delStatus = 0 and co.payState = 2 AND co.state = 3 ");
+        if (StringUtils.hasText(startTime)) {
+            sql.append(" AND co.createTime > '").append(startTime).append(" 00:00:00' ");
+        }
+        if (StringUtils.hasText(endTime)) {
+            sql.append(" AND co.createTime <= '").append(endTime).append(" 23:59:59' ");
+        }
+        return sql.toString();
+    }
+
     private String generateListOrderReportSumSQL(String storeId, String startTime, String endTime) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT \n" +
@@ -2164,6 +2283,26 @@ public class ConsumerOrderService {
         if (StringUtils.hasText(storeId)) {
             sql.append(" AND co.storeId = '").append(storeId).append("' ");
         }
+        if (StringUtils.hasText(startTime)) {
+            sql.append(" AND co.createTime > '").append(startTime).append(" 00:00:00' ");
+        }
+        if (StringUtils.hasText(endTime)) {
+            sql.append(" AND co.createTime <= '").append(endTime).append(" 23:59:59' ");
+        }
+        return sql.toString();
+    }
+
+    private String generateListOrderReportByRspIdSumSQL(String rspId, String startTime, String endTime) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT \n" +
+                "count(1)\n" +
+                "FROM consumerorder co WHERE co.id \n" +
+                "IN(\n" +
+                "SELECT cpi.consumerOrderId FROM consumerprojectinfo cpi WHERE cpi.projectId \n" +
+                "IN (\n" +
+                "SELECT p.id FROM rspproject p WHERE p.rspId = '").append(rspId).append("')\n" +
+                ")\n" +
+                "AND co.delStatus = 0 and co.payState = 2 AND co.state = 3");
         if (StringUtils.hasText(startTime)) {
             sql.append(" AND co.createTime > '").append(startTime).append(" 00:00:00' ");
         }
@@ -2205,6 +2344,43 @@ public class ConsumerOrderService {
             return BigDecimal.valueOf(0);
         }
 
+    }
+
+    public BigDecimal sumOrderParticularsTotalAccountByRspId(String rspId, String startTime, String endTime) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT IFNULL(cast( sum( co.actualPrice ) AS DECIMAL ( 15, 2 ) ),0) AS result \n" +
+                "FROM consumerorder co \n" +
+                "WHERE \n" +
+                "co.id \n" +
+                "IN(\n" +
+                "SELECT cpi.consumerOrderId FROM consumerprojectinfo cpi WHERE cpi.projectId \n" +
+                "IN (\n" +
+                "SELECT p.id FROM rspproject p WHERE p.rspId = '").append(rspId).append("')\n" +
+                ")\n" +
+                "and co.delStatus = FALSE AND co.payState = 2  AND co.state = 3 ");
+        if (StringUtils.hasText(startTime)) {
+            sql.append(" AND co.createTime > '").append(startTime).append(" 00:00:00' ");
+        }
+        if (StringUtils.hasText(endTime)) {
+            sql.append(" AND co.createTime <= '").append(endTime).append(" 23:59:59' ");
+        }
+
+//        logger.info(sql.toString());
+
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery = em.createNativeQuery(sql.toString());
+
+        @SuppressWarnings({"unused", "unchecked"})
+        List<BigDecimal> resultList = nativeQuery.getResultList();
+
+        //关闭em
+        em.close();
+
+        if (null != resultList && !resultList.isEmpty()) {
+            return resultList.get(0);
+        } else {
+            return BigDecimal.valueOf(0);
+        }
     }
 
     /**
@@ -2265,7 +2441,7 @@ public class ConsumerOrderService {
     /**
      * 查询流水报表
      */
-    public PaginationRJO listOrderReport(String storeId, String rspId, String startTime, String endTime, Integer currentPage, Integer pageSize) {
+    public PaginationRJO listOrderReport(String storeId, String startTime, String endTime, Integer currentPage, Integer pageSize) {
         String sql1 = generateListOrderReportSQL(storeId, startTime, endTime, currentPage, pageSize);
         EntityManager em1 = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
         Query nativeQuery1 = em1.createNativeQuery(sql1);
@@ -2296,6 +2472,66 @@ public class ConsumerOrderService {
 
         return PaginationRJO.of(page);
 
+    }
+
+    public List<OrderParticulars> listOrderReport(String storeId, String startTime, String endTime) {
+        String sql1 = generateListOrderReportSQL(storeId, startTime, endTime);
+        EntityManager em1 = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery1 = em1.createNativeQuery(sql1);
+        nativeQuery1.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(OrderParticulars.class));
+
+        @SuppressWarnings({"unused", "unchecked"})
+//        List<OrderParticulars> orderParticulars = nativeQuery.setFirstResult(MySQLPageTool.getStartPosition(currentPage, pageSize)).setMaxResults(pageSize).getResultList();
+        List<OrderParticulars> orderParticulars = nativeQuery1.getResultList();
+        //关闭em
+        em1.close();
+
+        return orderParticulars;
+
+    }
+
+    public PaginationRJO listOrderReportByRspId(String rspId, String startTime, String endTime, Integer currentPage, Integer pageSize) {
+        String sql1 = generateListOrderReportByRspIdSQL(rspId, startTime, endTime, currentPage, pageSize);
+        EntityManager em1 = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery1 = em1.createNativeQuery(sql1);
+        nativeQuery1.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(OrderParticulars.class));
+
+        @SuppressWarnings({"unused", "unchecked"})
+//        List<OrderParticulars> orderParticulars = nativeQuery.setFirstResult(MySQLPageTool.getStartPosition(currentPage, pageSize)).setMaxResults(pageSize).getResultList();
+        List<OrderParticulars> orderParticulars = nativeQuery1.getResultList();
+        //关闭em
+        em1.close();
+
+        String sql2 = generateListOrderReportByRspIdSumSQL(rspId, startTime, endTime);
+        EntityManager em2 = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery2 = em2.createNativeQuery(sql2);
+
+        @SuppressWarnings({"unused", "unchecked"})
+//        List<OrderParticulars> orderParticulars = nativeQuery.setFirstResult(MySQLPageTool.getStartPosition(currentPage, pageSize)).setMaxResults(pageSize).getResultList();
+        BigInteger total = (BigInteger) nativeQuery2.getSingleResult();
+        logger.info("result:{}", total);
+        //关闭em
+        em2.close();
+
+        Pageable pageable = PageableTools.basicPage(currentPage, pageSize);
+        @SuppressWarnings("unchecked")
+        Page<OrderRecordObject> page = new PageImpl(orderParticulars, pageable, total.intValue());
+
+        return PaginationRJO.of(page);
+    }
+
+    public List<OrderParticulars> listOrderReportByRspId(String rspId, String startTime, String endTime) {
+        String sql1 = generateListOrderReportByRspIdSQL(rspId, startTime, endTime);
+        EntityManager em1 = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery1 = em1.createNativeQuery(sql1);
+        nativeQuery1.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(OrderParticulars.class));
+
+        @SuppressWarnings({"unused", "unchecked"})
+//        List<OrderParticulars> orderParticulars = nativeQuery.setFirstResult(MySQLPageTool.getStartPosition(currentPage, pageSize)).setMaxResults(pageSize).getResultList();
+        List<OrderParticulars> orderParticulars = nativeQuery1.getResultList();
+        //关闭em
+        em1.close();
+        return orderParticulars;
     }
 
     public List getMongthlyIncomeByYear(String year) {
@@ -2492,6 +2728,7 @@ public class ConsumerOrderService {
             @SuppressWarnings({"unused", "unchecked"})
             List res = nativeQuery.getResultList();
             em.close();
+            //排序
             for (int i = 0; i < res.size() - 1; i++) {
                 for (int j = i + 1; j < res.size(); j++) {
                     Object[] oo1 = (Object[]) res.get(i);
@@ -2587,6 +2824,128 @@ public class ConsumerOrderService {
                 Object[] r0 = {projectName, serviceProviderName, value, sum.doubleValue() > 0 ? (bg.divide(sum, 2, BigDecimal.ROUND_HALF_UP)).doubleValue() : 0};
                 resList.add(r0);
             }
+            result.put("list", resList);
+            result.put("sum", sum.doubleValue());
+        }
+        return result;
+    }
+
+    public JSONObject getIncomeByRsp(String rspId, String startTime, String endTime) {
+        JSONObject result = new JSONObject();
+        if (StringUtils.isEmpty(rspId)) {//全部服务商
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT \n" +
+                    "r.name ,SUM(r.actualPrice) FROM\n" +
+                    "( SELECT \n" +
+                    "co.actualPrice,\n" +
+                    "rsp.name\n" +
+                    "FROM consumerorder co\n" +
+                    "LEFT JOIN consumerprojectinfo cpi ON cpi.consumerorderId = co.id\n" +
+                    "LEFT JOIN rspproject p ON cpi.projectId = p.id\n" +
+                    "LEFT JOIN realserviceprovider rsp ON rsp.id = p.rspId\n" +
+                    "WHERE \n" +
+                    "co.delStatus = FALSE AND co.state = 3  AND co.payState = 2) r GROUP BY r.name");
+            EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+            Query nativeQuery = em.createNativeQuery(sql.toString());
+            nativeQuery.unwrap(NativeQuery.class);
+            @SuppressWarnings({"unused", "unchecked"})
+            List res = nativeQuery.getResultList();
+            em.close();
+            for (Object o :
+                    res) {
+                Object[] oo1 = (Object[]) o;
+                if (StringUtils.isEmpty(oo1[0])) {
+                    res.remove(oo1);
+                }
+            }
+            for (int i = 0; i < res.size() - 1; i++) {
+                for (int j = i + 1; j < res.size(); j++) {
+                    Object[] oo1 = (Object[]) res.get(i);
+                    Double value1 = (Double) oo1[1];
+
+                    Object[] oo2 = (Object[]) res.get(j);
+                    Double value2 = (Double) oo2[1];
+                    if (value1 < value2) {
+                        Collections.swap(res, i, j);
+                    }
+                }
+            }
+            BigDecimal sum = new BigDecimal("0");
+            for (Object o :
+                    res) {
+                Object[] oo = (Object[]) o;
+                BigDecimal bg = new BigDecimal((Double) oo[1]);
+                sum = sum.add(bg);
+            }
+            List resList = new ArrayList();
+            for (Object o :
+                    res) {
+                Object[] oo = (Object[]) o;
+                BigDecimal bg = new BigDecimal((Double) oo[1]);
+                Double value = bg.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                Object[] or = {oo[0], value, sum.doubleValue() > 0 ? bg.divide(sum, 2, BigDecimal.ROUND_HALF_UP) : 0};
+                resList.add(or);
+            }
+            //统计服务商
+            result.put("list", resList);
+            result.put("sum", sum.doubleValue());
+        } else {//指定服务商
+            StringBuilder sql = new StringBuilder();
+            sql.append("SELECT r.name,sum(r.actualPrice) FROM (\n" +
+                    "SELECT \n" +
+                    "s.name,\n" +
+                    "co.storeId,\n" +
+                    "co.actualPrice\n" +
+                    "FROM consumerorder co\n" +
+                    "LEFT JOIN consumerprojectinfo cpi ON cpi.consumerorderId = co.id\n" +
+                    "LEFT JOIN store s on s.id = co.storeId\n" +
+                    "LEFT JOIN rspproject p ON cpi.projectId = p.id\n" +
+                    "LEFT JOIN realserviceprovider rsp ON rsp.id = p.rspId\n" +
+                    "WHERE \n" +
+                    "co.delStatus = FALSE AND co.state = 3  AND co.payState = 2 AND rsp.id = '").append(rspId).append("'\n" +
+                    ") r GROUP BY r.name");
+            EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+            Query nativeQuery = em.createNativeQuery(sql.toString());
+            nativeQuery.unwrap(NativeQuery.class);
+            @SuppressWarnings({"unused", "unchecked"})
+            List res = nativeQuery.getResultList();
+            em.close();
+            for (Object o :
+                    res) {
+                Object[] oo1 = (Object[]) o;
+                if (StringUtils.isEmpty(oo1[0])) {
+                    res.remove(oo1);
+                }
+            }
+            for (int i = 0; i < res.size() - 1; i++) {
+                for (int j = i + 1; j < res.size(); j++) {
+                    Object[] oo1 = (Object[]) res.get(i);
+                    Double value1 = (Double) oo1[1];
+
+                    Object[] oo2 = (Object[]) res.get(j);
+                    Double value2 = (Double) oo2[1];
+                    if (value1 < value2) {
+                        Collections.swap(res, i, j);
+                    }
+                }
+            }
+            BigDecimal sum = new BigDecimal("0");
+            for (Object o :
+                    res) {
+                Object[] oo = (Object[]) o;
+                BigDecimal bg = new BigDecimal((Double) oo[1]);
+                sum = sum.add(bg);
+            }
+            List resList = new ArrayList();
+            for (Object o :
+                    res) {
+                Object[] oo = (Object[]) o;
+                BigDecimal bg = new BigDecimal((Double) oo[1]);
+                Double value = bg.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                Object[] or = {oo[0], value, sum.doubleValue() > 0 ? bg.divide(sum, 2, BigDecimal.ROUND_HALF_UP) : 0};
+                resList.add(or);
+            }
+            //统计服务商
             result.put("list", resList);
             result.put("sum", sum.doubleValue());
         }
@@ -2887,7 +3246,7 @@ public class ConsumerOrderService {
         return false;
     }
 
-    public String getStaffKeyLocation(String orderId) throws ArgumentMissingException, ObjectNotFoundException {
+    public JSONObject getStaffKeyLocation(String orderId) throws ArgumentMissingException, ObjectNotFoundException {
         if (StringUtils.isEmpty(orderId)) {
             throw new ArgumentMissingException("参数orderId为空");
         }
@@ -2896,10 +3255,14 @@ public class ConsumerOrderService {
             throw new ObjectNotFoundException("未找到id为：" + orderId + " 的订单");
         }
         String staffKeyLocation = order.getStaffKeyLocation();
+        String staffKeyLocationSn = order.getStaffKeyLocationSn();
         if (StringUtils.isEmpty(staffKeyLocation)) {
             throw new ObjectNotFoundException("未查询到订单中的柜子信息，订单数据有误，请联系管理员或稍后重试");
         }
-        return staffKeyLocation;
+        JSONObject res = new JSONObject();
+        res.put("staffKeyLocation", staffKeyLocation);
+        res.put("staffKeyLocationSn", staffKeyLocationSn);
+        return res;
     }
 
     /**

@@ -100,6 +100,9 @@ public class WxUserInfo implements Serializable {
     @Column
     private String defaultStoreName;
 
+    @Column
+    private String defaultStoreAddress;
+
     public WxUserInfo() {
     }
 
@@ -238,5 +241,13 @@ public class WxUserInfo implements Serializable {
 
     public void setDefaultStoreName(String defaultStoreName) {
         this.defaultStoreName = defaultStoreName;
+    }
+
+    public String getDefaultStoreAddress() {
+        return defaultStoreAddress;
+    }
+
+    public void setDefaultStoreAddress(String defaultStoreAddress) {
+        this.defaultStoreAddress = defaultStoreAddress;
     }
 }

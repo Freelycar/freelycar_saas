@@ -280,16 +280,28 @@ public class StaffService {
     /**
      * 查询员工智能柜服务状态
      *
-     * @param id
+     * @param employeeId
      * @return
      */
-    public boolean isArk(String id) {
-        Staff staff = this.findById(id);
+    public boolean isArk(String employeeId) {
+        Employee employee = employeeRepository.findById(employeeId).orElse(null);
+        if (null != employee && employee.getDelStatus() == false) {
+            String phone = employee.getPhone();
+            List<Staff> staffList = staffRepository.findAllByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
+            for (Staff staff :
+                    staffList) {
+                if (staff.getIsArk()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+        /*Staff staff = this.findById(id);
         if (null == staff) {
             return false;
         }
         Boolean isArk = staff.getIsArk();
-        return isArk == null ? false : isArk;
+        return isArk == null ? false : isArk;*/
     }
 
 
