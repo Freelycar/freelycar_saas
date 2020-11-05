@@ -21,6 +21,8 @@ import java.util.Date;
 public class FinishOrderInfo {
     private String id;
 
+    private String rspName;
+
     private Integer state;
 
     private String clientName;

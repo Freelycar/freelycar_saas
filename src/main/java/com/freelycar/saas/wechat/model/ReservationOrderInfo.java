@@ -17,6 +17,8 @@ import java.util.Date;
 public class ReservationOrderInfo {
     private String id;
 
+    private String rspName;
+
     private String licensePlate;
 
     private String carBrand;
@@ -26,6 +28,8 @@ public class ReservationOrderInfo {
     private String carColor;
 
     private String carImageUrl;
+
+    private String comment;
 
     private String clientName;
 

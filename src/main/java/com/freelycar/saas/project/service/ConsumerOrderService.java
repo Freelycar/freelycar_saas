@@ -291,7 +291,10 @@ public class ConsumerOrderService {
 
     public List<BaseOrderInfo> findAllOrdersByClientId(String clientId) {
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select GROUP_CONCAT(url) from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0) as staffOrderImgUrl FROM consumerOrder co WHERE co.delStatus = 0 ");
+        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, " +
+                "( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, " +
+                "(SELECT GROUP_CONCAT(rsp.name) FROM realserviceprovider rsp WHERE rsp.id IN (SELECT p.rspId FROM rspproject p WHERE p.id IN (SELECT cpi.projectId FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0)) GROUP BY rsp.name) AS rspName," +
+                "co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select GROUP_CONCAT(url) from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0) as staffOrderImgUrl FROM consumerOrder co WHERE co.delStatus = 0 ");
         sql.append("AND co.clientId = '").append(clientId).append("' ORDER BY co.state ASC ,co.payState ASC,co.createTime desc");
 
         EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
@@ -352,7 +355,7 @@ public class ConsumerOrderService {
         List<ReservationOrderInfo> reservationOrderInfos = null;
         try {
             StringBuilder sql = new StringBuilder();
-            sql.append(" SELECT co.id, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.parkingLocation AS parkingLocation, d.arkSn AS arkSn, d.doorSn AS doorSn, concat( ( SELECT ark.`name` FROM ark WHERE ark.id = d.arkId ), '-', d.doorSn, '号门' ) AS keyLocation FROM door d LEFT JOIN consumerOrder co ON co.id = d.orderId WHERE co.state = 0 ")
+            sql.append(" SELECT co.id,co.comment, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.parkingLocation AS parkingLocation, d.arkSn AS arkSn, d.doorSn AS doorSn, concat( ( SELECT ark.`name` FROM ark WHERE ark.id = d.arkId ), '-', d.doorSn, '号门' ) AS keyLocation FROM door d LEFT JOIN consumerOrder co ON co.id = d.orderId WHERE co.state = 0 ")
                     .append(" AND co.storeId = '").append(storeId).append("' ");
             if (StringUtils.hasText(licensePlate)) {
                 sql.append(" and (co.licensePlate like '%").append(licensePlate.toUpperCase()).append("%' or co.id like '%").append(licensePlate.toUpperCase()).append("%') ");
@@ -395,70 +398,72 @@ public class ConsumerOrderService {
         if (null == employee) {
             throw new ObjectNotFoundException("未找到id为：" + employeeId + " 的技师信息");
         }
-        String phone = employee.getPhone();//手机作为技师的唯一标识
-        List<Staff> staffList = staffService.findByPhone(phone);
-        List<Store> storeList = new ArrayList<>();
-        for (Staff staff :
-                staffList) {
-            String staffId = staff.getId();
-            List<Store> stores = staffService.findServicingStoreByStaffId(staffId);
-            storeList.addAll(stores);
-        }
-        Set<String> storeIds = new HashSet<>();
-        for (Store store :
-                storeList) {
-            storeIds.add(store.getId());
-        }
-
         List<ReservationOrderInfo> reservationOrderInfos = null;
-        if (storeIds.size() > 0) {
-            StringBuilder storeIdsb = new StringBuilder();
-            for (String storeId :
-                    storeIds) {
-                storeIdsb.append(",").append("'").append(storeId).append("'");
+        if (employee.getNotification()) {
+            String phone = employee.getPhone();//手机作为技师的唯一标识
+            List<Staff> staffList = staffService.findByPhoneAndIsArk(phone, true);
+            List<Store> storeList = new ArrayList<>();
+            for (Staff staff :
+                    staffList) {
+                String staffId = staff.getId();
+                List<Store> stores = staffService.findServicingStoreByStaffId(staffId);
+                storeList.addAll(stores);
             }
-            String storeIdStr = storeIdsb.toString();
-            storeIdStr = storeIdStr.substring(1);
-            try {
-                StringBuilder sql = new StringBuilder();
-                sql.append(" SELECT co.id, co.licensePlate as licensePlate, co.carBrand as carBrand, " +
-                        "co.carType as carType, co.carColor, co.carImageUrl, co.clientName AS clientName," +
-                        "(select c.phone from client c where c.id = co.clientId) as phone, " +
-                        "( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi " +
-                        "WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) AS projectNames, " +
-                        "co.createTime AS createTime, co.parkingLocation AS parkingLocation, d.arkSn AS arkSn, " +
-                        "d.doorSn AS doorSn, concat( ( SELECT ark.`name` FROM ark WHERE ark.id = d.arkId ), '-', d.doorSn, '号门' ) AS keyLocation " +
-                        "FROM door d LEFT JOIN consumerOrder co ON co.id = d.orderId WHERE co.state = 0 and co.delStatus = false ")
-                        .append(" AND co.storeId in (").append(storeIdStr).append(") ");
-                if (StringUtils.hasText(licensePlate)) {
-                    sql.append(" and (co.licensePlate like '%").append(licensePlate.toUpperCase()).append("%' or co.id like '%").append(licensePlate.toUpperCase()).append("%') ");
+            Set<String> storeIds = new HashSet<>();
+            for (Store store :
+                    storeList) {
+                storeIds.add(store.getId());
+            }
+            if (storeIds.size() > 0) {
+                StringBuilder storeIdsb = new StringBuilder();
+                for (String storeId :
+                        storeIds) {
+                    storeIdsb.append(",").append("'").append(storeId).append("'");
                 }
-                sql.append(" ORDER BY co.createTime ASC");
+                String storeIdStr = storeIdsb.toString();
+                storeIdStr = storeIdStr.substring(1);
+                try {
+                    StringBuilder sql = new StringBuilder();
+                    sql.append(" SELECT co.id,co.comment, co.licensePlate as licensePlate, co.carBrand as carBrand, " +
+                            "co.carType as carType, co.carColor, co.carImageUrl, co.clientName AS clientName," +
+                            "(select c.phone from client c where c.id = co.clientId) as phone, " +
+                            "( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi " +
+                            "WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) AS projectNames, " +
+                            "(SELECT GROUP_CONCAT(rsp.name) FROM realserviceprovider rsp WHERE rsp.id IN (SELECT p.rspId FROM rspproject p WHERE p.id IN (SELECT cpi.projectId FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0)) GROUP BY rsp.name) AS rspName," +
+                            "co.createTime AS createTime, co.parkingLocation AS parkingLocation, d.arkSn AS arkSn, " +
+                            "d.doorSn AS doorSn, concat( ( SELECT ark.`name` FROM ark WHERE ark.id = d.arkId ), '-', d.doorSn, '号门' ) AS keyLocation " +
+                            "FROM door d LEFT JOIN consumerOrder co ON co.id = d.orderId WHERE co.state = 0 and co.delStatus = false ")
+                            .append(" AND co.storeId in (").append(storeIdStr).append(") ");
+                    if (StringUtils.hasText(licensePlate)) {
+                        sql.append(" and (co.licensePlate like '%").append(licensePlate.toUpperCase()).append("%' or co.id like '%").append(licensePlate.toUpperCase()).append("%') ");
+                    }
+                    sql.append(" ORDER BY co.createTime ASC");
 
-                EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
-                Query nativeQuery = em.createNativeQuery(sql.toString());
-                nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(ReservationOrderInfo.class));
-                reservationOrderInfos = nativeQuery.getResultList();
-                for (ReservationOrderInfo orderInfo :
-                        reservationOrderInfos) {
-                    String orderId = orderInfo.getId();
+                    EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+                    Query nativeQuery = em.createNativeQuery(sql.toString());
+                    nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(ReservationOrderInfo.class));
+                    reservationOrderInfos = nativeQuery.getResultList();
+                    for (ReservationOrderInfo orderInfo :
+                            reservationOrderInfos) {
+                        String orderId = orderInfo.getId();
 //                    ClientOrderImg img = clientOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, false);
-                    List<ClientOrderImg> imgs = clientOrderImgRepository.findByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, false);
-                    StringBuilder img = new StringBuilder("");
-                    for (ClientOrderImg clientOrderImg :
-                            imgs) {
-                        img.append(",").append(clientOrderImg.getUrl());
-                    }
+                        List<ClientOrderImg> imgs = clientOrderImgRepository.findByOrderIdAndDelStatusOrderByCreateTimeDesc(orderId, false);
+                        StringBuilder img = new StringBuilder("");
+                        for (ClientOrderImg clientOrderImg :
+                                imgs) {
+                            img.append(",").append(clientOrderImg.getUrl());
+                        }
 //                    logger.info(img.toString());
-                    if (imgs.size() > 0) {
-                        orderInfo.setCarImageUrl(img.substring(1));
-                    }
+                        if (imgs.size() > 0) {
+                            orderInfo.setCarImageUrl(img.substring(1));
+                        }
 
+                    }
+                    //关闭em
+                    em.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                //关闭em
-                em.close();
-            } catch (Exception e) {
-                e.printStackTrace();
             }
         }
         return reservationOrderInfos;
@@ -565,7 +570,9 @@ public class ConsumerOrderService {
             String staffStr = staffIdSb.toString();
             staffStr = staffStr.substring(1);
             StringBuilder sql = new StringBuilder();
-            sql.append(" SELECT co.id,co.state,co.orderTakingTime, co.parkingLocation,co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, co.pickTime as pickTime, co.userKeyLocationSn, co.userKeyLocation FROM consumerOrder co WHERE co.delStatus = 0 AND co.orderType = 2 AND (co.state = -1 or co.state = 1) ")
+            sql.append(" SELECT co.id,co.state,co.orderTakingTime, co.parkingLocation,co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, " +
+                    "(SELECT GROUP_CONCAT(rsp.name) FROM realserviceprovider rsp WHERE rsp.id IN (SELECT p.rspId FROM rspproject p WHERE p.id IN (SELECT cpi.projectId FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0)) GROUP BY rsp.name) AS rspName," +
+                    "co.pickTime as pickTime, co.userKeyLocationSn, co.userKeyLocation FROM consumerOrder co WHERE co.delStatus = 0 AND co.orderType = 2 AND (co.state = -1 or co.state = 1) ")
                     // 添加staffId条件筛选，技师只能还自己接单的订单，不能其他技师代还
                     .append(" AND co.pickCarStaffId in (").append(staffStr).append(") ");
             if (StringUtils.hasText(licensePlate)) {
@@ -595,6 +602,24 @@ public class ConsumerOrderService {
             }
         }
         return finishOrderInfo;
+    }
+
+    public String getRspNameByConsumerOrderId(String id) {
+        String rspName = "";
+        List<ConsumerProjectInfo> projectInfoList = consumerProjectInfoService.getAllProjectInfoByOrderId(id);
+        if (projectInfoList != null && projectInfoList.size() > 0) {
+            ConsumerProjectInfo projectInfo = projectInfoList.get(0);
+            String projectId = projectInfo.getProjectId();
+            RSPProject project = rspProjectRepository.findByIdAndDelStatus(projectId, Constants.DelStatus.NORMAL.isValue()).orElse(null);
+            if (null != project) {
+                RealServiceProvider realServiceProvider = realServiceProviderRepository.findByIdAndDelStatus(project.getRspId(),
+                        Constants.DelStatus.NORMAL.isValue()).orElse(null);
+                if (null != realServiceProvider) {
+                    rspName = realServiceProvider.getName();
+                }
+            }
+        }
+        return rspName;
     }
 
     /**
@@ -682,8 +707,7 @@ public class ConsumerOrderService {
             Store store = storeRepository.findById(storeId).orElse(null);
             orderObject.setStore(store);
         }
-
-
+        orderObject.setRspName(getRspNameByConsumerOrderId(id));
         return ResultJsonObject.getDefaultResult(orderObject);
     }
 
@@ -3157,6 +3181,7 @@ public class ConsumerOrderService {
                 "co.staffKeyLocation as keyLocation,\n" +
                 "co.parkingLocation,\n" +
                 "case co.payState when 1 then '待支付' else '已交付' end as payState ,\n" +
+                "(SELECT GROUP_CONCAT(rsp.name) FROM realserviceprovider rsp WHERE rsp.id IN (SELECT p.rspId FROM rspproject p WHERE p.id IN (SELECT cpi.projectId FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0)) GROUP BY rsp.name) AS rspName," +
                 "(SELECT  group_concat(cpi.projectName) as names FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus = FALSE) as projectNames" +
                 " from consumerorder co where co.delStatus = 0 and (state = 2 or state = 3) and co.pickCarStaffId in (").append(staffIdStr).append(") ");
         if (StringUtils.hasText(keyword)) {

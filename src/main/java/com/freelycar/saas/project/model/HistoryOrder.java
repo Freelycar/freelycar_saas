@@ -17,6 +17,8 @@ import java.util.Date;
 public class HistoryOrder {
     private String id;
 
+    private String rspName;
+
     private String clientName;
 
     private Date finishTime;

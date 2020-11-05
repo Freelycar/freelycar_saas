@@ -14,6 +14,8 @@ import java.util.List;
 public class OrderObject {
     private ConsumerOrder consumerOrder;
 
+    private String rspName;
+
     private List<ConsumerProjectInfo> consumerProjectInfos;
 
     private List<AutoParts> autoParts;
@@ -47,6 +49,14 @@ public class OrderObject {
 
     public void setConsumerOrder(ConsumerOrder consumerOrder) {
         this.consumerOrder = consumerOrder;
+    }
+
+    public String getRspName() {
+        return rspName;
+    }
+
+    public void setRspName(String rspName) {
+        this.rspName = rspName;
     }
 
     public List<ConsumerProjectInfo> getConsumerProjectInfos() {

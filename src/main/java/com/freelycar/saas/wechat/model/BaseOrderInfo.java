@@ -16,6 +16,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class BaseOrderInfo {
     private String id;
+    private String rspName;
     private String licensePlate;
     private String carBrand;
     private String carType;

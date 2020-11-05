@@ -459,7 +459,6 @@ public class StaffService {
      * @return
      */
     public ResultJsonObject closeArk(String id) {
-
         Optional<Staff> optionalStaff = staffRepository.findById(id);
         if (optionalStaff.isPresent()) {
             Staff staff = optionalStaff.get();
@@ -753,6 +752,10 @@ public class StaffService {
 
     public List<Staff> findByPhone(String phone) {
         return staffRepository.findAllByPhoneAndDelStatus(phone, Constants.DelStatus.NORMAL.isValue());
+    }
+
+    public List<Staff> findByPhoneAndIsArk(String phone, boolean isArk) {
+        return staffRepository.findAllByPhoneAndDelStatusAndIsArk(phone, Constants.DelStatus.NORMAL.isValue(), true);
     }
 
     public List<Staff> findByPhoneAndRspId(String phone, String rspId) {
