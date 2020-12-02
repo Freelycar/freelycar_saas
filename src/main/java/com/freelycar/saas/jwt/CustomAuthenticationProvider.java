@@ -44,7 +44,9 @@ class CustomAuthenticationProvider implements AuthenticationProvider {
         if (null != sysUser) {
             if (!StringUtils.isEmpty(sysUser.getStoreId())) {
                 Optional<Store> storeOptional = storeRepository.findById(sysUser.getStoreId());
-                if (!storeOptional.isPresent() || storeOptional.get().getDelStatus() == true) {
+                if (!storeOptional.isPresent()
+                        || storeOptional.get().getDelStatus() == true
+                        || !sysUser.getOpen()) {
                     throw new BadCredentialsException(ResultCode.USER_LOGIN_ERROR.message());
                 }
             }

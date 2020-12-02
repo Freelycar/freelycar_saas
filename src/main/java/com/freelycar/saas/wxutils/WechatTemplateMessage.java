@@ -128,7 +128,7 @@ public class WechatTemplateMessage {
 
 
     /**
-     * 推送通知：智能柜用户订单状态变化，推送给技师（客户取消订单和有技师接了某个订单）
+     * 推送通知：智能柜用户订单状态变化，推送给技师（1.客户取消订单2.有技师接了某个订单3.技师完工）
      * {{first.DATA}}
      * 订单编号： {{OrderSn.DATA}}
      * 订单状态： {{OrderStatus.DATA}}
@@ -138,22 +138,29 @@ public class WechatTemplateMessage {
         log.info("准备订单更新模版消息……（推送给技师）");
         Integer state = consumerOrder.getState();
         if (state == Constants.OrderState.CANCEL.getValue()
-                || state == Constants.OrderState.ORDER_TAKING.getValue()) {
+                || state == Constants.OrderState.ORDER_TAKING.getValue()
+                || state == Constants.OrderState.SERVICE_FINISH.getValue()
+        ) {
             String clientName = consumerOrder.getClientName();
             String staffName = consumerOrder.getPickCarStaffName();
-            String first;
-            String stateString;
+            String first = null;
+            String stateString = null;
 //            String parkingLocation = consumerOrder.getParkingLocation();
             String licensePlate = consumerOrder.getLicensePlate();
             String orderId = consumerOrder.getId();
-            if (state == 4) {
+            if (state == Constants.OrderState.CANCEL.getValue()) {
                 stateString = "已取消";
                 first = "客户取消订单通知";
-            } else {
+            }
+            if (state == Constants.OrderState.ORDER_TAKING.getValue()) {
                 stateString = "已接单";
                 first = "技师 " + staffName + " 已接到订单。";
             }
 
+            if (state == Constants.OrderState.SERVICE_FINISH.getValue()) {
+                stateString = "已完工";
+                first = "技师 " + staffName + " 已完工。";
+            }
             String remark = "客户姓名：" + clientName
                     + "\n车牌：" + licensePlate
                     + "\n智能柜网格：" + door.getArkSn() + "-" + door.getDoorSn()
@@ -174,6 +181,64 @@ public class WechatTemplateMessage {
             log.info("微信订单更新模版消息结果：" + result);
         }
     }
+
+    /**
+     * 推送通知：智能柜用户订单状态变化，推送给技师（3.技师完工失败）
+     * {{first.DATA}}
+     * 订单编号： {{OrderSn.DATA}}
+     * 订单状态： {{OrderStatus.DATA}}
+     * {{remark.DATA}}
+     */
+    public static void orderChangedFailureForStaff(ConsumerOrder consumerOrder, String openId, Door door, Ark ark) {
+        log.info("准备订单更新失败模版消息……（推送给技师）");
+        Integer state = consumerOrder.getState();
+        if (state == Constants.OrderState.SERVICE_FINISH.getValue()) {
+            String clientName = consumerOrder.getClientName();
+            String staffName = consumerOrder.getPickCarStaffName();
+            String first = "完工操作失败";
+            String stateString = "技师 " + staffName + " 还车关门超时,请重新开门还车。";
+            String licensePlate = consumerOrder.getLicensePlate();
+            String orderId = consumerOrder.getId();
+            String remark = "客户姓名：" + clientName
+                    + "\n车牌：" + licensePlate
+                    + "\n智能柜网格：" + door.getArkSn() + "-" + door.getDoorSn()
+                    + "\n智能柜位置：" + ark.getLocation()
+                    + "\n车辆停放位置：" + consumerOrder.getParkingLocation();
+
+            JSONObject params = new JSONObject();
+            JSONObject data = new JSONObject();
+            params.put("touser", openId);
+            params.put("template_id", ORDER_CHANGED_FOR_CLIENT_ID);
+            data.put("first", keywordFactory(first, "#173177"));
+            data.put("OrderSn", keywordFactory(orderId, "#173177"));
+            data.put("OrderStatus", keywordFactory(stateString, "#173177"));
+            data.put("remark", keywordFactory(remark));
+            params.put("data", data);
+            String result = invokeTemplateMessage(params);
+            log.info("微信订单更新模版消息结果：" + result);
+        }
+    }
+
+    /*public static void main(String[] args) {
+        ConsumerOrder consumerOrder = new ConsumerOrder();
+        consumerOrder.setState(Constants.OrderState.SERVICE_FINISH.getValue());
+        consumerOrder.setClientName("测试");
+        consumerOrder.setPickCarStaffName("测试技师");
+        consumerOrder.setLicensePlate("苏A123456");
+        consumerOrder.setId("A00001");
+
+        String openId = "oBaSqs857aKKQB1SSmxBgGtkHsVc";
+
+        Door door = new Door();
+        door.setArkSn("888888888888888");
+        door.setDoorSn(1);
+
+        Ark ark = new Ark();
+        ark.setLocation("测试位置");
+
+        orderChangedFailureForStaff(consumerOrder, openId, door, ark);
+
+    }*/
 
     /**
      * 消息推送：订单生成时告知技师

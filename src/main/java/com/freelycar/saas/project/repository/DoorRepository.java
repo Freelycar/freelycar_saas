@@ -13,7 +13,7 @@ import java.util.List;
 public interface DoorRepository extends JpaRepository<Door, String> {
     Door findTopByOrderId(String sn);
 
-    Door findTopByArkSnAndDoorSn(String arkSn, String doorSn);
+    Door findTopByArkSnAndDoorSn(String arkSn, Integer doorSn);
 
     List<Door> findByArkSnAndStateAndDelStatus(String arkSn, int state, boolean delStatus);
 

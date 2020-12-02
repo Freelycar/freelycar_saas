@@ -18,6 +18,8 @@ import java.util.Set;
 public interface RealServiceProviderRepository extends JpaRepository<RealServiceProvider, String> {
     Optional<RealServiceProvider> findByName(String name);
 
+    Optional<RealServiceProvider> findByNameAndDelStatus(String name, boolean delStatus);
+
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value = "update realServiceProvider set delStatus = 1 where id in :ids", nativeQuery = true)
@@ -25,11 +27,11 @@ public interface RealServiceProviderRepository extends JpaRepository<RealService
 
     Optional<RealServiceProvider> findByIdAndDelStatus(String id, boolean delStatus);
 
-    Optional<RealServiceProvider> findByIdAndDelStatusAndServiceStatus(String id, boolean delStatus,boolean serviceStatus);
+    Optional<RealServiceProvider> findByIdAndDelStatusAndServiceStatus(String id, boolean delStatus, boolean serviceStatus);
 
     Page<RealServiceProvider> findByDelStatusAndNameContainingOrderBySortAsc(boolean delStatus, String name, Pageable pageable);
 
     RealServiceProvider findTopByDelStatusAndSortIsNotNullOrderBySortDesc(boolean delStatus);
 
-    List<RealServiceProvider> findByIdInAndDelStatus(Set<String> ids,boolean delStatus);
+    List<RealServiceProvider> findByIdInAndDelStatus(Set<String> ids, boolean delStatus);
 }

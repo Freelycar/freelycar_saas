@@ -1,8 +1,12 @@
 package com.freelycar.saas.util;
 
 
-import com.avos.avoscloud.AVException;
-import com.avos.avoscloud.AVOSCloud;
+import cn.leancloud.core.AVOSCloud;
+import cn.leancloud.sms.AVSMS;
+import cn.leancloud.sms.AVSMSOption;
+import cn.leancloud.types.AVNull;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 /**
  * LeanCloud 短信认证 Java SDK 调用方式 demo
@@ -15,15 +19,62 @@ import com.avos.avoscloud.AVOSCloud;
 public class TestAVOSCloud {
     public static void main(String[] args) {
         // 参数依次为 AppId、AppKey、MasterKey
-        AVOSCloud.initialize("YPVPvcghD0yT1CtQKUOpOUGI-gzGzoHsz", "AnrwmLo01qL7RuKNbV0NwWR4", "TPP91RhAzOntQMb2elHO7nKu");
-        // 放在 SDK 初始化语句 AVOSCloud.initialize() 后面，只需要调用一次即可
-        AVOSCloud.setDebugLogEnabled(false);
 
-        // 下面参数中的 10 表示验证码有效时间为 10 分钟
-        try {
-            AVOSCloud.requestSMSCode("186xxxxxxxx", "小易爱车", "短信认证", 10);
-        } catch (AVException e) {
-            e.printStackTrace();
-        }
+        String phone = "18206295380";
+        String code = "659268";
+        smsCode("18206295380");
+//        verifySMSCode(phone, code);
     }
+
+    public static void smsCode(String phone) {
+        AVSMSOption option = new AVSMSOption();
+        option.setTtl(1);
+        option.setApplicationName("小易爱车");
+        option.setOperation("短信认证");
+        AVSMS.requestSMSCodeInBackground(phone, option)
+                .subscribe(new Observer<AVNull>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(AVNull avNull) {
+                        System.out.println("Result: Successfully sent verification code.");
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        System.out.println("Result: Failed to send verification code. Reason: " + e.getMessage());
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+    }
+
+    public static void verifySMSCode(String phone, String code) {
+        AVSMS.verifySMSCodeInBackground(code, phone).subscribe(new Observer<AVNull>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+            }
+
+            @Override
+            public void onNext(AVNull avNull) {
+                System.out.println("Result: Successfully verified the number.");
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                System.out.println("Result: Failed to verify the number. Reason: " + throwable.getMessage());
+            }
+
+            @Override
+            public void onComplete() {
+            }
+        });
+    }
+
 }

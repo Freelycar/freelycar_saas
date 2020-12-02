@@ -84,7 +84,7 @@ public class WeChatArkController {
         logger.info("arkOrderLog:生成智能柜订单接口----------");
         try {
             return consumerOrderService.arkHandleOrder(orderObject);
-        } catch (ArgumentMissingException | ObjectNotFoundException | NoEmptyArkException | OpenArkDoorTimeOutException | InterruptedException | OpenArkDoorFailedException | UpdateDataErrorException | NormalException e) {
+        } catch (ArgumentMissingException | ObjectNotFoundException | UpdateDataErrorException | NormalException | DoorInUseException | OpenArkDoorFailedException e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
             return ResultJsonObject.getErrorResult(null, "智能柜开单失败：" + e.getMessage() + "，请稍后重试或联系门店");

@@ -16,6 +16,10 @@ import java.util.Date;
 @AllArgsConstructor
 public class BaseOrderInfo {
     private String id;
+    /**
+     * 是否为缓冲页面
+     */
+    private Boolean isBuffer;
     private String rspName;
     private String licensePlate;
     private String carBrand;

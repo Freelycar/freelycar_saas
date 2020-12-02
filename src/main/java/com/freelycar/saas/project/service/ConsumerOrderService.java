@@ -601,6 +601,15 @@ public class ConsumerOrderService {
                 info.setClientOrderImgUrl(imgSb.substring(1));
             }
         }
+        for (FinishOrderInfo info :
+                finishOrderInfo) {
+            String orderId = info.getId();
+            Door door = doorRepository.findTopByOrderId(orderId);
+            if (null != door
+                    && door.getState() == Constants.DoorState.EMPTY.getValue()) {
+                info.setIsBuffer(true);
+            }
+        }
         return finishOrderInfo;
     }
 
@@ -1165,15 +1174,24 @@ public class ConsumerOrderService {
         return ResultJsonObject.getDefaultResult(null);
     }
 
+
     /**
      * 智能柜开单
      *
      * @param orderObject
      * @return
      */
-    public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, NoEmptyArkException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException, UpdateDataErrorException, NormalException {
-//        logger.info("执行智能柜开单操作：---start---");
+    public ResultJsonObject arkHandleOrder(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, UpdateDataErrorException, NormalException, DoorInUseException, OpenArkDoorFailedException {
+        logger.info("执行智能柜开单操作：---start---");
         String doorId = orderObject.getDoorId();
+        Door door = doorRepository.findById(doorId).orElse(null);
+        if (null == door) {
+            throw new ObjectNotFoundException("未找到分配的柜门，请稍后重试");
+        }
+        if (door.getState() != Constants.DoorState.EMPTY.getValue()
+                || !(null == door.getOrderId() || door.getOrderId().isEmpty())) {
+            throw new DoorInUseException("柜门占用中,请稍后重试");
+        }
         //获取提交过来的数据：
         //订单信息
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
@@ -1298,34 +1316,15 @@ public class ConsumerOrderService {
         }
 
         //关联用户上传的图片
-        /*ClientOrderImg clientOrderImg = orderObject.getClientOrderImg();
-        if (null != clientOrderImg) {
-            clientOrderImg.setOrderId(orderId);
-            clientOrderImg.setCreateTime(currentTime);
-            clientOrderImgRepository.save(clientOrderImg);
-        }*/
-
         List<ClientOrderImg> clientOrderImgs = orderObject.getClientOrderImgs();
-        for (ClientOrderImg img :
-                clientOrderImgs) {
-            img.setCreateTime(currentTime);
-            img.setOrderId(orderId);
+        if (null != clientOrderImgs) {
+            for (ClientOrderImg img :
+                    clientOrderImgs) {
+                img.setCreateTime(currentTime);
+                img.setOrderId(orderId);
+            }
+            clientOrderImgRepository.saveAll(clientOrderImgs);
         }
-        clientOrderImgRepository.saveAll(clientOrderImgs);
-
-        //开门，放钥匙
-        // door表数据更新，根据智能柜编号获取door对象，并更新状态为"预约状态"
-        this.changeDoorState(emptyDoor, orderId, Constants.DoorState.USER_RESERVATION.getValue());
-        // 数据保存完毕之后操作硬件，成功后返回成功，否则抛出异常进行回滚操作
-        try {
-            doorService.openDoorByDoorObject(emptyDoor);
-        } catch (OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
-            throw e;
-        } finally {
-            ConcurrentHashMapCacheUtils.deleteCache(doorId);
-        }
-
-
         //判断客户所选服务项目是否为代驾项目
         boolean orderType = false;
         String serviceProviderId = null;
@@ -1340,28 +1339,22 @@ public class ConsumerOrderService {
                     orderType = true;
                     serviceProviderId = projectOptional.get().getServiceProviderId();
                     break;
-                }/* else {
-                    throw new ObjectNotFoundException("未找到对应的项目类型信息");
-                }*/
-            }/* else {
-                throw new ObjectNotFoundException("未找到对应的项目信息");
-            }*/
+                }
+            }
         }
-
-        if (orderType) {//1.代驾订单：向e代驾下单，发送短信给代驾师傅
-            logger.info("订单：" + consumerOrderRes.getId() + "为代驾订单");
-            Integer EorderId = edaijiaService.createOrder(consumerOrderRes, emptyDoor, serviceProviderId);
-            // 推送微信公众号消息，通知用户订单生成成功
-            sendWeChatMsg(consumerOrderRes);
-            // 向接单司机发送短信链接
-            edaijiaService.sendTemplate(EorderId);
-        } else {//2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
-            //更新:给项目相关的技师推送微信消息模板
-            staffService.sendWeChatMessageToStaff(consumerOrderRes, emptyDoor, null, rspId);
-            // 推送微信公众号消息，通知用户订单生成成功
-            sendWeChatMsg(consumerOrderRes);
+        //开门，放钥匙
+        //door表数据更新，更新柜门所属订单号
+        this.changeDoorState(emptyDoor, orderId, Constants.DoorState.EMPTY.getValue());
+        // 数据保存完毕之后操作硬件：
+        // 1.打开柜门指令失败抛出异常，事务回滚
+        // 2.打开柜门指令成功，关门超时，删除订单
+        try {
+            doorService.openDoorByDoorObjectForBeginAndEnd(emptyDoor, orderType, serviceProviderId, rspId);
+        } catch (OpenArkDoorFailedException e) {
+            logger.error("开门失败，失败原因：{}", e.getMessage());
+            throw e;
         }
-
+        this.changeDoorState(emptyDoor, orderId, Constants.DoorState.EMPTY.getValue());
 
         logger.info("执行智能柜开单操作---end---：" + orderId);
         return ResultJsonObject.getDefaultResult(consumerOrderRes.getId(), "订单生成成功！");
@@ -1747,17 +1740,9 @@ public class ConsumerOrderService {
      * @param orderObject
      * @return
      */
-    public ResultJsonObject finishCar(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException {
+    public ResultJsonObject finishCar(OrderObject orderObject) throws ArgumentMissingException, ObjectNotFoundException, OpenArkDoorTimeOutException, InterruptedException, OpenArkDoorFailedException, DoorInUseException {
         logger.info("执行技师还车操作：---start---");
         ConsumerOrder consumerOrder = orderObject.getConsumerOrder();
-        String doorId = orderObject.getDoorId();
-
-        logger.info("arkOrderLog:前端传入的doorId：" + doorId);
-
-        if (StringUtils.isEmpty(doorId)) {
-            throw new ArgumentMissingException("参数中的doorId对象为空");
-        }
-
         if (null == consumerOrder) {
             throw new ArgumentMissingException("参数中的consumerOrder对象为空");
         }
@@ -1767,25 +1752,49 @@ public class ConsumerOrderService {
             return ResultJsonObject.getCustomResult("参数orderId值为null", ResultCode.PARAM_NOT_COMPLETE);
         }
 
+        Door doorOld = doorRepository.findTopByOrderId(consumerOrder.getId());
+        String doorId;
+        Door emptyDoor;
+        if (null == doorOld) {
+            doorId = orderObject.getDoorId();
+            emptyDoor = (Door) ConcurrentHashMapCacheUtils.getCache(doorId);
+            Door door = doorRepository.findById(doorId).orElse(null);
+            if (null == door) {
+                throw new ObjectNotFoundException("未找到分配的柜门，请稍后重试");
+            }
+            if (door.getState() != Constants.DoorState.EMPTY.getValue()) {
+                throw new DoorInUseException("柜门占用中,请稍后重试");
+            }
 
-        consumerOrder.setFinishTime(new Timestamp(System.currentTimeMillis()));
-        consumerOrder.setState(Constants.OrderState.SERVICE_FINISH.getValue());
+            logger.info("arkOrderLog:前端传入的doorId：" + doorId);
 
-        // 有效柜子分配逻辑
-        Door emptyDoor = (Door) ConcurrentHashMapCacheUtils.getCache(doorId);
+            if (StringUtils.isEmpty(doorId)) {
+                throw new ArgumentMissingException("参数中的doorId对象为空");
+            }
+        } else {
+            doorId = doorOld.getId();
+            emptyDoor = doorOld;
+        }
+
+        /*consumerOrder.setFinishTime(new Timestamp(System.currentTimeMillis()));
+        consumerOrder.setState(Constants.OrderState.SERVICE_FINISH.getValue());*/
+
+
         if (null == emptyDoor) {
             throw new ObjectNotFoundException("未找到分配的柜门号，请稍后重试");
         }
+        if (StringUtils.isEmpty(consumerOrder.getStaffKeyLocation())) {
+            logger.info("arkOrderLog:智能柜柜门door信息：" + emptyDoor);
 
-        logger.info("arkOrderLog:智能柜柜门door信息：" + emptyDoor);
-
-        // 更新技师把钥匙存放在哪个柜子的哪个门
-        String staffKeyLocation = emptyDoor.getArkName() + Constants.HYPHEN + emptyDoor.getDoorSn() + "号门";
-        String staffKeyLocationSn = emptyDoor.getArkSn() + Constants.HYPHEN + emptyDoor.getDoorSn();
-        consumerOrder.setStaffKeyLocation(staffKeyLocation);
-        consumerOrder.setStaffKeyLocationSn(staffKeyLocationSn);
-
-
+            // 更新技师把钥匙存放在哪个柜子的哪个门
+            String staffKeyLocation = emptyDoor.getArkName() + Constants.HYPHEN + emptyDoor.getDoorSn() + "号门";
+            String staffKeyLocationSn = emptyDoor.getArkSn() + Constants.HYPHEN + emptyDoor.getDoorSn();
+            consumerOrder.setStaffKeyLocation(staffKeyLocation);
+            consumerOrder.setStaffKeyLocationSn(staffKeyLocationSn);
+        }
+        /*else {
+            emptyDoor = doorRepository.findTopByOrderId(consumerOrder.getId());
+        }*/
         ConsumerOrder order;
         try {
             order = this.updateOrder(consumerOrder);
@@ -1796,33 +1805,26 @@ public class ConsumerOrderService {
 
 
         //关联技师上传订单车辆图片
-        /*StaffOrderImg staffOrderImg = orderObject.getStaffOrderImg();
-        if (null != staffOrderImg) {
-            staffOrderImg.setOrderId(orderId);
-            staffOrderImgRepository.save(staffOrderImg);
-        }*/
         List<StaffOrderImg> staffOrderImgs = orderObject.getStaffOrderImgs();
-        for (StaffOrderImg img :
-                staffOrderImgs) {
-            img.setOrderId(orderId);
+        if (null != staffOrderImgs) {
+            for (StaffOrderImg img :
+                    staffOrderImgs) {
+                img.setOrderId(orderId);
+            }
+            staffOrderImgRepository.saveAll(staffOrderImgs);
         }
-        staffOrderImgRepository.saveAll(staffOrderImgs);
-
 
         // 更新door表数据状态
-        this.changeDoorState(emptyDoor, orderId, Constants.DoorState.STAFF_FINISH.getValue());
+        this.changeDoorState(emptyDoor, orderId, Constants.DoorState.EMPTY.getValue());
         // 调用硬件接口方法打开柜门
         try {
-            doorService.openDoorByDoorObject(emptyDoor);
-        } catch (OpenArkDoorFailedException | OpenArkDoorTimeOutException | InterruptedException e) {
+            //todo
+            doorService.openDoorByDoorObjectForBeginAndEnd(emptyDoor, false, null, null);
+        } catch (OpenArkDoorFailedException e) {
             throw e;
         } finally {
             ConcurrentHashMapCacheUtils.deleteCache(doorId);
         }
-
-
-        // 推送微信公众号消息，通知用户取车
-        sendWeChatMsg(order);
 
         logger.info("执行技师还车操作：---end---" + orderId);
         return ResultJsonObject.getDefaultResult(orderId);
@@ -1981,10 +1983,10 @@ public class ConsumerOrderService {
      * @param doorState
      * @throws Exception
      */
-    private void changeDoorState(String arkSn, String doorSn, String orderId, int doorState) throws Exception {
+    /*private void changeDoorState(String arkSn, String doorSn, String orderId, int doorState) throws Exception {
         Door door = doorRepository.findTopByArkSnAndDoorSn(arkSn, doorSn);
         this.changeDoorState(door, orderId, doorState);
-    }
+    }*/
 
     /**
      * 改变door表的数据状态
@@ -2000,7 +2002,7 @@ public class ConsumerOrderService {
         }
         door.setOrderId(orderId);
         door.setState(doorState);
-        doorRepository.save(door);
+        doorRepository.saveAndFlush(door);
     }
 
     /**

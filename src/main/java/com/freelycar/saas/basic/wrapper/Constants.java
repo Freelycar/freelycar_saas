@@ -246,7 +246,7 @@ public class Constants {
      * 智能柜门状态
      */
     public enum DoorState {
-        EMPTY(0, "可使用"),
+         EMPTY(0, "可使用"),
         USER_RESERVATION(1, "预约状态"),
         STAFF_FINISH(2, "完工状态"),
         DISABLED(6, "不可用");

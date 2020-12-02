@@ -7,7 +7,9 @@ import com.freelycar.saas.iotcloudcn.util.ArkThread;
 import com.freelycar.saas.iotcloudcn.util.BoxCommandResponse;
 import com.freelycar.saas.project.entity.Ark;
 import com.freelycar.saas.project.entity.Door;
+import com.freelycar.saas.project.repository.ConsumerOrderRepository;
 import com.freelycar.saas.project.repository.DoorRepository;
+import com.freelycar.saas.util.CloseDoorThread;
 import com.freelycar.saas.util.cache.ConcurrentHashMapCacheUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -28,7 +31,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @email toby911115@gmail.com
  */
 @Service
-@Transactional(rollbackFor = Exception.class)
 public class DoorService {
     /**
      * 初始化一个存放正在操作的Door对象的缓存对象
@@ -38,6 +40,8 @@ public class DoorService {
 
     @Autowired
     private DoorRepository doorRepository;
+    @Autowired
+    private ConsumerOrderRepository consumerOrderRepository;
 
     public Door findById(String id) throws ArgumentMissingException, ObjectNotFoundException {
         if (StringUtils.isEmpty(id)) {
@@ -63,16 +67,24 @@ public class DoorService {
             throw new ArgumentMissingException("参数arkSn缺失");
         }
         List<Door> emptyDoorList = doorRepository.findByArkSnAndStateAndDelStatus(arkSn, Constants.DoorState.EMPTY.getValue(), Constants.DelStatus.NORMAL.isValue());
+        List<Door> result = new ArrayList<>();
+        for (Door door :
+                emptyDoorList) {
+            if (null == door.getOrderId() || door.getOrderId().isEmpty()) {
+                result.add(door);
+            }
+        }
         if (null == emptyDoorList || emptyDoorList.isEmpty()) {
             logger.error("没有可分配的智能柜！");
             throw new NoEmptyArkException("没有查找到可使用的空智能柜");
         }
 
         synchronized (doorCacheVariable) {
-            return isOperatingDoor(emptyDoorList);
+            return isOperatingDoor(result);
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
     private Door isOperatingDoor(List<Door> emptyDoors) throws NoEmptyArkException {
         if (null == emptyDoors || emptyDoors.isEmpty()) {
             logger.error("没有可分配的智能柜！");
@@ -89,8 +101,8 @@ public class DoorService {
         String targetDoorId = targetDoor.getId();
 //        String arkId = targetDoor.getArkId();
 
-        //如果缓存中没有（null），则说明柜子可用
         Door cacheDoor = (Door) ConcurrentHashMapCacheUtils.getCache(targetDoorId);
+        //如果缓存中没有（null），则说明柜子可用
         if (null == cacheDoor) {
             //将当前door存入缓存，过期时间与超时时间同步
             ConcurrentHashMapCacheUtils.setCache(targetDoorId, targetDoor, ArkThread.TIMEOUT);
@@ -109,6 +121,7 @@ public class DoorService {
     }
 
     @Deprecated
+    @Transactional(rollbackFor = Exception.class)
     public void takeOutDoorIdWithCache(Door door) {
         logger.info("已分配的柜子从缓存中去除-----");
         //从缓存中去掉这个Door对象
@@ -125,6 +138,48 @@ public class DoorService {
         }
     }
 
+    /**
+     * 用户下单和技师还车用开门接口
+     *
+     * @param door
+     * @throws ArgumentMissingException
+     * @throws OpenArkDoorFailedException
+     * @throws OpenArkDoorTimeOutException
+     * @throws InterruptedException
+     */
+    public void openDoorByDoorObjectForBeginAndEnd(Door door, Boolean orderType, String serviceProviderId, String rspId) throws ArgumentMissingException, OpenArkDoorFailedException {
+        if (null == door) {
+            throw new ArgumentMissingException("参数doorObject为空。");
+        }
+        String deviceId = door.getArkSn();
+        int boxId = door.getDoorSn();
+        Door doorOld = doorRepository.findTopByArkSnAndDoorSn(deviceId, boxId);
+        if (null == doorOld) {
+            throw new ArgumentMissingException("参数doorObject为空。");
+        }
+        if (StringUtils.isEmpty(deviceId)) {
+            throw new ArgumentMissingException("参数doorObject中的arkSn值为空");
+        }
+        if (boxId < 1 || boxId > 16) {
+            throw new ArgumentMissingException("参数boxId不是有效数字，无法开柜");
+        }
+
+        //打开柜门
+        BoxCommandResponse boxCommandResponse = ArkOperation.openBox(deviceId, boxId);
+        //判断是否成功，成功就启动监控线程
+        if (null != boxCommandResponse && ArkOperation.SUCCESS_CODE == boxCommandResponse.code) {
+            logger.info("arkOrderLog:开门：{}成功", deviceId + "-" + boxId);
+            logger.info("arkOrderLog:开始执行智能柜关门监控----------");
+            logger.info("arkOrderLog:智能柜sn编号为：" + deviceId);
+            logger.info("arkOrderLog:执行柜门号为：" + boxId + "号门");
+            CloseDoorThread closeDoorThread = new CloseDoorThread(doorOld, orderType, serviceProviderId, rspId);
+            new Thread(closeDoorThread, "关门线程").start();
+            //如果正常到这边，不抛出异常，就说明一切正常，可以开单
+        } else {
+            throw new OpenArkDoorFailedException("打开柜门失败：从远端获取到打开柜门失败的信息。");
+        }
+    }
+
 
     /**
      * 重写开门方法
@@ -135,13 +190,13 @@ public class DoorService {
      * @throws OpenArkDoorTimeOutException
      * @throws InterruptedException
      */
+    @Transactional(rollbackFor = Exception.class)
     public void openDoorByDoorObject(Door door) throws ArgumentMissingException, OpenArkDoorFailedException, OpenArkDoorTimeOutException, InterruptedException {
         if (null == door) {
             throw new ArgumentMissingException("参数doorObject为空。");
         }
         String deviceId = door.getArkSn();
         int boxId = door.getDoorSn();
-
         if (StringUtils.isEmpty(deviceId)) {
             throw new ArgumentMissingException("参数doorObject中的arkSn值为空");
         }
@@ -258,6 +313,7 @@ public class DoorService {
      * @param ark
      * @throws ArgumentMissingException
      */
+    @Transactional(rollbackFor = Exception.class)
     public void generateDoors(Ark ark) throws ArgumentMissingException {
         if (null == ark) {
             throw new ArgumentMissingException("参数ark为空，生成door表数据失败");
@@ -303,11 +359,12 @@ public class DoorService {
         return result;
     }
 
-
+    @Transactional(rollbackFor = Exception.class)
     public Door save(Door door) {
         return doorRepository.save(door);
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public void deleteAllByArkId(String arkId) {
         List<Door> doors = findAllDoorsByArkId(arkId);
         for (Door door : doors) {

@@ -39,6 +39,11 @@ public interface StaffRepository extends JpaRepository<Staff, String> {
     @Query(value = "update staff set delStatus = 1 where id=:id", nativeQuery = true)
     int delById(String id);
 
+    @Transactional
+    @Modifying(clearAutomatically = true)
+    @Query(value = "update staff set delStatus = 1 where id in :ids", nativeQuery = true)
+    int delById(Set<String> ids);
+
     @Query(value = "select * from staff where account=:account and id!=:id and isArk = 1", nativeQuery = true)
     List<Staff> checkRepeatAccount(String account, String id);
 

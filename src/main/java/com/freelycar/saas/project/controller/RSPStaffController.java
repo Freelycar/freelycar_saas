@@ -2,6 +2,7 @@ package com.freelycar.saas.project.controller;
 
 import com.freelycar.saas.aop.LoggerManage;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
+import com.freelycar.saas.exception.BatchDeleteException;
 import com.freelycar.saas.project.entity.Staff;
 import com.freelycar.saas.project.service.StaffService;
 import io.swagger.annotations.Api;
@@ -68,14 +69,19 @@ public class RSPStaffController {
     /**
      * 删除操作（软删除）
      *
-     * @param id
+     * @param ids
      * @return
      */
-    @ApiOperation(value = "单个删除员工信息", produces = "application/json")
-    @GetMapping(value = "/delete")
+    @ApiOperation(value = "删除员工信息", produces = "application/json")
+    @PostMapping(value = "/delete")
     @LoggerManage(description = "调用方法：单个删除员工信息")
-    public ResultJsonObject delete(@RequestParam String id) {
-        return staffService.delete(id);
+    public ResultJsonObject delete(@RequestBody String[] ids) {
+        try {
+            return staffService.delete(ids);
+        } catch (BatchDeleteException e) {
+//            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
     }
 
     /**

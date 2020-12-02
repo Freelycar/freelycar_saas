@@ -1,6 +1,7 @@
 package com.freelycar.saas.project.service;
 
 import com.freelycar.saas.basic.wrapper.*;
+import com.freelycar.saas.exception.BatchDeleteException;
 import com.freelycar.saas.jwt.TokenAuthenticationUtil;
 import com.freelycar.saas.project.entity.*;
 import com.freelycar.saas.project.model.StaffInfo;
@@ -364,6 +365,18 @@ public class StaffService {
             return ResultJsonObject.getErrorResult(id, "删除失败，删除操作出现异常");
         }
         return ResultJsonObject.getDefaultResult(id, "删除成功");
+    }
+
+    public ResultJsonObject delete(String[] ids) throws BatchDeleteException {
+        Set<String> idSet = new HashSet<>(Arrays.asList(ids));
+        int result = staffRepository.delById(idSet);
+        if (result == 0) {
+            return ResultJsonObject.getErrorResult(ids, "删除失败," + RESULT_DATA_NONE);
+        }
+        if (result != ids.length) {
+            throw new BatchDeleteException("部分id不存在");
+        }
+        return ResultJsonObject.getDefaultResult(ids, "删除成功");
     }
 
 

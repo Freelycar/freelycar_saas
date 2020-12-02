@@ -101,7 +101,7 @@ public class RealServiceProviderService {
      */
     public RealServiceProvider modify(RealServiceProvider serviceProvider) throws DataIsExistException, ObjectNotFoundException {
         String id = serviceProvider.getId();
-        Optional<RealServiceProvider> optional = realServiceProviderRepository.findByName(serviceProvider.getName());
+        Optional<RealServiceProvider> optional = realServiceProviderRepository.findByNameAndDelStatus(serviceProvider.getName(),Constants.DelStatus.NORMAL.isValue());
         //1.判断新增/修改
         if (StringUtils.isEmpty(id)) {//新增
             if (optional.isPresent()) {
@@ -187,7 +187,7 @@ public class RealServiceProviderService {
                 "rsp.id,rsp.`name`,rsp.address,(SELECT sort FROM rspstoresort WHERE rspId = rsp.id AND storeId = '")
                 .append(storeId).append("') AS sort \n" +
                 "FROM realserviceprovider rsp WHERE \n" +
-                "id IN (SELECT DISTINCT(rspId) FROM rspstoresort WHERE storeId = '").append(storeId).append("')\n" +
+                "delStatus = FALSE AND id IN (SELECT DISTINCT(rspId) FROM rspstoresort WHERE storeId = '").append(storeId).append("')\n" +
                 "ORDER BY sort ASC");
         EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
         Query nativeQuery = em.createNativeQuery(sql.toString());

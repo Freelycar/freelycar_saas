@@ -105,7 +105,6 @@ public class StoreService {
      * @param storeAccount 门店-账户对象
      * @return Store
      */
-    @Transactional
     public StoreAccount saveOrUpdate(StoreAccount storeAccount) throws ArgumentMissingException, ObjectNotFoundException, NumberOutOfRangeException, UnknownException, DataIsExistException {
         if (null == storeAccount) {
             throw new ArgumentMissingException("storeAccount对象为空值，网点新增/修改失败");

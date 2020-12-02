@@ -1,10 +1,16 @@
 package com.freelycar.saas.wechat.controller;
 
+import cn.leancloud.core.AVOSCloud;
+import cn.leancloud.sms.AVSMS;
+import cn.leancloud.sms.AVSMSOption;
+import cn.leancloud.types.AVNull;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.project.service.WxUserInfoService;
 import com.freelycar.saas.wxutils.HttpRequest;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import org.apache.http.HttpEntity;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,6 +29,12 @@ public class WeChatLoginController {
     private final String ContentType = "application/json";
     private final String leancloudUrlRes = "https://leancloud.cn/1.1/requestSmsCode";
     private final String leancloudUrlVer = "https://leancloud.cn/1.1/verifySmsCode";
+
+    static {
+        AVOSCloud.initialize("YPVPvcghD0yT1CtQKUOpOUGI-gzGzoHsz", "AnrwmLo01qL7RuKNbV0NwWR4", "https://ypvpvcgh.lc-cn-n1-shared.com");
+
+    }
+
     @Autowired
     private WxUserInfoService wxUserInfoService;
     private Logger log = LogManager.getLogger(WeChatLoginController.class);
@@ -30,13 +42,53 @@ public class WeChatLoginController {
     //发送短信验证码请求
     @RequestMapping(value = "/getSmsCode", method = RequestMethod.POST)
     public ResultJsonObject getSmsCode(String phone) {
-        return getVerification(phone, false);
+        return getVerification(phone);
     }
 
     //发送语音验证码请求
     @RequestMapping(value = "/getVoiceCode", method = RequestMethod.POST)
     public ResultJsonObject getVoiceCode(String phone) {
         return getVerification(phone, true);
+    }
+
+
+    public ResultJsonObject getVerification(String phone) {
+        AVSMSOption option = new AVSMSOption();
+        option.setTtl(1);
+        option.setApplicationName("小易爱车");
+        option.setOperation("短信认证");
+        final boolean[] flag = {true};
+        final String[] message = {""};
+        AVSMS.requestSMSCodeInBackground(phone, option)
+                .subscribe(new Observer<AVNull>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(AVNull avNull) {
+                        flag[0] = true;
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        flag[0] = false;
+                        message[0] = e.getMessage();
+                        System.out.println("Result: Failed to send verification code. Reason: " + e.getMessage());
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
+                });
+        if (flag[0]) {
+            return ResultJsonObject.getDefaultResult(null);
+        } else {
+            return ResultJsonObject.getErrorResult(message[0]);
+        }
+
     }
 
 
@@ -125,7 +177,7 @@ public class WeChatLoginController {
      * @return
      */
     private JSONObject verifySmsCode(String phone, String smscode) {
-        Map<String, Object> head = setLeancloudHead();
+        /*Map<String, Object> head = setLeancloudHead();
         String result = HttpRequest.postCall(leancloudUrlVer + "/" + smscode + "?mobilePhoneNumber=" + phone, null, head);
         log.debug("绑定手机短信验证, phone:" + phone + ", smscode:" + smscode + "。 短信验证结果：" + result);
         JSONObject json = null;
@@ -137,7 +189,30 @@ public class WeChatLoginController {
         }
         log.debug("解析后结果：" + json);
 
-        return json;
+        return json;*/
+        JSONObject jsonObject = new JSONObject();
+        AVSMS.verifySMSCodeInBackground(smscode, phone).subscribe(new Observer<AVNull>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+            }
+
+            @Override
+            public void onNext(AVNull avNull) {
+                jsonObject.put("success", "1");
+//                System.out.println("Result: Successfully verified the number.");
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                jsonObject.put("error", throwable.getMessage());
+//                System.out.println("Result: Failed to verify the number. Reason: " + throwable.getMessage());
+            }
+
+            @Override
+            public void onComplete() {
+            }
+        });
+        return jsonObject;
     }
 
     /**

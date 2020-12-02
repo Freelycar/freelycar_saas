@@ -5,6 +5,9 @@ buildscript {
     }
     repositories {
         maven {
+            url "https://oss.sonatype.org/content/groups/public/"
+        }
+        maven {
             url 'http://maven.aliyun.com/nexus/content/groups/public/'
         }
         mavenCentral()
@@ -32,6 +35,9 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 repositories {
+    maven {
+        url "https://oss.sonatype.org/content/groups/public/"
+    }
     maven {
         url 'http://maven.aliyun.com/nexus/content/groups/public/'
     }
@@ -100,10 +106,14 @@ dependencies {
 
 
     // LeanCloud Java SDK 老版本
-    compile("cn.leancloud:java-sdk:0.2.1")
+//    compile("cn.leancloud:java-sdk:0.2.1")
     // LeanCloud Java Unified SDK 2019-09正式上线这里备用（届时需要按照官方最新文档重新实现业务代码)
     // https://github.com/leancloud/java-unified-sdk
 //    compile("cn.leancloud:storage-core:5.0.15")
+//    compile('cn.leancloud:storage-core:6.5.12')
+    // https://mvnrepository.com/artifact/cn.leancloud/storage-core
+    compile group: 'cn.leancloud', name: 'storage-core', version: '6.5.12'
+
 
     // devtools
     compile('org.springframework.boot:spring-boot-devtools')

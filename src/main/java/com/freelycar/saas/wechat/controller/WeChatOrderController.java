@@ -1,10 +1,13 @@
 package com.freelycar.saas.wechat.controller;
 
+import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.ResultCode;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.NoEmptyArkException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
+import com.freelycar.saas.project.entity.Door;
+import com.freelycar.saas.project.repository.DoorRepository;
 import com.freelycar.saas.project.service.ArkService;
 import com.freelycar.saas.project.service.ConsumerOrderService;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
@@ -33,6 +36,8 @@ public class WeChatOrderController {
     private ConsumerOrderService consumerOrderService;
     @Autowired
     private ArkService arkService;
+    @Autowired
+    private DoorRepository doorRepository;
 
     @GetMapping("/listOrdersByClient")
     public ResultJsonObject ListOrdersByClientId(@RequestParam String clientId) {
@@ -59,6 +64,17 @@ public class WeChatOrderController {
                 }
             }
             if (flag) {//用户名下有进行中订单
+                for (BaseOrderInfo info :
+                        res) {
+                    String id = info.getId();
+                    Door door = doorRepository.findTopByOrderId(id);
+                    if (null != door
+                            && !door.getOrderId().isEmpty()
+                            && door.getState() == Constants.DoorState.EMPTY.getValue()
+                    ) {
+                        info.setIsBuffer(true);
+                    }
+                }
                 return ResultJsonObject.getDefaultResult(res);
             } else {//检查进行中订单数是否小于柜门数
                 if (arkService.checkArk(arkSn)) return ResultJsonObject.getDefaultResult(null);
