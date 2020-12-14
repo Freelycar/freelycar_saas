@@ -1,5 +1,6 @@
 package com.freelycar.saas.wechat.controller;
 
+import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.ResultCode;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
@@ -39,6 +40,12 @@ public class WeChatOrderController {
     @Autowired
     private DoorRepository doorRepository;
 
+    @GetMapping("/getDoorState")
+    public ResultJsonObject getDoorState(@RequestParam String orderId) {
+        JSONObject res = consumerOrderService.getDoorState(orderId);
+        return ResultJsonObject.getDefaultResult(res);
+    }
+
     @GetMapping("/listOrdersByClient")
     public ResultJsonObject ListOrdersByClientId(@RequestParam String clientId) {
         List<BaseOrderInfo> res = consumerOrderService.findAllOrdersByClientId(clientId);
@@ -73,6 +80,12 @@ public class WeChatOrderController {
                             && door.getState() == Constants.DoorState.EMPTY.getValue()
                     ) {
                         info.setIsBuffer(true);
+                        Integer state = info.getState();
+                        if (state == 1) {
+                            info.setIsUser(true);
+                        } else {
+                            info.setIsUser(false);
+                        }
                     }
                 }
                 return ResultJsonObject.getDefaultResult(res);

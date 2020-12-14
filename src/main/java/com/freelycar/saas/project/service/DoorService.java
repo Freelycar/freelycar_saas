@@ -85,7 +85,7 @@ public class DoorService {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    private Door isOperatingDoor(List<Door> emptyDoors) throws NoEmptyArkException {
+    Door isOperatingDoor(List<Door> emptyDoors) throws NoEmptyArkException {
         if (null == emptyDoors || emptyDoors.isEmpty()) {
             logger.error("没有可分配的智能柜！");
             throw new NoEmptyArkException("没有查找到可使用的空智能柜");

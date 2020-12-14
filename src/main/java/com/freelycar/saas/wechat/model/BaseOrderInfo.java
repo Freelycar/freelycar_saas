@@ -20,6 +20,10 @@ public class BaseOrderInfo {
      * 是否为缓冲页面
      */
     private Boolean isBuffer;
+    /**
+     * 是否为用户缓冲
+     */
+    private Boolean isUser;
     private String rspName;
     private String licensePlate;
     private String carBrand;

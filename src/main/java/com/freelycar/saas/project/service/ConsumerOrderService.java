@@ -130,6 +130,39 @@ public class ConsumerOrderService {
     @Autowired
     private RealServiceProviderRepository realServiceProviderRepository;
 
+    public JSONObject getDoorState(String orderId) {
+        JSONObject jsonObject = new JSONObject();
+        boolean isBuffer = false;
+        Integer doorSn = null;
+        boolean isUser = false;
+        ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
+        if (null != consumerOrder
+                && consumerOrder.getDelStatus() == Constants.DelStatus.NORMAL.isValue()) {
+            Door door = doorRepository.findTopByOrderId(orderId);
+            if (null != door) {
+                doorSn = door.getDoorSn();
+                if ((consumerOrder.getState().equals(Constants.OrderState.RESERVATION.getValue())
+                        && door.getState().equals(Constants.DoorState.EMPTY.getValue()))
+                        && !door.getOrderId().isEmpty()
+                ) {
+                    isBuffer = true;
+                    isUser = true;
+                }
+                if (consumerOrder.getState().equals(Constants.OrderState.RECEIVE_CAR.getValue())
+                        && door.getState().equals(Constants.DoorState.PER_STAFF_FINISH.getValue())
+                        && !door.getOrderId().isEmpty()
+                ) {
+                    isBuffer = true;
+                }
+            }
+
+        }
+        jsonObject.put("isBuffer", isBuffer);
+        jsonObject.put("doorSn", doorSn);
+        jsonObject.put("isUser", isUser);
+        return jsonObject;
+    }
+
     /**
      * 保存和修改
      *
@@ -606,7 +639,7 @@ public class ConsumerOrderService {
             String orderId = info.getId();
             Door door = doorRepository.findTopByOrderId(orderId);
             if (null != door
-                    && door.getState() == Constants.DoorState.EMPTY.getValue()) {
+                    && door.getState() == Constants.DoorState.PER_STAFF_FINISH.getValue()) {
                 info.setIsBuffer(true);
             }
         }
@@ -1385,6 +1418,8 @@ public class ConsumerOrderService {
         //打开柜门
         doorService.openDoorByDoorObject(door);
 
+        ConcurrentHashMapCacheUtils.deleteCache(door.getId());
+
         //判断客户所选服务项目是否为代驾项目
         List<ConsumerProjectInfo> projectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(orderId);
         boolean orderType = false;
@@ -1522,6 +1557,7 @@ public class ConsumerOrderService {
         this.changeDoorState(door, null, Constants.DoorState.EMPTY.getValue());
         //打开柜门
         doorService.openDoorByDoorObject(door);
+        ConcurrentHashMapCacheUtils.deleteCache(door.getId());
 
 
         //推送微信公众号消息，通知用户服务完全结束
@@ -1722,6 +1758,8 @@ public class ConsumerOrderService {
         this.changeDoorState(door, null, Constants.DoorState.EMPTY.getValue());
         // 调用硬件接口方法打开柜门
         doorService.openDoorByDoorObject(door);
+        ConcurrentHashMapCacheUtils.deleteCache(door.getId());
+
 
         //推送微信公众号消息，通知用户已开始受理服务
         sendWeChatMsg(orderRes);
@@ -1815,7 +1853,7 @@ public class ConsumerOrderService {
         }
 
         // 更新door表数据状态
-        this.changeDoorState(emptyDoor, orderId, Constants.DoorState.EMPTY.getValue());
+        this.changeDoorState(emptyDoor, orderId, Constants.DoorState.PER_STAFF_FINISH.getValue());
         // 调用硬件接口方法打开柜门
         try {
             //todo

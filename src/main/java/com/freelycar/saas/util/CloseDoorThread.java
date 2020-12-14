@@ -16,6 +16,7 @@ import com.freelycar.saas.project.repository.DoorRepository;
 import com.freelycar.saas.project.service.EdaijiaService;
 import com.freelycar.saas.project.service.StaffService;
 import com.freelycar.saas.project.service.WxUserInfoService;
+import com.freelycar.saas.util.cache.ConcurrentHashMapCacheUtils;
 import com.freelycar.saas.wxutils.WechatTemplateMessage;
 import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
@@ -68,7 +69,7 @@ public class CloseDoorThread implements Runnable {
     }
 
     @Transactional
-    private void updateData(boolean isClosed, Door doorOld) throws NormalException, ObjectNotFoundException {
+    void updateData(boolean isClosed, Door doorOld) throws NormalException, ObjectNotFoundException {
         String deviceId = doorOld.getArkSn();
         Integer boxId = doorOld.getDoorSn();
         Door door = doorRepository.findTopByArkSnAndDoorSn(deviceId, boxId);
@@ -107,6 +108,7 @@ public class CloseDoorThread implements Runnable {
                         //取消订单
                         consumerOrder.setState(Constants.OrderState.CANCEL.getValue());
                         consumerOrderRepository.saveAndFlush(consumerOrder);
+                        ConcurrentHashMapCacheUtils.deleteCache(door.getId());
                     }
                 }
                 if (orderState == Constants.OrderState.RECEIVE_CAR.getValue()) {
@@ -126,6 +128,9 @@ public class CloseDoorThread implements Runnable {
                         //通知技师
                         WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
                     } else {
+                        ConcurrentHashMapCacheUtils.deleteCache(door.getId());
+                        door.setState(Constants.DoorState.EMPTY.getValue());
+                        doorRepository.saveAndFlush(door);
                         //通知技师，门未关闭
                         WechatTemplateMessage.orderChangedFailureForStaff(consumerOrder, openId, door, ark);
                     }
@@ -165,12 +170,13 @@ public class CloseDoorThread implements Runnable {
     @SneakyThrows
     @Override
     public void run() {
-        log.info("开始检查柜门关闭情况——————————————————————");
+        String deviceId = door.getArkSn();
+        Integer boxId = door.getDoorSn();
+        log.info("开始检查柜门:{}关闭情况——————————————————————", deviceId + ":" + boxId);
         long start = System.currentTimeMillis();
         boolean startFlag = true;
         boolean isClosed = false;
-        String deviceId = door.getArkSn();
-        Integer boxId = door.getDoorSn();
+
         while (startFlag) {
             synchronized (CloseDoorThread.class) {
                 try {
@@ -193,21 +199,27 @@ public class CloseDoorThread implements Runnable {
                     log.error("boxId为空值，线程终止。boxId：" + boxId);
                     break;
                 }
-                boxCommandResponse = ArkOperation.queryBox(deviceId, boxId);
+                try {
+                    boxCommandResponse = ArkOperation.queryBox(deviceId, boxId);
 
-                int code = boxCommandResponse.code;
-                boolean isOpen = boxCommandResponse.is_open;
-                if (ArkOperation.SUCCESS_CODE == code) {
-                    if (!isOpen) {
-                        log.info(deviceId + " 柜门关闭。正常结束进程");
-                        isClosed = true;
-                        break;
+                    int code = boxCommandResponse.code;
+                    boolean isOpen = boxCommandResponse.is_open;
+                    if (ArkOperation.SUCCESS_CODE == code) {
+                        if (!isOpen) {
+                            log.info(deviceId + " 柜门关闭。正常结束进程");
+                            isClosed = true;
+                            break;
+                        }
                     }
+                } catch (Exception e) {
+                    log.error("查询柜门情况出错：{}", e.getMessage());
                 }
+
             }
             // 让出CPU，给其他线程执行
             Thread.yield();
         }
+        log.info("检查柜门:{}关闭情况结束——————————————————————", deviceId + ":" + boxId);
         updateData(isClosed, door);
 
     }

@@ -62,7 +62,7 @@ public class Constants {
      * 订单类型（1.服务开单；2.智能柜开单；3.办卡/抵用券；4.充值）
      */
     public enum OrderType {
-        SERVICE(1, "service"),  ARK(2, "ark"), CARD(3, "card"), RECHARGE(4, "recharge");
+        SERVICE(1, "service"), ARK(2, "ark"), CARD(3, "card"), RECHARGE(4, "recharge");
 
         private final Integer value;
         private final String name;
@@ -113,7 +113,7 @@ public class Constants {
      */
     public enum OrderState {
         RESERVATION(0, "预约"),
-        ORDER_TAKING(-1,"接单"),//技师接单状态
+        ORDER_TAKING(-1, "接单"),//技师接单状态
         RECEIVE_CAR(1, "接车"),
         SERVICE_FINISH(2, "完工"),
         HAND_OVER(3, "交车"),
@@ -246,9 +246,10 @@ public class Constants {
      * 智能柜门状态
      */
     public enum DoorState {
-         EMPTY(0, "可使用"),
+        EMPTY(0, "可使用"),
         USER_RESERVATION(1, "预约状态"),
         STAFF_FINISH(2, "完工状态"),
+        PER_STAFF_FINISH(3, "预完工状态"),
         DISABLED(6, "不可用");
 
         private final Integer value;
