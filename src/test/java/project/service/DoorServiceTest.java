@@ -34,9 +34,4 @@ public class DoorServiceTest {
             e.printStackTrace();
         }
     }
-
-    @Test
-    public void countAllByUserKeyLocationSnContainsAndDelStatusAndState(){
-
-    }
 }

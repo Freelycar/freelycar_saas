@@ -1355,6 +1355,7 @@ public class ConsumerOrderService {
                     clientOrderImgs) {
                 img.setCreateTime(currentTime);
                 img.setOrderId(orderId);
+                img.setDelStatus(false);
             }
             clientOrderImgRepository.saveAll(clientOrderImgs);
         }
@@ -1843,11 +1844,14 @@ public class ConsumerOrderService {
 
 
         //关联技师上传订单车辆图片
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis());
         List<StaffOrderImg> staffOrderImgs = orderObject.getStaffOrderImgs();
         if (null != staffOrderImgs) {
             for (StaffOrderImg img :
                     staffOrderImgs) {
                 img.setOrderId(orderId);
+                img.setDelStatus(false);
+                img.setCreateTime(currentTime);
             }
             staffOrderImgRepository.saveAll(staffOrderImgs);
         }

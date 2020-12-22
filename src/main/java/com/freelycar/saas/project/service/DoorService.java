@@ -176,6 +176,7 @@ public class DoorService {
             new Thread(closeDoorThread, "关门线程").start();
             //如果正常到这边，不抛出异常，就说明一切正常，可以开单
         } else {
+            ConcurrentHashMapCacheUtils.deleteCache(door.getId());
             throw new OpenArkDoorFailedException("打开柜门失败：从远端获取到打开柜门失败的信息。");
         }
     }

@@ -176,13 +176,10 @@ public class StaffService {
             } else {
                 //如果已有数据，则统一其智能柜登录账户密码
                 String account = employee.getAccount();
-                String password = employee.getPassword();
                 if (StringUtils.hasText(account)) {
-                    staff.setAccount(account);
-                    staff.setPassword(password);
-                    if (null != password) {
-                        staff.setIsArk(true);
-                    }
+                    employee.setPassword(staff.getPassword());
+                    employeeRepository.saveAndFlush(employee);
+                    staff.setIsArk(true);
                     staff.setOpenId(employee.getOpenId());
                 }
             }
