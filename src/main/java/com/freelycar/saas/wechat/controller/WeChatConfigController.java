@@ -22,10 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author tangwei - Toby
@@ -127,7 +124,7 @@ public class WeChatConfigController {
         //access token
         String accessToken = WechatConfig.getAccessTokenForInteface().getString("access_token");
         //body
-        String uu = "{\"action_name\": \"QR_LIMIT_STR_SCENE\", \"action_info\": {\"scene\": {\"scene_str\":" + scene_str + "}}}";
+        String uu = "{\"action_name\": \"QR_LIMIT_STR_SCENE\", \"action_info\": {\"scene\": {\"scene_str\":\"" + scene_str + "\"}}}";
         String jsonObject = HttpRequest.postCall(ticket_url + accessToken, HttpRequest.getEntity(uu), null);
         String ticket = JSONObject.parseObject(jsonObject).getString("ticket");
         //二维码
@@ -167,6 +164,7 @@ public class WeChatConfigController {
                 && !StringUtils.isEmpty(result.get("FromUserName"))) {
             String openId = result.get("FromUserName");
             String eventKey = result.get("EventKey");
+            Long createTime = Long.parseLong(result.get("CreateTime"));
             if (result.get("Event").equals("subscribe")) {
                 Map<String, String> sendMessage = new HashMap<>();
                 sendMessage.put("ToUserName", openId);
@@ -184,17 +182,15 @@ public class WeChatConfigController {
                 out.close();
             }
             if (!StringUtils.isEmpty(eventKey) && eventKey.contains("sn:")) {
+                logger.info(result.toString());
                 String devicesn = eventKey.split(":")[1];
                 Ark ark = arkRepository.findTopBySnAndDelStatus(devicesn, Constants.DelStatus.NORMAL.isValue());
-                Store store = null;
                 if (ark != null) {
-                    Optional<Store> storeOptional = storeRepository.findById(ark.getStoreId());
-                    if (storeOptional.isPresent()) store = storeOptional.get();
-                }
-                //模板消息
+                    //模板消息
 //                WechatTemplateMessage.remindToOrder(ark, store, openId);
-                //客服消息
-                CustomMessage.remindToOrder(ark, openId);
+                    //客服消息
+                    CustomMessage.remindToOrder(ark, openId);
+                }
             }
             out.close();
         } else {

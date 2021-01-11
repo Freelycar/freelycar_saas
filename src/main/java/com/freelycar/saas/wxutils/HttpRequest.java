@@ -167,7 +167,6 @@ public class HttpRequest {
                 CloseableHttpResponse response = httpClient.execute(httpPost)
         ) {
             outResult = getOutResult(response);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
