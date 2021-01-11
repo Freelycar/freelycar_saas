@@ -126,7 +126,7 @@ public class ClientController {
         if (StringUtils.hasText(StringUtils.trimWhitespace(licensePlate))) {
             params.put("licensePlate", licensePlate);
         }
-        return clientService.list(storeId, currentPage, pageSize, params, false);
+        return clientService.list(storeId, currentPage, pageSize, params);
     }
 
     @ApiOperation(value = "会员统计", produces = "application/json")
@@ -171,7 +171,7 @@ public class ClientController {
         if (StringUtils.hasText(StringUtils.trimWhitespace(phone))) {
             params.put("licensePlate", licensePlate);
         }
-        ResultJsonObject resultJsonObject = clientService.list(storeId, currentPage, pageSize, params, true);
+        ResultJsonObject resultJsonObject = clientService.exportList(storeId, currentPage, pageSize, params, true);
         //模拟从数据库获取需要导出的数据
         @SuppressWarnings({"unused", "unchecked"})
         List<CustomerList> list = (List<CustomerList>) resultJsonObject.getData();

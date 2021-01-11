@@ -33,6 +33,10 @@ public class StoreAccount {
      */
     private String address;
     /**
+     * 网点物业
+     */
+    private String propertyCompany;
+    /**
      * 网点备注
      */
     private String remark;
@@ -66,6 +70,7 @@ public class StoreAccount {
         store.setAddress(this.address);
         store.setRemark(this.remark);
         store.setSort(this.sort);
+        store.setPropertyCompany(this.propertyCompany);
         return store;
     }
 

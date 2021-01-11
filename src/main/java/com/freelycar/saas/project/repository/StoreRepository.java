@@ -6,11 +6,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.QueryHint;
 import java.util.List;
 import java.util.Set;
+
+import static org.hibernate.jpa.QueryHints.HINT_COMMENT;
 
 /**
  * @author tangwei - Toby
@@ -23,6 +27,15 @@ public interface StoreRepository extends JpaRepository<Store, String> {
     List<Store> findStoreByDelStatusAndIdIn(boolean delStatus, Set<String> ids);
 
     Page<Store> findStoreByDelStatusAndNameContainingOrderBySortAsc(boolean delStatus, String name, Pageable pageable);
+
+    @QueryHints(value = {@QueryHint(name = HINT_COMMENT, value = "a query for pageable")})
+    @Query("select u from Store u where u.delStatus = ?1 and u.name like CONCAT('%',?2,'%')  and u.propertyCompany like CONCAT('%',?3,'%') ")
+    Page<Store> findStoreByDelStatusAndNameContainingAndPropertyCompanyContainingOrderBySortAsc(boolean delStatus, String name, String propertyCompany, Pageable pageable);
+
+    @QueryHints(value = {@QueryHint(name = HINT_COMMENT, value = "a query for pageable")})
+    @Query("select u from Store u where u.delStatus = ?1 and u.name like CONCAT('%',?2,'%')  and (u.propertyCompany like CONCAT('%','','%') or u.propertyCompany is null)")
+    Page<Store> findStoreByDelStatusAndNameContainingAndPropertyCompanyContainingOrderBySortAsc(boolean delStatus, String name, Pageable pageable);
+
 
     List<Store> findAllByDelStatusOrderBySortAsc(boolean delStatus);
 

@@ -50,6 +50,9 @@ public class Store implements Serializable {
     private String address;
 
     @Column
+    private String propertyCompany;
+
+    @Column
     private Time openingTime;
 
     @Column

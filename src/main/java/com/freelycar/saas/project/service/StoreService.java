@@ -133,12 +133,15 @@ public class StoreService {
             source = storeRepository.saveAndFlush(store);
         }
         if (StringUtils.isEmpty(sysUserId)) {//新增账号
-            SysUser user = storeAccount.toUser();
-            user.setStoreId(source.getId());
-            user.setStoreName(source.getName());
-            user.setDelStatus(Constants.DelStatus.NORMAL.isValue());
-            user.setOpen(true);
-            userSource = sysUserService.addOrModify(user);
+            if (!StringUtils.isEmpty(storeAccount.getUsername())
+                    && !StringUtils.isEmpty(storeAccount.getPassword())) {
+                SysUser user = storeAccount.toUser();
+                user.setStoreId(source.getId());
+                user.setStoreName(source.getName());
+                user.setDelStatus(Constants.DelStatus.NORMAL.isValue());
+                user.setOpen(true);
+                userSource = sysUserService.addOrModify(user);
+            }
         } else {//修改账号
             Optional<SysUser> userOptional = sysUserRepository.findById(sysUserId);
             SysUser user = storeAccount.toUser();
@@ -159,6 +162,7 @@ public class StoreService {
             sa.setStoreId(store.getId());
             sa.setName(store.getName());
             sa.setAddress(store.getAddress());
+            sa.setPropertyCompany(store.getPropertyCompany());
             sa.setRemark(store.getRemark());
             sa.setSort(store.getSort());
         }
@@ -284,6 +288,7 @@ public class StoreService {
 
     /**
      * 门店列表（包含“门店名称”的模糊查询）
+     *
      * @param name
      * @return
      */
@@ -291,8 +296,13 @@ public class StoreService {
         return storeRepository.findByNameContainingAndDelStatus(name, Constants.DelStatus.NORMAL.isValue());
     }
 
-    public Page<StoreAccount> listStoreAccount(String name, Integer currentPage, Integer pageSize) {
-        Page<Store> storePage = storeRepository.findStoreByDelStatusAndNameContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
+    public Page<StoreAccount> listStoreAccount(String name, String propertyCompany, Integer currentPage, Integer pageSize) {
+        Page<Store> storePage;
+        if(StringUtils.isEmpty(propertyCompany)){
+            storePage= storeRepository.findStoreByDelStatusAndNameContainingAndPropertyCompanyContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, PageableTools.basicPage(currentPage, pageSize));
+        }else {
+            storePage= storeRepository.findStoreByDelStatusAndNameContainingAndPropertyCompanyContainingOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, propertyCompany, PageableTools.basicPage(currentPage, pageSize));
+        }
         List<StoreAccount> storeAccountList = new ArrayList<>();
         for (Store store :
                 storePage.getContent()) {

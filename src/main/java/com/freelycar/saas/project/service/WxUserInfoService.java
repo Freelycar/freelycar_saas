@@ -13,7 +13,6 @@ import com.freelycar.saas.project.model.CumulateOrder;
 import com.freelycar.saas.project.model.CumulateThree;
 import com.freelycar.saas.project.repository.*;
 import com.freelycar.saas.util.NicknameFilter;
-import com.freelycar.saas.util.RoundTool;
 import com.freelycar.saas.util.TimestampUtil;
 import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
@@ -30,7 +29,6 @@ import org.springframework.util.StringUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.text.ParseException;

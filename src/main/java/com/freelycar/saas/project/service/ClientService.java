@@ -171,6 +171,103 @@ public class ClientService {
     }
 
     /**
+     * 获取客户列表
+     *
+     * @param storeId
+     * @param currentPage
+     * @param pageSize
+     * @param params
+     * @return
+     */
+    public ResultJsonObject list(String storeId, Integer currentPage, Integer pageSize, Map params) {
+        String name = null;
+        String phone = null;
+        String licensePlate = null;
+        if (null != params) {
+            name = (String) params.get("name");
+            phone = (String) params.get("phone");
+            licensePlate = (String) params.get("licensePlate");
+        }
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        StringBuilder sql = new StringBuilder();
+        Query nativeQuery = null;
+        if (StringUtils.hasText(licensePlate) || StringUtils.hasText(name) || StringUtils.hasText(phone)) {
+            sql.append("SELECT COUNT(1) \n" +
+                    "FROM client c WHERE \n" +
+                    "c.storeId = '").append(storeId).append("' \n" +
+                    "AND c.delStatus = FALSE ");
+            StringBuilder sql3 = new StringBuilder();
+            if (StringUtils.hasText(licensePlate)) {
+                sql3.append("AND r.plates LIKE '%").append(licensePlate).append("%' ");
+            }
+            if (StringUtils.hasText(name)) {
+                sql3.append("AND r.name LIKE '%").append(name).append("%' ");
+            }
+            if (StringUtils.hasText(phone)) {
+                sql3.append("AND r.phone LIKE '%").append(phone).append("%'  ");
+            }
+            sql.append(sql3.substring(3));
+        } else {
+            sql.append("SELECT COUNT(1) \n" +
+                    "FROM client c WHERE \n" +
+                    "c.storeId = '").append(storeId).append("' \n" +
+                    "AND c.delStatus = FALSE");
+        }
+
+        nativeQuery = em.createNativeQuery(sql.toString());
+        Object result = nativeQuery.getSingleResult();
+        StringBuilder sql1 = new StringBuilder();
+        sql1.append("SELECT \n" +
+                "c.id,\n" +
+                "c.name,\n" +
+                "c.phone,\n" +
+                "(SELECT GROUP_CONCAT(car.carBrand) FROM car WHERE car.clientId = c.id AND delStatus = FALSE) as brands,\n" +
+                "(SELECT GROUP_CONCAT(car.licensePlate) FROM car WHERE car.clientId = c.id AND delStatus = FALSE) as plates,\n" +
+                "(SELECT createTime FROM consumerorder co WHERE co.clientId = c.id AND co.delStatus = FALSE ORDER BY createTime ASC LIMIT 0,1) as lastVisit,\n" +
+                "(SELECT count(1) FROM consumerorder co WHERE co.clientId = c.id AND co.delStatus = FALSE) as totalCount,\n" +
+                "IF(c.isMember=0,'否','是') as isMember\n" +
+                "FROM client c \n" +
+                "WHERE c.storeId = '").append(storeId).append("' \n" +
+                "AND c.delStatus = FALSE\n" +
+                "ORDER BY c.createTime asc");
+        StringBuilder sql2 = new StringBuilder();
+
+        if (StringUtils.hasText(licensePlate) || StringUtils.hasText(name) || StringUtils.hasText(phone)) {
+            sql2.append("SELECT * FROM (").append(sql1).append(") as r \n" +
+                    "WHERE ");
+            StringBuilder sql3 = new StringBuilder();
+            if (StringUtils.hasText(licensePlate)) {
+                sql3.append("AND r.plates LIKE '%").append(licensePlate).append("%' ");
+            }
+            if (StringUtils.hasText(name)) {
+                sql3.append("AND r.name LIKE '%").append(name).append("%' ");
+            }
+            if (StringUtils.hasText(phone)) {
+                sql3.append("AND r.phone LIKE '%").append(phone).append("%'  ");
+            }
+            sql2.append(sql3.substring(3));
+            nativeQuery = em.createNativeQuery(sql2.toString());
+        } else {
+            nativeQuery = em.createNativeQuery(sql1.toString());
+        }
+
+        nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(CustomerList.class));
+
+        Pageable pageable = PageableTools.basicPage(currentPage, pageSize);
+        int total = Integer.valueOf(result.toString());
+        @SuppressWarnings({"unused", "unchecked"})
+        List<CustomerList> customerInfos = nativeQuery.setFirstResult(MySQLPageTool.getStartPosition(currentPage, pageSize)).setMaxResults(pageSize).getResultList();
+
+        //关闭em
+        em.close();
+
+        @SuppressWarnings("unchecked")
+        Page<CustomerList> page = new PageImpl(customerInfos, pageable, total);
+
+        return ResultJsonObject.getDefaultResult(PaginationRJO.of(page));
+    }
+
+    /**
      * 获取客户列表(待优化)
      *
      * @param storeId
@@ -179,40 +276,17 @@ public class ClientService {
      * @param params
      * @return
      */
-    public ResultJsonObject list(String storeId, Integer currentPage, Integer pageSize, Map params, boolean export) {
+    public ResultJsonObject exportList(String storeId, Integer currentPage, Integer pageSize, Map params, boolean export) {
         String name = null;
         String phone = null;
-        Boolean isMember = null;
         String licensePlate = null;
         if (null != params) {
             name = (String) params.get("name");
             phone = (String) params.get("phone");
-//            isMember = (Boolean) params.get("isMember");
             licensePlate = (String) params.get("licensePlate");
         }
         EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
-        StringBuilder sql = new StringBuilder();
         StringBuilder sql1 = new StringBuilder();
-        /*sql.append(" SELECT client.id, client.name, client.phone, p.plates, p.brands, if(client.isMember=0,'否','是') as isMember, (select count(1) from consumerOrder co where co.clientId=client.id and co.delStatus=0) as totalCount, client.lastVisit as lastVisit, round((select sum(card.balance) from card where card.clientId=client.id and card.delStatus=0),2) as totalBalance FROM client LEFT JOIN (SELECT c.id, group_concat( car.licensePlate ) as plates, GROUP_CONCAT( carBrand ) as brands FROM car LEFT JOIN client c ON c.id = car.clientId WHERE car.delStatus = 0 GROUP BY c.id ) p ON p.id = client.id WHERE client.delStatus = 0 AND client.storeId = '").append(storeId).append("' ");
-        if (StringUtils.hasText(licensePlate)) {
-            sql.append(" AND p.plates LIKE '%").append(licensePlate).append("%' ");
-        }
-        if (StringUtils.hasText(name)) {
-            sql.append(" AND client.NAME LIKE '%").append(name).append("%' ");
-        }
-        if (StringUtils.hasText(phone)) {
-            sql.append(" AND client.phone LIKE '%").append(phone).append("%'  ");
-        }
-        if (null != isMember) {
-            sql.append(" AND client.isMember= ");
-            if (isMember) {
-                sql.append("1");
-            } else {
-                sql.append("0");
-            }
-        }
-
-        sql.append(" ORDER BY client.createTime ASC ");*/
         sql1.append("SELECT \n" +
                 "c.id,\n" +
                 "c.name,\n" +
@@ -249,79 +323,12 @@ public class ClientService {
 
         nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(CustomerList.class));
 
-        if (export) {
-            @SuppressWarnings({"unused", "unchecked"})
-            List<CustomerList> customerInfos = nativeQuery.getResultList();
+        List<CustomerList> customerInfos = nativeQuery.getResultList();
 
-            //关闭em
-            em.close();
+        //关闭em
+        em.close();
 
-            return ResultJsonObject.getDefaultResult(customerInfos);
-        } else {
-            Pageable pageable = PageableTools.basicPage(currentPage, pageSize);
-            int total = nativeQuery.getResultList().size();
-            @SuppressWarnings({"unused", "unchecked"})
-            List<CustomerList> customerInfos = nativeQuery.setFirstResult(MySQLPageTool.getStartPosition(currentPage, pageSize)).setMaxResults(pageSize).getResultList();
-
-            //关闭em
-            em.close();
-            /*"brands": "明锐,东南DX3,ALFA 159,凯旋",
-                    "id": "ea8ecbc5694ccea501694ceacabf0003",
-                    "isMember": "否",
-                    "lastVisit": null,
-                    "name": "yyy",
-                    "phone": "17826616659",
-                    "plates": "青A10011,青A00001,苏A00001,苏A01111",
-                    "totalBalance": 1.2,
-                    "totalCount": 0*/
-
-            /*List<CustomerList> resultList = new ArrayList<>();
-            for (CustomerList customer :
-                    customerInfos) {
-                CustomerList newCustomr = new CustomerList();
-                newCustomr.setId(customer.getId());
-                newCustomr.setIsMember(customer.getIsMember());
-                newCustomr.setLastVisit(customer.getLastVisit());
-                newCustomr.setName(customer.getName());
-                newCustomr.setPhone(customer.getPhone());
-                newCustomr.setTotalBalance(customer.getTotalBalance());
-                newCustomr.setTotalCount(customer.getTotalCount());
-
-                String brands = customer.getBrands();
-                String newBrands = "";
-                if (brands != null && brands.contains(",")) {
-                    Set<String> brandSet = new HashSet<>();
-                    for (String brand : brands.split(",")) {
-                        if (brandSet.contains(brand)) continue;
-                        else {
-                            newBrands += brand + ',';
-                            brandSet.add(brand);
-                        }
-                    }
-                }
-                newCustomr.setBrands(newBrands);
-
-                String plates = customer.getPlates();
-                String newPlates = "";
-                if (plates != null && plates.contains(",")) {
-                    Set<String> plateSet = new HashSet<>();
-                    for (String plate : plates.split(",")) {
-                        if (plateSet.contains(plate)) continue;
-                        else {
-                            newPlates += plate + ',';
-                            plateSet.add(plate);
-                        }
-                    }
-                }
-                newCustomr.setPlates(newPlates);
-                resultList.add(newCustomr);
-            }*/
-
-            @SuppressWarnings("unchecked")
-            Page<CustomerList> page = new PageImpl(customerInfos, pageable, total);
-
-            return ResultJsonObject.getDefaultResult(PaginationRJO.of(page));
-        }
+        return ResultJsonObject.getDefaultResult(customerInfos);
     }
 
 

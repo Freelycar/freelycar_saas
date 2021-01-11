@@ -52,9 +52,12 @@ public class WxCumulateService {
     void saveWxCumulateTask() {
         String yesterdayDate = TimestampUtil.getYesterday();
         try {
+            JSONArray wxCumulateObj;
             JSONObject jsonObject = WechatConfig.getUserCumulate(yesterdayDate, yesterdayDate);
-            JSONArray wxCumulateObj = jsonObject.getJSONArray("list");
-
+            wxCumulateObj = jsonObject.getJSONArray("list");
+            if (wxCumulateObj.size() == 0) {
+                wxCumulateObj = WechatConfig.getUserCumulate(yesterdayDate, yesterdayDate).getJSONArray("list");
+            }
             String refDate = wxCumulateObj.getJSONObject(0).getString("ref_date");
             Long cumulateUser = wxCumulateObj.getJSONObject(0).getLong("cumulate_user");
 

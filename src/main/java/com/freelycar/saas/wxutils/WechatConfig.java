@@ -35,6 +35,7 @@ public class WechatConfig {
     public static final String ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
     public final static String REFUND_URL = "https://api.mch.weixin.qq.com/secapi/pay/refund";
     public final static String WECHAT_TEMPLATE_MESSAGE_URL = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token=";
+    public final static String WECHAT_CUSTOM_MESSAGE_URL = "https://api.weixin.qq.com/cgi-bin/message/custom/send?access_token=";
     //设置token 和 jsapi_ticket的过期时间 为一个半小时
     private final static int TIME_OUT = 5400 * 1000;
     private final static String ACCESS_TOKEN_URL = "https://api.weixin.qq.com/sns/oauth2/access_token";
@@ -312,4 +313,5 @@ public class WechatConfig {
 
         return resultObject;
     }
+
 }

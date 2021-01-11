@@ -27,7 +27,8 @@ public class MvcConfigurer implements WebMvcConfigurer {
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
         /*
-         * 1.ServletMappings 设置的是 "/" 2.setUseSuffixPatternMatch默认设置为true,
+         * 1.ServletMappings 设置的是 "/"
+         * 2.setUseSuffixPatternMatch默认设置为true,
          * 那么,"/user" 就会匹配 "/user.*",也就是说,"/user.html" 的请求会被 "/user" 的 Controller所拦截.
          * 3.如果该值为false,则不匹配
          */
