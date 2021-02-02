@@ -87,6 +87,15 @@ public class ResultJsonObject {
         return rj;
     }
 
+    public static ResultJsonObject getErrorResult(Object data, String message,Integer code) {
+        ResultJsonObject rj = new ResultJsonObject();
+        rj.setData(data);
+        rj.setCode(code);
+        rj.setMsg(message);
+        return rj;
+    }
+
+
     public static ResultJsonObject getErrorResult(Object data, String message) {
         ResultJsonObject rj = new ResultJsonObject();
         rj.setData(data);

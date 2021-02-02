@@ -56,7 +56,8 @@ public enum ResultCode {
     /* 微信接口错误：80001-89999 */
     NOT_FOUND_WXUSER(30, "无openId对应微信用户"),
     ORDER_ERROR(31, "微信下单接口失败"),
-    CALL_PORT_ERROR(32, "微信下单接口调用失败");
+    CALL_PORT_ERROR(32, "微信下单接口调用失败"),
+    GET_LOGIN_ACCESS_TOKEN_FAILURE(33, "获取登录access_token失败");
 
     private Integer code;
 

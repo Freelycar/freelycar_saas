@@ -2,6 +2,7 @@ package com.freelycar.saas.wechat.controller;
 
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.Constants;
+import com.freelycar.saas.basic.wrapper.ResultCode;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.WeChatException;
 import com.freelycar.saas.project.entity.Ark;
@@ -109,9 +110,9 @@ public class WeChatConfigController {
         try {
             jsonObject = WechatLoginUse.wechatInfo(code);
         } catch (WeChatException e) {
-            logger.error(e.getMessage(), e);
+            logger.error("获取access_token失败，微信接口返回信息：" + e.getMessage(), e);
             e.printStackTrace();
-            return ResultJsonObject.getErrorResult(null, e.getMessage());
+            return ResultJsonObject.getErrorResult(null, e.getMessage(), ResultCode.GET_LOGIN_ACCESS_TOKEN_FAILURE.code());
         }
         logger.info("通过微信接口去获取微信用户信息：");
         logger.info(jsonObject.toString());

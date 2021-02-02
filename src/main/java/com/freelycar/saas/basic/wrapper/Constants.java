@@ -283,4 +283,16 @@ public class Constants {
             return value;
         }
     }
+
+    public enum FeedBackType{
+        ABNORMAL_FUNCTION("功能异常"),
+        PRODUCT_SUGGESTION("产品建议"),
+        PAYMENT_ISSUE("支付问题"),
+        OTHER("其他");
+        private final String value;
+
+        FeedBackType(String value) {
+            this.value = value;
+        }
+    }
 }

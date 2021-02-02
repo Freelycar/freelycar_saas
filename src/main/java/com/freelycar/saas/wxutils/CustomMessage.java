@@ -38,7 +38,8 @@ public class CustomMessage {
      * @param openId
      */
     public static void remindToOrder(Ark ark, String openId) {
-        String url = "https://www.freelycar.com/wechat/role-select/" + ark.getSn();
+        Long currentTime = System.currentTimeMillis() / 1000;
+        String url = "https://www.freelycar.com/wechat/role-select/" + ark.getSn() + "?createTime=" + currentTime;
         String arkLocation = ark.getLocation();
         JSONObject params = new JSONObject();
         params.put("touser", openId);
@@ -46,10 +47,10 @@ public class CustomMessage {
         JSONObject news = new JSONObject();
         JSONArray articles = new JSONArray();
         JSONObject article = new JSONObject();
-        article.put("title","点击下单");
-        article.put("description",arkLocation);
-        article.put("url",url);
-        article.put("picurl","https://www.freelycar.com/upload/headimg/logo.jpg");
+        article.put("title", "点击下单");
+        article.put("description", arkLocation);
+        article.put("url", url);
+        article.put("picurl", "https://www.freelycar.com/upload/headimg/logo.jpg");
         articles.add(article);
         news.put("articles", articles);
         params.put("news", news);

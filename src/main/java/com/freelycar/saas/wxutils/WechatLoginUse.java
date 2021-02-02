@@ -22,7 +22,7 @@ public class WechatLoginUse {
 
         if (StringUtils.isEmpty(openid) || StringUtils.isEmpty(accessToken)) {
             log.error(resultJson);
-            throw new WeChatException("获取access_token失败，微信接口返回信息：" + resultJson);
+            throw new WeChatException(resultJson.toJSONString());
         }
 
         // 获取微信用户信息

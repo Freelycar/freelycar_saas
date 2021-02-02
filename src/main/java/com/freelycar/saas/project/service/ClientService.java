@@ -198,15 +198,15 @@ public class ClientService {
                     "AND c.delStatus = FALSE ");
             StringBuilder sql3 = new StringBuilder();
             if (StringUtils.hasText(licensePlate)) {
-                sql3.append("AND r.plates LIKE '%").append(licensePlate).append("%' ");
+                sql3.append("AND c.id in (SELECT DISTINCT(clientId) FROM car WHERE licensePlate like '%").append(licensePlate).append("%') ");
             }
             if (StringUtils.hasText(name)) {
-                sql3.append("AND r.name LIKE '%").append(name).append("%' ");
+                sql3.append("AND c.name LIKE '%").append(name).append("%' ");
             }
             if (StringUtils.hasText(phone)) {
-                sql3.append("AND r.phone LIKE '%").append(phone).append("%'  ");
+                sql3.append("AND c.phone LIKE '%").append(phone).append("%'  ");
             }
-            sql.append(sql3.substring(3));
+            sql.append(sql3);
         } else {
             sql.append("SELECT COUNT(1) \n" +
                     "FROM client c WHERE \n" +
