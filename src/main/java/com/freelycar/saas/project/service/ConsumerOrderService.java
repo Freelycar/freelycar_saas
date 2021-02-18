@@ -2784,7 +2784,7 @@ public class ConsumerOrderService {
             sql.append("SELECT s.name,SUM(co.actualPrice) FROM consumerorder co \n" +
                     "LEFT JOIN store s ON s.id = co.storeId \n" +
                     "WHERE \n" +
-                    "co.delStatus = FALSE AND co.state = 3 AND co.payState = 2 ")
+                    "co.delStatus = FALSE AND (co.state = 3 or co.state = 2) AND co.payState = 2 ")
                     .append("AND co.createTime > '").append(startTime).append("' \n" +
                     "AND co.createTime < '").append(endTime).append("'\n" +
                     "GROUP BY co.storeId");
@@ -2833,7 +2833,7 @@ public class ConsumerOrderService {
                     "SELECT co.*,cpi.projectId FROM `consumerorder` co \n" +
                     "LEFT JOIN consumerprojectinfo cpi ON co.id = cpi.consumerOrderId\n" +
                     "WHERE co.storeId = '")
-                    .append(storeId).append("' AND co.orderType = 2 AND co.state = 3 AND co.delStatus = FALSE\n" +
+                    .append(storeId).append("' AND co.orderType = 2 AND (co.state = 3 or co.state = 2) AND co.delStatus = FALSE\n" +
                     "AND co.createTime >= '")
                     .append(startTime).append("' AND co.createTime <= '").append(endTime).append("'\n" +
                     ") t GROUP BY t.projectId");
@@ -2912,42 +2912,42 @@ public class ConsumerOrderService {
                     "LEFT JOIN rspproject p ON cpi.projectId = p.id\n" +
                     "LEFT JOIN realserviceprovider rsp ON rsp.id = p.rspId\n" +
                     "WHERE \n" +
-                    "co.delStatus = FALSE AND co.state = 3  AND co.payState = 2) r GROUP BY r.name");
+                    "co.delStatus = FALSE AND (co.state = 3 or co.state = 2)  AND co.payState = 2) r GROUP BY r.name");
             EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
             Query nativeQuery = em.createNativeQuery(sql.toString());
             nativeQuery.unwrap(NativeQuery.class);
             @SuppressWarnings({"unused", "unchecked"})
             List res = nativeQuery.getResultList();
             em.close();
+            List resList0 = new ArrayList();
             for (Object o :
                     res) {
                 Object[] oo1 = (Object[]) o;
-                if (StringUtils.isEmpty(oo1[0])) {
-                    res.remove(oo1);
-                }
+                if (StringUtils.isEmpty(oo1[0])) continue;
+                resList0.add(oo1);
             }
-            for (int i = 0; i < res.size() - 1; i++) {
-                for (int j = i + 1; j < res.size(); j++) {
-                    Object[] oo1 = (Object[]) res.get(i);
+            for (int i = 0; i < resList0.size() - 1; i++) {
+                for (int j = i + 1; j < resList0.size(); j++) {
+                    Object[] oo1 = (Object[]) resList0.get(i);
                     Double value1 = (Double) oo1[1];
 
-                    Object[] oo2 = (Object[]) res.get(j);
+                    Object[] oo2 = (Object[]) resList0.get(j);
                     Double value2 = (Double) oo2[1];
                     if (value1 < value2) {
-                        Collections.swap(res, i, j);
+                        Collections.swap(resList0, i, j);
                     }
                 }
             }
             BigDecimal sum = new BigDecimal("0");
             for (Object o :
-                    res) {
+                    resList0) {
                 Object[] oo = (Object[]) o;
                 BigDecimal bg = new BigDecimal((Double) oo[1]);
                 sum = sum.add(bg);
             }
             List resList = new ArrayList();
             for (Object o :
-                    res) {
+                    resList0) {
                 Object[] oo = (Object[]) o;
                 BigDecimal bg = new BigDecimal((Double) oo[1]);
                 Double value = bg.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
@@ -2970,7 +2970,7 @@ public class ConsumerOrderService {
                     "LEFT JOIN rspproject p ON cpi.projectId = p.id\n" +
                     "LEFT JOIN realserviceprovider rsp ON rsp.id = p.rspId\n" +
                     "WHERE \n" +
-                    "co.delStatus = FALSE AND co.state = 3  AND co.payState = 2 AND rsp.id = '").append(rspId).append("'\n" +
+                    "co.delStatus = FALSE AND (co.state = 3 or co.state = 2)  AND co.payState = 2 AND rsp.id = '").append(rspId).append("'\n" +
                     ") r GROUP BY r.name");
             EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
             Query nativeQuery = em.createNativeQuery(sql.toString());
