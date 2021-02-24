@@ -49,6 +49,7 @@ repositories {
 }
 
 dependencies {
+    implementation 'junit:junit:4.12'
     compile('org.springframework.boot:spring-boot-starter-actuator')
     compile('org.springframework.boot:spring-boot-starter-aop')
     compile('org.springframework.boot:spring-boot-starter-data-jpa')
@@ -115,6 +116,8 @@ dependencies {
     // https://mvnrepository.com/artifact/cn.leancloud/storage-core
     compile group: 'cn.leancloud', name: 'storage-core', version: '6.5.12'
 
+    compile group: 'com.github.ulisesbocchio', name: 'jasypt-spring-boot-starter', version: '3.0.3'
+
 
     // devtools
     compile('org.springframework.boot:spring-boot-devtools')
@@ -145,7 +148,7 @@ remotes {
 //        host = '124.70.190.179'
         user = 'Administrator'
         // 支持password、rsa等方式登录
-        password = ''
+        password = 'Freelycar@2019'
 //        identity = file("${rootDir}/id_rsa")
     }
 }

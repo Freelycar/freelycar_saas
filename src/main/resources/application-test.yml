@@ -30,5 +30,5 @@ swagger:
 # 自定义的上传路径和映射路径参数
 upload:
   picture:
-    path: C:\nginx\html\upload
+    path: C:\nginx\nginx-1.18.0\html\upload
     url: http://124.70.190.179/upload
