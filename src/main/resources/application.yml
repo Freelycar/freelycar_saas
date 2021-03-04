@@ -51,3 +51,6 @@ edaijia:
   order: https://baoyang.d.edaijia.cn/api/third/2/order/
   channel: 91
   customerId: CH0110000223
+jasypt:
+  encryptor:
+    password: freelycar@

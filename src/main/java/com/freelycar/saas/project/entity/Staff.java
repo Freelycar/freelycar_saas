@@ -55,6 +55,9 @@ public class Staff implements Serializable {
     private String openId;
 
     @Column
+    private String unionId;
+
+    @Column
     private String storeId;
 
     @Column

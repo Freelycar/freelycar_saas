@@ -1,5 +1,6 @@
 package com.freelycar.saas.project.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.ArgumentMissingException;
@@ -18,6 +19,7 @@ import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import com.freelycar.saas.wechat.model.PersonalInfo;
 import com.freelycar.saas.wechat.model.WeChatUser;
+import com.freelycar.saas.wxutils.WechatConfig;
 import org.hibernate.query.NativeQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -411,25 +413,37 @@ public class WxUserInfoService {
      * @param nickName
      * @return
      */
-    public ResultJsonObject wechatLogin(String phone, String openId, String headimgurl, String nickName) {
+    public ResultJsonObject wechatLogin(
+            String phone, String openId, String unionid,
+            String headimgurl, String nickName) {
         nickName = NicknameFilter.filter4BytesUTF8(nickName);
+        //根据phone查询微信用户是否已存在
         WxUserInfo wxUser = wxUserInfoRepository.findWxUserInfoByDelStatusAndPhone(Constants.DelStatus.NORMAL.isValue(), phone);
-        WxUserInfo res;
+        WxUserInfo res;//更新后微信用户/新的微信用户
         if (wxUser == null) {
             //新用户，保存其信息
             WxUserInfo wxUserNew = new WxUserInfo();
             wxUserNew.setPhone(phone);
-            wxUserNew.setHeadImgUrl(headimgurl);
-            wxUserNew.setNickName(nickName);
+            if (!StringUtils.isEmpty(headimgurl)) {
+                wxUserNew.setHeadImgUrl(headimgurl);
+            }
+            if (!StringUtils.isEmpty(nickName)) {
+                wxUserNew.setNickName(nickName);
+            }
             wxUserNew.setOpenId(openId);
+            wxUserNew.setUnionid(unionid);
             res = this.modify(wxUserNew);
         } else {
             //登录过的用户，更新其微信信息
-            wxUser.setHeadImgUrl(headimgurl);
-            wxUser.setNickName(nickName);
+            if (!StringUtils.isEmpty(headimgurl)) {
+                wxUser.setHeadImgUrl(headimgurl);
+            }
+            if (!StringUtils.isEmpty(nickName)) {
+                wxUser.setNickName(nickName);
+            }
             wxUser.setOpenId(openId);
+            wxUser.setUnionid(unionid);
             res = wxUserInfoRepository.save(wxUser);
-
             try {
                 // 如果trueName不为空，更新其所有client中所有相关
                 String trueName = res.getTrueName();
@@ -674,4 +688,30 @@ public class WxUserInfoService {
         }
         return ResultJsonObject.getDefaultResult(cumulateOrderList1);
     }
+
+    /*public void updateWxUserInfo() {
+        List<WxUserInfo> wxUserInfoList = wxUserInfoRepository.findAll();
+        for (WxUserInfo info :
+                wxUserInfoList) {
+            String openId = info.getOpenId();
+            String phone = info.getPhone();
+            logger.info(openId + ":" + phone);
+            if (null == openId || null == phone) continue;
+            JSONObject wxinfo = WechatConfig.getWxUserInfo(openId);
+            if (null != wxinfo
+                    && null != wxinfo.get("subscribe")
+                    && wxinfo.getInteger("subscribe") == 1) {
+                String unionId = wxinfo.getString("unionid");
+                String headimgurl = wxinfo.getString("headimgurl");
+                String nickname = wxinfo.getString("nickname");
+                nickname = NicknameFilter.filter4BytesUTF8(nickname);
+
+                if (null != unionId) info.setUnionid(unionId);
+                if (null != headimgurl) info.setHeadImgUrl(headimgurl);
+                if (null != nickname) info.setNickName(nickname);
+                wxUserInfoRepository.saveAndFlush(info);
+                logger.info("更新：{}", nickname);
+            }
+        }
+    }*/
 }

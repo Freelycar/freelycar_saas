@@ -73,13 +73,13 @@ public class ClientService {
     public ResultJsonObject addClientAndCar(Client client, Car car) throws CarNumberValidationException {
         //非空验证
         if (null == client || null == car) {
-            return ResultJsonObject.getErrorResult("保存失败！客户信息或车辆信息为空！");
+            return ResultJsonObject.getErrorResult(null, "保存失败！客户信息或车辆信息为空！");
         }
 
         //保存用户信息
         Client clientRes = this.saveOrUpdate(client);
         if (null == clientRes) {
-            return ResultJsonObject.getErrorResult("保存失败！保存客户信息失败！");
+            return ResultJsonObject.getErrorResult(null, "保存失败！保存客户信息失败！");
         }
         String clientId = clientRes.getId();
         car.setClientId(clientId);
@@ -88,7 +88,7 @@ public class ClientService {
         Car carRes = carService.saveOrUpdate(car);
 
         if (null == carRes) {
-            return ResultJsonObject.getErrorResult("保存失败！保存车辆信息失败！");
+            return ResultJsonObject.getErrorResult(null, "保存失败！保存车辆信息失败！");
         }
 
         //组装成对应model返回到前台

@@ -34,13 +34,14 @@ public class CardController {
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             e.printStackTrace();
-            return ResultJsonObject.getErrorResult("生成会员卡购买单据失败，无法开卡。");
+            return ResultJsonObject.getErrorResult(null, "生成会员卡购买单据失败，无法开卡。");
 
         }
     }
 
     /**
      * 获取会员卡详情
+     *
      * @param id
      * @return
      */

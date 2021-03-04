@@ -18,4 +18,6 @@ public class StaffLogin {
     private String password;
 
     private String openId;
+
+    private String unionId;
 }

@@ -43,6 +43,12 @@ public class WeChatConfigController {
 
     private ArkRepository arkRepository;
     private StoreRepository storeRepository;
+    private MiniProgramUtils utils;
+
+    @Autowired
+    public void setUtils(MiniProgramUtils utils) {
+        this.utils = utils;
+    }
 
     @Autowired
     public void setArkRepository(ArkRepository arkRepository) {
@@ -136,6 +142,11 @@ public class WeChatConfigController {
     @PostMapping("/getAccessToken")
     public JSONObject getAccessToken() {
         return WechatConfig.getAccessTokenForInteface();
+    }
+
+    @PostMapping("/getAccessTokenForMini")
+    public JSONObject getAccessTokenForMini() {
+        return utils.getAccessTokenForInteface();
     }
 
     @GetMapping(value = "/verify")
@@ -242,4 +253,20 @@ public class WeChatConfigController {
         }
         out.close();
     }*/
+
+    @GetMapping(value = "/code2Session")
+    public ResultJsonObject code2Session(String code) {
+        // 获取微信用户信息
+        JSONObject jsonObject;
+        try {
+            jsonObject = utils.code2Session(code);
+        } catch (RuntimeException e) {
+            logger.error("获取access_token失败，微信接口返回信息：" + e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage(), ResultCode.GET_LOGIN_ACCESS_TOKEN_FAILURE.code());
+        }
+        logger.info("通过微信接口去获取微信用户信息：");
+        logger.info(jsonObject.toString());
+        return ResultJsonObject.getDefaultResult(jsonObject);
+    }
 }

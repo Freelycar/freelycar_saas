@@ -51,6 +51,7 @@ public class WechatLoginUse {
         String headImgUrl = userInfoJson.getString("headimgurl");
         String province = userInfoJson.getString("province");
         String city = userInfoJson.getString("city");
+        String unionid = userInfoJson.getString("unionid");
 
         wechatInfo.put("subscribe", subscribe);
         wechatInfo.put("openid", openid);
@@ -59,6 +60,7 @@ public class WechatLoginUse {
         wechatInfo.put("headimgurl", headImgUrl);
         wechatInfo.put("province", province);
         wechatInfo.put("city", city);
+        wechatInfo.put("unionid", unionid);
 
         return wechatInfo;
 

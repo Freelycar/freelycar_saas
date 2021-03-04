@@ -86,9 +86,8 @@ public class WeChatLoginController {
         if (flag[0]) {
             return ResultJsonObject.getDefaultResult(null);
         } else {
-            return ResultJsonObject.getErrorResult(message[0]);
+            return ResultJsonObject.getErrorResult(null, message[0]);
         }
-
     }
 
 
@@ -133,13 +132,20 @@ public class WeChatLoginController {
             @RequestParam String phone,
             @RequestParam String smscode,
             @RequestParam String openId,
-            @RequestParam String headimgurl,
-            @RequestParam String nickName) {
+            @RequestParam(required = false) String unionid,
+            @RequestParam(required = false) String headimgurl,
+            @RequestParam(required = false) String nickName) {
         log.info("验证短信码方法接收到的微信用户信息：");
         log.info("openId:" + openId);
-        log.info("headimgurl:" + headimgurl);
-        log.info("nickName:" + nickName);
-
+        if (null != unionid) {
+            log.info("unionid:" + unionid);
+        }
+        if (null != headimgurl) {
+            log.info("headimgurl:" + headimgurl);
+        }
+        if (null != nickName) {
+            log.info("nickName:" + nickName);
+        }
         //添加后台验证，阻断前端传送字符串“undefined”到后台
         if (StringUtils.hasText(openId) && "undefined".equalsIgnoreCase(openId)) {
             String paramMsg = "接收到参数openId为undefined，请重新微信授权后再试。";
@@ -153,7 +159,7 @@ public class WeChatLoginController {
             log.error(phone + ";code:" + smscode + " 验证失败。。。");
             return ResultJsonObject.getErrorResult(json, json.getString("error"));
         } else {
-            return wxUserInfoService.wechatLogin(phone, openId, headimgurl, nickName);
+            return wxUserInfoService.wechatLogin(phone, openId, unionid, headimgurl, nickName);
         }
     }
 

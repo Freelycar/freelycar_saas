@@ -31,6 +31,7 @@ public class WeChatStaffController {
         String account = staffLogin.getAccount();
         String password = staffLogin.getPassword();
         String openId = staffLogin.getOpenId();
+        String unionId = staffLogin.getUnionId();
 
         if (StringUtils.isEmpty(account) || StringUtils.isEmpty(password)) {
             return ResultJsonObject.getErrorResult(null, "登录失败：接收到的参数中，用户名或密码为空。");
@@ -38,7 +39,7 @@ public class WeChatStaffController {
         if (StringUtils.isEmpty(openId)) {
             return ResultJsonObject.getErrorResult(null, "登录失败：接收到的参数中，openId为空。注意：这会影响消息推送。");
         }
-        return staffService.login(account, password, openId);
+        return staffService.login(account, password, openId, unionId);
     }
 
     @GetMapping("/logout")

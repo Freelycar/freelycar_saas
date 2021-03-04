@@ -118,7 +118,7 @@ public class StaffService {
             return ResultJsonObject.getDefaultResult(staffRepository.saveAndFlush(staff));
         } catch (Exception e) {
 //            e.printStackTrace();
-            return ResultJsonObject.getErrorResult(null);
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
         }
     }
 
@@ -505,7 +505,7 @@ public class StaffService {
      * @param password
      * @return
      */
-    public ResultJsonObject login(String account, String password, String openId) {
+    public ResultJsonObject login(String account, String password, String openId, String unionId) {
         if (StringUtils.isEmpty(account)) {
             logger.error("登录失败，参数account为空！");
             return ResultJsonObject.getErrorResult(null, "登录失败，参数account为空！");
@@ -518,6 +518,7 @@ public class StaffService {
         if (null != staff) {
             //更新openId到数据库（用于推送消息）
             staff.setOpenId(openId);
+            staff.setUnionId(unionId);
             modify(staff);
             String jwt = TokenAuthenticationUtil.generateAuthentication(staff.getId());
             return ResultJsonObject.getDefaultResult(new WeChatStaff(jwt, staff));

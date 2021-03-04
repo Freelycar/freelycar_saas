@@ -75,6 +75,12 @@ public class WxUserInfo implements Serializable {
     private String openId;
 
     /**
+     * unionid
+     */
+    @Column
+    private String unionid;
+
+    /**
      * 手机号（作为与client表数据对应的唯一凭证）
      */
     @Column(length = 20)
@@ -125,6 +131,8 @@ public class WxUserInfo implements Serializable {
                 .append(trueName).append('\"');
         sb.append(",\"openId\":\"")
                 .append(openId).append('\"');
+        sb.append(",\"unionid\":\"")
+                .append(unionid).append('\"');
         sb.append(",\"phone\":\"")
                 .append(phone).append('\"');
         sb.append(",\"delStatus\":")
@@ -193,6 +201,14 @@ public class WxUserInfo implements Serializable {
 
     public void setOpenId(String openId) {
         this.openId = openId;
+    }
+
+    public String getUnionid() {
+        return unionid;
+    }
+
+    public void setUnionid(String unionid) {
+        this.unionid = unionid;
     }
 
     public String getPhone() {
