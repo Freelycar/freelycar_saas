@@ -57,6 +57,7 @@ dependencies {
     compile('org.springframework.boot:spring-boot-starter-web')
     compile('org.springframework.boot:spring-boot-starter-cache')
     compile('org.springframework.boot:spring-boot-starter-websocket')
+    compile('org.springframework.boot:spring-boot-configuration-processor')
 //    compile('org.springframework.boot:spring-boot-starter-thymeleaf')
 
     compile('mysql:mysql-connector-java')

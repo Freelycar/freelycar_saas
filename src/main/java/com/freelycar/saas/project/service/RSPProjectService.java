@@ -49,6 +49,8 @@ import static com.freelycar.saas.basic.wrapper.ResultCode.RESULT_DATA_NONE;
 @Service
 @Transactional(rollbackFor = Exception.class)
 public class RSPProjectService {
+    private StoreRepository storeRepository;
+
     private RSPProjectRepository rspProjectRepository;
 
     private RealServiceProviderRepository realServiceProviderRepository;
@@ -62,6 +64,11 @@ public class RSPProjectService {
     private RspProjectStoreRepository rspProjectStoreRepository;
 
     private RealServiceProviderService realServiceProviderService;
+
+    @Autowired
+    public void setStoreRepository(StoreRepository storeRepository) {
+        this.storeRepository = storeRepository;
+    }
 
     @Autowired
     public void setRealServiceProviderService(RealServiceProviderService realServiceProviderService) {
@@ -137,6 +144,7 @@ public class RSPProjectService {
 
     /**
      * 服务商项目新增/修改
+     * modify: 服务商开通网点功能情况下，新增项目即上架网点
      */
     public RSPProject add(RSPProject project) throws DataIsExistException, ArgumentMissingException, ObjectNotFoundException {
         if (project != null && !StringUtils.isEmpty(project.getId())) {
@@ -158,10 +166,22 @@ public class RSPProjectService {
             if (rspProjectList.size() > 0) {
                 throw new DataIsExistException("已包含名称为：“" + name + "”的数据，不能重复添加。");
             } else {
+                //1.新增项目
                 project.setCreateTime(new Timestamp(System.currentTimeMillis()));
                 project.setDelStatus(Constants.DelStatus.NORMAL.isValue());
                 project.setSort(generateSort(project.getRspId()));
                 project = rspProjectRepository.save(project);
+                //2.上架
+                //2.1 查找服务商关联网点
+                Set<String> storeIdSet = rspStoreSortRepository.findStoreIdByRspId(project.getRspId());
+                List<Store> storeList = storeRepository.findByDelStatusAndIdIn(Constants.DelStatus.NORMAL.isValue(), new ArrayList<>(storeIdSet));
+                List<String> projectIds = new ArrayList<>();
+                projectIds.add(project.getId());
+                //2.2 上架项目
+                for (Store store :
+                        storeList) {
+                    storeBookOnlineProject(store.getId(), projectIds);
+                }
                 return project;
             }
         } else {
@@ -190,6 +210,13 @@ public class RSPProjectService {
      */
     public Page<RSPProject> list(String name, Integer currentPage, Integer pageSize, String rspId) {
         return rspProjectRepository.findByDelStatusAndNameContainingAndRspIdOrderBySortAsc(Constants.DelStatus.NORMAL.isValue(), name, rspId, PageableTools.basicPage(currentPage, pageSize));
+    }
+
+    /**
+     * 服务商下全部项目id
+     */
+    public List<String> list(String rspId) {
+        return rspProjectRepository.findIdByDelStatusAndRspId(Constants.DelStatus.NORMAL.isValue(), rspId);
     }
 
     /**

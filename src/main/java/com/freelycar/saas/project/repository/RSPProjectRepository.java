@@ -37,5 +37,8 @@ public interface RSPProjectRepository extends JpaRepository<RSPProject, String> 
 
     RSPProject findTopByRspIdAndDelStatusAndSortIsNotNullOrderBySortDesc(String rspId, boolean delStatus);
 
+    @Query(value = "select id from RSPProject where delStatus = :delStatus and rspId = :rspId", nativeQuery = true)
+    List<String> findIdByDelStatusAndRspId(boolean delStatus, String rspId);
+
     Page<RSPProject> findByDelStatusAndNameContainingAndRspIdOrderBySortAsc(boolean delStatus, String name, String rspId, Pageable pageable);
 }

@@ -36,6 +36,13 @@ public class RSPStoreService {
 
     private RSPStoreSortRepository rspStoreSortRepository;
 
+    private RSPProjectService rspProjectService;
+
+    @Autowired
+    public void setRspProjectService(RSPProjectService rspProjectService) {
+        this.rspProjectService = rspProjectService;
+    }
+
     @Autowired
     public void setRspStoreSortRepository(RSPStoreSortRepository rspStoreSortRepository) {
         this.rspStoreSortRepository = rspStoreSortRepository;
@@ -102,6 +109,9 @@ public class RSPStoreService {
      * @return
      */
     public ResultJsonObject openArk(String[] ids, String rspId) {
+        List<String> projectIds = rspProjectService.list(rspId);
+        boolean flag = false;
+        if (projectIds.size() > 0) flag = true;
         //开通网点功能并排序
         for (int i = 0; i < ids.length; i++) {
             String storeId = ids[i];
@@ -113,6 +123,8 @@ public class RSPStoreService {
                 sort.setSort(this.generateSort(ids[i]));
                 rspStoreSortRepository.saveAndFlush(sort);
             }
+            //服务商下项目在网点上架
+            if (flag) rspProjectService.storeBookOnlineProject(storeId, projectIds);
         }
         return ResultJsonObject.getDefaultResult(null);
     }
@@ -142,8 +154,13 @@ public class RSPStoreService {
      * @return
      */
     public ResultJsonObject closeArk(String[] ids, String rspId) {
+        //下架网点的服务商项目
+        List<String> projectIds = rspProjectService.list(rspId);
+        boolean flag = false;
+        if (projectIds.size() > 0) flag = true;
         for (int i = 0; i < ids.length; i++) {
             rspStoreSortRepository.deleteByStoreIdAndRspId(ids[i], rspId);
+            if (flag) rspProjectService.storeBookOfflineProject(ids[i], projectIds);
         }
         //服务商下技师
         /*Set<String> idSet = new HashSet<>(Arrays.asList(ids));//待删除门店id
