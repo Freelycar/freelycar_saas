@@ -149,7 +149,7 @@ remotes {
 //        host = '124.70.190.179'
         user = 'Administrator'
         // 支持password、rsa等方式登录
-        password = 'Freelycar@2019'
+        password = ''
 //        identity = file("${rootDir}/id_rsa")
     }
 }
