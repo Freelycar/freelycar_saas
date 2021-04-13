@@ -1,6 +1,5 @@
 package com.freelycar.saas.project.service;
 
-import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.ArgumentMissingException;
@@ -19,7 +18,6 @@ import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import com.freelycar.saas.wechat.model.PersonalInfo;
 import com.freelycar.saas.wechat.model.WeChatUser;
-import com.freelycar.saas.wxutils.WechatConfig;
 import org.hibernate.query.NativeQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,6 +81,24 @@ public class WxUserInfoService {
 //    }
 
     /**
+     * 使用手机号注册微信用户
+     *
+     * @param phone
+     * @return
+     */
+    public WxUserInfo register(String phone) {
+        WxUserInfo wxUser = wxUserInfoRepository.findWxUserInfoByDelStatusAndPhone(Constants.DelStatus.NORMAL.isValue(), phone);
+        if (wxUser == null) {
+            //新用户，保存其信息
+            WxUserInfo wxUserNew = new WxUserInfo();
+            wxUserNew.setPhone(phone);
+            wxUserNew = this.modify(wxUserNew);
+            return wxUserNew;
+        }
+        return null;
+    }
+
+    /**
      * 查找微信用户对象
      *
      * @param id
@@ -106,12 +122,12 @@ public class WxUserInfoService {
             return ResultJsonObject.getErrorResult(id, "找不到id为：" + id + "的微信用户信息。");
         }
         //查找默认门店下的车辆信息
-        List<Car> carList = null;
-        String clientId = wxUserInfo.getDefaultClientId();
+        List<Car> carList = carRepository.findByWxUserIdAndDelStatus(id, Constants.DelStatus.NORMAL.isValue());
+        /*String clientId = wxUserInfo.getDefaultClientId();
         String storeId = wxUserInfo.getDefaultStoreId();
         if (!StringUtils.isEmpty(clientId) && !StringUtils.isEmpty(storeId)) {
             carList = carRepository.findByStoreIdAndClientIdAndDelStatus(storeId, clientId, Constants.DelStatus.NORMAL.isValue());
-        }
+        }*/
         //查询这个用户有没有订单，如果有订单，则不享受新人优惠
         boolean preferential = false;
         String phone = wxUserInfo.getPhone();
@@ -145,11 +161,11 @@ public class WxUserInfoService {
         PersonalInfo personalInfo = new PersonalInfo();
 
         //获取车辆信息
-
-        List<Car> carList = null;
-//        Float carBalance = null;
-        String defaultStoreId = wxUserInfo.getDefaultStoreId();
         String phone = wxUserInfo.getPhone();
+        List<Car> carList = carRepository.findByWxUserIdAndDelStatus(id, Constants.DelStatus.NORMAL.isValue());
+//        Float carBalance = null;
+        /*String defaultStoreId = wxUserInfo.getDefaultStoreId();
+
         if (StringUtils.isEmpty(defaultStoreId)) {
             //未选择默认门店，查询出来的车辆是去重的，后续相关操作需要以车牌号为基准
             //未选择默认门店，不显示
@@ -174,7 +190,7 @@ public class WxUserInfoService {
             } else {
                 carList = carRepository.listCarsByStoreIdAndPhone(defaultStoreId, phone);
             }
-        }
+        }*/
 
         //查询这个用户有没有订单，如果有订单，则不享受新人优惠
         boolean preferential = false;
@@ -198,6 +214,7 @@ public class WxUserInfoService {
      *
      * @param wxUserInfo
      * @return
+     * @modify 2021.03.26 Car修改为与WxUserInfo关联，取消与Client关联，同步车辆步骤去除
      */
     public ResultJsonObject chooseDefaultStore(WxUserInfo wxUserInfo) {
         String wxUserId = wxUserInfo.getId();
@@ -245,7 +262,7 @@ public class WxUserInfoService {
                 Client newClient = clientService.copyNewObjectForOtherStore(otherStoreClient, defaultStoreId);
                 client = clientService.saveOrUpdate(newClient);
                 // 同步车辆
-                List<Car> sourceCars = carService.listClientCars(otherStoreClient.getId());
+                /*List<Car> sourceCars = carService.listClientCars(otherStoreClient.getId());
                 for (Car sourceCar : sourceCars) {
                     Car targetCar = carService.copyNewObjectForOtherStore(sourceCar, client);
                     try {
@@ -254,10 +271,11 @@ public class WxUserInfoService {
                         logger.error(e.getMessage());
                         e.printStackTrace();
                     }
-                }
+                }*/
 
             }
-        } else {
+        }
+        /*else {
             // 如果已经存在client数据，需要同步其车辆数据
             // 先获取当前的defaultClientId，已这个client对象的car为标准去做添加或删除
             //马上要切换为默认门店的client的名下的车
@@ -314,7 +332,7 @@ public class WxUserInfoService {
                 }
 
             }
-        }
+        }*/
 
         String clientId = client.getId();
         wxUserInfo.setDefaultClientId(clientId);

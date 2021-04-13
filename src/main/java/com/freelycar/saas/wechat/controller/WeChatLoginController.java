@@ -7,6 +7,7 @@ import cn.leancloud.types.AVNull;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
+import com.freelycar.saas.project.entity.WxUserInfo;
 import com.freelycar.saas.project.service.WxUserInfoService;
 import com.freelycar.saas.wxutils.HttpRequest;
 import io.reactivex.Observer;
@@ -38,6 +39,17 @@ public class WeChatLoginController {
     @Autowired
     private WxUserInfoService wxUserInfoService;
     private Logger log = LogManager.getLogger(WeChatLoginController.class);
+
+    //活动：用户注册
+    @PostMapping("/register")
+    public ResultJsonObject register(
+            @RequestParam String phone) {
+        WxUserInfo wxUserInfo = wxUserInfoService.register(phone);
+        if (null == wxUserInfo) {
+            return ResultJsonObject.getErrorResult(null, "已领取");
+        }
+        return ResultJsonObject.getDefaultResult(null, "领取成功");
+    }
 
     //发送短信验证码请求
     @RequestMapping(value = "/getSmsCode", method = RequestMethod.POST)
@@ -86,7 +98,7 @@ public class WeChatLoginController {
         if (flag[0]) {
             return ResultJsonObject.getDefaultResult(null);
         } else {
-            return ResultJsonObject.getErrorResult(null, message[0]);
+            return ResultJsonObject.getErrorResult(null, "短信发送过快，请稍后重试。");
         }
     }
 

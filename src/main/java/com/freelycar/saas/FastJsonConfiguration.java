@@ -3,9 +3,12 @@ package com.freelycar.saas;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alibaba.fastjson.support.config.FastJsonConfig;
 import com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.ArrayList;
@@ -17,8 +20,14 @@ import java.util.List;
  */
 @Configuration
 public class FastJsonConfiguration implements WebMvcConfigurer {
+    @Bean
+    public StringHttpMessageConverter stringHttpMessageConverter() {
+        return new StringHttpMessageConverter();
+    }
+
     /**
      * 修改自定义消息转换器
+     *
      * @param converters 消息转换器列表
      */
     @Override
@@ -34,6 +43,7 @@ public class FastJsonConfiguration implements WebMvcConfigurer {
                 SerializerFeature.WriteNullStringAsEmpty,
                 SerializerFeature.WriteDateUseDateFormat
         );
+
         fastConverter.setFastJsonConfig(fastJsonConfig);
 
         //显示声明支持的MediaType
@@ -57,7 +67,16 @@ public class FastJsonConfiguration implements WebMvcConfigurer {
         supportedMediaTypes.add(MediaType.TEXT_XML);
         fastConverter.setSupportedMediaTypes(supportedMediaTypes);
 
+        //字符串转换器
+        List<MediaType> listString = new ArrayList<>();
+        //字符串的消息类型为text/plain
+        listString.add(MediaType.TEXT_PLAIN);
+        listString.add(MediaType.APPLICATION_JSON_UTF8);
+        StringHttpMessageConverter stringHttpMessageConverter = new StringHttpMessageConverter();
+        stringHttpMessageConverter.setSupportedMediaTypes(listString);
+
         //将fastjson添加到视图消息转换器列表内
+        converters.add(stringHttpMessageConverter);
         converters.add(fastConverter);
     }
 }

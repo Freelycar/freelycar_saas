@@ -2669,6 +2669,7 @@ public class ConsumerOrderService {
             Object[] objs = (Object[]) year1.get(i);
             sum += (double) objs[1];
         }
+        //去年12月数据
         List year2 = getMongthlyIncomeByYear((Integer.valueOf(year) - 1) + "");
         //计算环比
         JSONArray m2m = new JSONArray();
@@ -2693,7 +2694,7 @@ public class ConsumerOrderService {
                 }
             }
             double value = 0;
-            if (value2 > 0 && value1 > 0) {
+            if (value2 > 0) {
                 value = (double) Math.round((value1 - value2) / value2 * 100) / 100;
             }
             Object[] res = {month1, value};

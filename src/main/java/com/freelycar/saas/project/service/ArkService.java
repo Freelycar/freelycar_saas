@@ -4,13 +4,16 @@ import com.freelycar.saas.basic.wrapper.*;
 import com.freelycar.saas.exception.*;
 import com.freelycar.saas.project.entity.Ark;
 import com.freelycar.saas.project.entity.Door;
+import com.freelycar.saas.project.model.ArkStore;
 import com.freelycar.saas.project.repository.ArkRepository;
 import com.freelycar.saas.project.repository.ConsumerOrderRepository;
 import com.freelycar.saas.project.repository.DoorRepository;
 import com.freelycar.saas.util.UpdateTool;
+import com.freelycar.saas.wxutils.HttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,7 +22,9 @@ import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author tangwei - Toby
@@ -41,8 +46,11 @@ public class ArkService {
     @Autowired
     private DoorService doorService;
 
-    public Ark findByArkSn(String arkSn){
-        return arkRepository.findTopBySnAndDelStatus(arkSn,Constants.DelStatus.NORMAL.isValue());
+    @Value("${device.webList.url}")
+    private String deviceWebListUrl;
+
+    public Ark findByArkSn(String arkSn) {
+        return arkRepository.findTopBySnAndDelStatus(arkSn, Constants.DelStatus.NORMAL.isValue());
     }
 
     public ResultJsonObject getCurrentArkLocation(String arkSn) {
@@ -60,6 +68,7 @@ public class ArkService {
      * 检查柜子是否满足下单条件:
      * 1.柜子空着
      * 2.未故障柜门数>进行中订单数
+     *
      * @param arkSn
      * @return
      */
@@ -209,5 +218,25 @@ public class ArkService {
             return arkRepository.findAllByStoreIdAndSnContainingAndDelStatus(storeId, arkSn, Constants.DelStatus.NORMAL.isValue(), pageable);
         }
         return arkRepository.findAllBySnContainingAndDelStatus(arkSn, Constants.DelStatus.NORMAL.isValue(), pageable);
+    }
+
+    public String getOfflineDevices() {
+        StringBuilder sb = new StringBuilder();
+        List<ArkStore> arkSnList = arkRepository.findSnByDelStatus(Constants.DelStatus.NORMAL.isValue());
+        String pre_result = HttpRequest.getCall(deviceWebListUrl, null, null);
+        Set<String> result = new HashSet<>();
+        for (int i = 0; i < pre_result.length() / 15; i++) {
+            result.add(pre_result.substring(i * 15, (i + 1) * 15));
+        }
+        for (ArkStore arkStore :
+                arkSnList) {
+            if (!result.contains(arkStore.getSn())) {
+
+                sb.append(arkStore.getSn()).append(",");
+                sb.append(arkStore.getName()).append(",");
+                sb.append(arkStore.getLocation()).append("\n");
+            }
+        }
+        return sb.toString();
     }
 }

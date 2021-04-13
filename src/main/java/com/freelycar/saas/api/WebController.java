@@ -3,6 +3,8 @@ package com.freelycar.saas.api;
 import com.freelycar.saas.aop.LoggerManage;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.project.entity.Partner;
+import com.freelycar.saas.project.model.ArkStore;
+import com.freelycar.saas.project.service.ArkService;
 import com.freelycar.saas.project.service.PartnerService;
 import com.freelycar.saas.util.PartnerNumberGenerator;
 import com.freelycar.saas.util.TimestampUtil;
@@ -12,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author tangwei - Toby
@@ -27,6 +31,9 @@ public class WebController {
     @Autowired
     private PartnerService partnerService;
 
+    @Autowired
+    private ArkService arkService;
+
     @ApiOperation(value = "保存加盟商信息", produces = "application/json")
     @PostMapping("/saveInfo")
     @LoggerManage(description = "调用方法：保存加盟商信息")
@@ -40,5 +47,12 @@ public class WebController {
     @LoggerManage(description = "调用方法：获取已登记人数")
     public ResultJsonObject getCount() {
         return ResultJsonObject.getDefaultResult(partnerService.countAll() + PartnerNumberGenerator.partnerCount);
+    }
+
+    @ApiOperation(value = "获取离线设备列表", produces = "text/plain")
+    @GetMapping(value = "/offlineDevices", produces = "text/plain;charset=utf-8")
+    @LoggerManage(description = "调用方法：获取已登记人数")
+    public String getOfflineDevices() {
+        return arkService.getOfflineDevices();
     }
 }

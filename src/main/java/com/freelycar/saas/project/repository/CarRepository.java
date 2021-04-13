@@ -20,6 +20,9 @@ public interface CarRepository extends JpaRepository<Car, String> {
 
     List<Car> findByClientIdAndDelStatus(String clientId, boolean delStatus);
 
+    @Query(value = "select * from car where wxUserId = :wxUserId and delStatus = :delStatus", nativeQuery = true)
+    List<Car> findByWxUserIdAndDelStatus(String wxUserId,boolean delStatus);
+
     List<Car> findByClientIdInAndDelStatus(Set<String> clientId, boolean delStatus);
 
     @Transactional
@@ -32,6 +35,9 @@ public interface CarRepository extends JpaRepository<Car, String> {
 
     @Query(value = "select * from car where storeId = :storeId and delStatus = 0 and licensePlate = :licensePlate", nativeQuery = true)
     List<Car> checkRepeatName(@Param("licensePlate") String licensePlate, @Param("storeId") String storeId);
+
+    @Query(value = "select * from car where wxUserId = :wxUserId and delStatus = 0 and licensePlate = :licensePlate", nativeQuery = true)
+    List<Car> checkRepeatCar(@Param("licensePlate") String licensePlate, @Param("wxUserId") String wxUserId);
 
     @Query(value = "SELECT car.* FROM car LEFT JOIN client c ON c.id = car.clientId WHERE phone = :phone AND car.delStatus = 0 GROUP BY car.licensePlate ORDER BY car.defaultCar DESC, car.createTime ASC", nativeQuery = true)
     List<Car> listCarsByStoreIdWithoutSamePlate(String phone);

@@ -39,8 +39,8 @@ public class CarService {
         return carRepository.findById(id).orElse(null);
     }
 
-    public Car findByClientIdAndStoreId(String clientId,String storeId){
-        return carRepository.findByClientIdAndStoreIdAndDelStatus(clientId,storeId,false);
+    public Car findByClientIdAndStoreId(String clientId, String storeId) {
+        return carRepository.findByClientIdAndStoreIdAndDelStatus(clientId, storeId, false);
     }
 
     /**
@@ -54,9 +54,10 @@ public class CarService {
             return null;
         }
         String id = car.getId();
-        String clientId = car.getClientId();
-        if (StringUtils.isEmpty(clientId)) {
-            logger.error("保存车辆信息失败：数据中没有包含clientId。");
+        String wxUserId = car.getWxUserId();
+//        String clientId = car.getClientId();
+        if (StringUtils.isEmpty(wxUserId)) {
+            logger.error("保存车辆信息失败：数据中没有包含wxUserInfoId。");
             return null;
         }
 
@@ -74,7 +75,7 @@ public class CarService {
             if (null == car.getNewCar()) {
                 car.setNewCar(false);
             }
-            car.setDefaultCar(this.isFirstCar(clientId));
+            car.setDefaultCar(this.isWxUserFirstCar(wxUserId));
             car.setNeedInspectionRemind(false);
             car.setNeedInsuranceRemind(false);
         } else {
@@ -96,8 +97,22 @@ public class CarService {
      * @param clientId
      * @return
      */
-    private boolean isFirstCar(String clientId) {
+    /*private boolean isFirstCar(String clientId) {
         List<Car> carList = carRepository.findByClientIdAndDelStatus(clientId, Constants.DelStatus.NORMAL.isValue());
+        if (null != carList) {
+            return carList.isEmpty();
+        }
+        return true;
+    }*/
+
+    /**
+     * 判断车辆是否为微信用户名下的第一辆车
+     *
+     * @param wxUserId
+     * @return
+     */
+    private boolean isWxUserFirstCar(String wxUserId) {
+        List<Car> carList = carRepository.findByWxUserIdAndDelStatus(wxUserId, Constants.DelStatus.NORMAL.isValue());
         if (null != carList) {
             return carList.isEmpty();
         }
@@ -133,10 +148,12 @@ public class CarService {
     public ResultJsonObject modify(Car car) {
         try {
             //验重
-            if (this.checkRepeatName(car)) {
+            /*if (this.checkRepeatName(car)) {
                 return ResultJsonObject.getErrorResult(null, "该门店已包含名称为：“" + car.getLicensePlate() + "”的数据，不能重复添加。");
+            }*/
+            if (this.checkRepeatCar(car)) {
+                return ResultJsonObject.getErrorResult(null, "该用户已包含车牌为：“" + car.getLicensePlate() + "”的数据，不能重复添加。");
             }
-
             Car res = this.saveOrUpdate(car);
             if (null == res) {
                 return ResultJsonObject.getErrorResult(null);
@@ -163,6 +180,11 @@ public class CarService {
         return carList.size() != 0;
     }
 
+    private boolean checkRepeatCar(Car car) {
+        List<Car> carList = carRepository.checkRepeatCar(car.getLicensePlate(), car.getWxUserId());
+        return carList.size() != 0;
+    }
+
 
     /**
      * 根据车牌号和门店ID查询对应车辆信息
@@ -183,24 +205,33 @@ public class CarService {
     /**
      * 加载某个车主名下的所有车辆
      *
-     * @param clientId
+     * @param wxUserId
      * @return jsonResult
      */
-    public ResultJsonObject listPersonalCars(String clientId) {
+    /*public ResultJsonObject listPersonalCars(String clientId) {
         if (StringUtils.isEmpty(clientId)) {
             return ResultJsonObject.getErrorResult(null, "参数clientId为空值");
         }
         return ResultJsonObject.getDefaultResult(listClientCars(clientId));
+    }*/
+    public ResultJsonObject listPersonalCarsByWxUserId(String wxUserId) {
+        if (StringUtils.isEmpty(wxUserId)) {
+            return ResultJsonObject.getErrorResult(null, "参数wxUserId为空值");
+        }
+        return ResultJsonObject.getDefaultResult(listCarsByWxUser(wxUserId));
     }
 
     /**
      * 加载某个车主名下的所有车辆
      *
-     * @param clientId
+     * @param wxUserId
      * @return list
      */
-    public List<Car> listClientCars(String clientId) {
+    /*public List<Car> listClientCars(String clientId) {
         return carRepository.findByClientIdAndDelStatus(clientId, Constants.DelStatus.NORMAL.isValue());
+    }*/
+    public List<Car> listCarsByWxUser(String wxUserId) {
+        return carRepository.findByWxUserIdAndDelStatus(wxUserId, Constants.DelStatus.NORMAL.isValue());
     }
 
     /**

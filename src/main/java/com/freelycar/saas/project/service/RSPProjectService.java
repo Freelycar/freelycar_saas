@@ -331,6 +331,7 @@ public class RSPProjectService {
             JSONObject rspData = new JSONObject();
             rspData.put("rspId", rspId);
             rspData.put("name", model.getName());
+            rspData.put("phone", model.getPhone());
             //项目的可接单状态判断
             boolean staffReady = staffReadyHandler(rspId, storeId);
             rspData.put("staffReady", staffReady);

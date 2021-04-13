@@ -64,12 +64,15 @@ public class WeChatClientController {
     }
 
 
-    @GetMapping(value = "/listPersonalCars")
+    /*@GetMapping(value = "/listPersonalCars")
     @LoggerManage(description = "调用方法：微信端-加载用户所有车辆")
     public ResultJsonObject listPersonalCars(@RequestParam String clientId) {
         return carService.listPersonalCars(clientId);
+    }*/
+
+    @GetMapping(value = "/listPersonalCars")
+    @LoggerManage(description = "调用方法：微信端-加载用户所有车辆")
+    public ResultJsonObject listPersonalCars(@RequestParam String wxUserId) {
+        return carService.listPersonalCarsByWxUserId(wxUserId);
     }
-
-
-
 }

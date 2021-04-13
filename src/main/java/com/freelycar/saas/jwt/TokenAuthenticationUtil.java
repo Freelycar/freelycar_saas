@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.List;
 
 /**
@@ -29,7 +30,7 @@ public class TokenAuthenticationUtil {
     private static Logger logger = LoggerFactory.getLogger(TokenAuthenticationUtil.class);
 
     private static final long EXPIRATION_TIME = 7776000000L;     // 4周
-//            private static final long EXPIRATIONTIME = 300_000;     // 5分钟测试用
+    //            private static final long EXPIRATIONTIME = 300_000;     // 5分钟测试用
     private static final String SECRET = "FreelyC@r";            // JWT密码
     private static final String TOKEN_PREFIX = "Bearer";        // Token前缀
     private static final String HEADER_STRING = "Authorization";// 存放Token的Header Key
@@ -67,8 +68,14 @@ public class TokenAuthenticationUtil {
     // JWT验证方法
     static Authentication getAuthentication(HttpServletRequest request) {
         // 从Header中拿到token
+        /*Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            String content = request.getHeader(headerName);
+            logger.info("{}:{}", headerName, content);
+        }*/
         String token = request.getHeader(HEADER_STRING);
-
+//        logger.info("token:{}", token);
         if (token != null) {
             // 解析 Token
             Claims claims = Jwts.parser()

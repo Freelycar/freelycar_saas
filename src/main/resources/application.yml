@@ -54,3 +54,7 @@ edaijia:
 jasypt:
   encryptor:
     password: freelycar@
+
+device:
+  webList:
+    url: https://www.freelycar.cn/web/list/device

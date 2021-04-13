@@ -101,7 +101,7 @@ public class RealServiceProviderService {
      */
     public RealServiceProvider modify(RealServiceProvider serviceProvider) throws DataIsExistException, ObjectNotFoundException {
         String id = serviceProvider.getId();
-        Optional<RealServiceProvider> optional = realServiceProviderRepository.findByNameAndDelStatus(serviceProvider.getName(),Constants.DelStatus.NORMAL.isValue());
+        Optional<RealServiceProvider> optional = realServiceProviderRepository.findByNameAndDelStatus(serviceProvider.getName(), Constants.DelStatus.NORMAL.isValue());
         //1.判断新增/修改
         if (StringUtils.isEmpty(id)) {//新增
             if (optional.isPresent()) {
@@ -206,7 +206,7 @@ public class RealServiceProviderService {
     public List<RealServiceProviderModel> listByStore(String storeId) {
         StringBuilder sql = new StringBuilder();
         sql.append("SELECT \n" +
-                "rsp.id,rsp.`name`,rsp.address,(SELECT sort FROM rspstoresort WHERE rspId = rsp.id AND storeId = '")
+                "rsp.id,rsp.`name`,rsp.phone,rsp.address,(SELECT sort FROM rspstoresort WHERE rspId = rsp.id AND storeId = '")
                 .append(storeId).append("') AS sort \n" +
                 "FROM realserviceprovider rsp WHERE rsp.service_status = true and \n" +
                 "id IN (SELECT DISTINCT(rspId) FROM rspstoresort WHERE storeId = '").append(storeId).append("')\n" +

@@ -99,9 +99,9 @@ public class WechatTemplateMessage {
                 if (StringUtils.hasText(parkingLocation)) {
                     remark += "停车位置：" + parkingLocation + "\n";
                 }
-                if (StringUtils.hasText(userKeyLocationSn)) {
+                /*if (StringUtils.hasText(userKeyLocationSn)) {
                     url = WechatConfig.APP_DOMAIN + "role-select/" + userKeyLocationSn.split(Constants.HYPHEN)[0];
-                }
+                }*/
                 break;
             case 3:
                 stateString = "已交车";
@@ -171,7 +171,7 @@ public class WechatTemplateMessage {
             JSONObject data = new JSONObject();
             params.put("touser", openId);
             params.put("template_id", ORDER_CHANGED_FOR_CLIENT_ID);
-//        params.put("url", WechatConfig.APP_DOMAIN + "#/shop/servicesorder?id=" + consumerOrder.getId());
+            params.put("url", WechatConfig.APP_DOMAIN + "order");
             data.put("first", keywordFactory(first, "#173177"));
             data.put("OrderSn", keywordFactory(orderId, "#173177"));
             data.put("OrderStatus", keywordFactory(stateString, "#173177"));

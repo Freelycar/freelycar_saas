@@ -13,7 +13,8 @@ import java.io.IOException;
 public class ArkOps {
 
     public static void main(String[] args) throws IOException {
-        String deviceId = "862057048892555";
+        //861230044375815
+        String deviceId = "867190039936340";
 
         int boxId = 2;
 

@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 public class RealServiceProviderModel {
     private String id;
     private String name;
+    private String phone;
     private String address;
     private BigDecimal sort;
 }

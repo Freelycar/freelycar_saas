@@ -95,6 +95,12 @@ public class Car implements Serializable {
     @Column
     private String clientId;
 
+    /**
+     * 关联微信用户Id
+     */
+    @Column
+    private String wxUserId;
+
     @Column
     private String insuranceCity;
 
@@ -161,6 +167,8 @@ public class Car implements Serializable {
                 .append(defaultCar);
         sb.append(",\"clientId\":\"")
                 .append(clientId).append('\"');
+        sb.append(",\"wxUserId\":\"")
+                .append(wxUserId).append('\"');
         sb.append(",\"insuranceCity\":\"")
                 .append(insuranceCity).append('\"');
         sb.append(",\"insuranceCompany\":\"")
@@ -397,6 +405,14 @@ public class Car implements Serializable {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public String getWxUserId() {
+        return wxUserId;
+    }
+
+    public void setWxUserId(String wxUserId) {
+        this.wxUserId = wxUserId;
     }
 
     public Car() {
