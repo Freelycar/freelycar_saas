@@ -15,6 +15,9 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BaseOrderInfo {
+    /**
+     * 订单id
+     */
     private String id;
     /**
      * 是否为缓冲页面
@@ -24,10 +27,23 @@ public class BaseOrderInfo {
      * 是否为用户缓冲
      */
     private Boolean isUser;
+    /**
+     * 服务商名称
+     */
     private String rspName;
+    private String rspPhone;
+    /**
+     * 车牌号
+     */
     private String licensePlate;
+    /**
+     * 车牌
+     */
     private String carBrand;
     private String carType;
+    /**
+     * 车主姓名
+     */
     private String clientName;
     private String projectNames;
     private String cardName;
@@ -40,4 +56,17 @@ public class BaseOrderInfo {
     private Double totalPrice;
     private Integer payState;
     private String staffOrderImgUrl;
+    private String clientOrderImgUrl;
+    /**
+     * 钥匙位置
+     */
+    private String staffKeyLocation;
+    /**
+     * 车辆位置
+     */
+    private String parkingLocation;
+    /**
+     * 备注
+     */
+    private String comment;
 }

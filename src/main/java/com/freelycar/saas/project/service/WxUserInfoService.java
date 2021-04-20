@@ -1,5 +1,6 @@
 package com.freelycar.saas.project.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.ArgumentMissingException;
@@ -18,6 +19,7 @@ import com.freelycar.saas.util.UpdateTool;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import com.freelycar.saas.wechat.model.PersonalInfo;
 import com.freelycar.saas.wechat.model.WeChatUser;
+import com.freelycar.saas.wxutils.WechatConfig;
 import org.hibernate.query.NativeQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -707,7 +709,7 @@ public class WxUserInfoService {
         return ResultJsonObject.getDefaultResult(cumulateOrderList1);
     }
 
-    /*public void updateWxUserInfo() {
+    public void updateWxUserInfo() {
         List<WxUserInfo> wxUserInfoList = wxUserInfoRepository.findAll();
         for (WxUserInfo info :
                 wxUserInfoList) {
@@ -715,7 +717,8 @@ public class WxUserInfoService {
             String phone = info.getPhone();
             logger.info(openId + ":" + phone);
             if (null == openId || null == phone) continue;
-            JSONObject wxinfo = WechatConfig.getWxUserInfo(openId);
+//            JSONObject wxinfo = WechatConfig.getWxUserInfo(openId);
+            JSONObject wxinfo = WechatConfig.getWXUserInfo(openId);
             if (null != wxinfo
                     && null != wxinfo.get("subscribe")
                     && wxinfo.getInteger("subscribe") == 1) {
@@ -731,5 +734,5 @@ public class WxUserInfoService {
                 logger.info("更新：{}", nickname);
             }
         }
-    }*/
+    }
 }

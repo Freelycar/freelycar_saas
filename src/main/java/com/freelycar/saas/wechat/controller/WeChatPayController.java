@@ -12,10 +12,7 @@ import com.freelycar.saas.project.repository.ConsumerOrderRepository;
 import com.freelycar.saas.project.service.ConsumerOrderService;
 import com.freelycar.saas.util.RandomStringGenerator;
 import com.freelycar.saas.wechat.model.OrderPay;
-import com.freelycar.saas.wxutils.HttpRequest;
-import com.freelycar.saas.wxutils.WeChatSignatureUtil;
-import com.freelycar.saas.wxutils.WechatConfig;
-import com.freelycar.saas.wxutils.XMLParser;
+import com.freelycar.saas.wxutils.*;
 import io.swagger.annotations.ApiOperation;
 import org.apache.http.HttpEntity;
 import org.slf4j.Logger;
@@ -51,6 +48,9 @@ public class WeChatPayController {
 
     @Autowired
     private ConsumerOrderService consumerOrderService;
+
+    @Autowired
+    private MiniProgramConfig config;
 
 
     @PostMapping("/payOrderByWechat")
@@ -171,6 +171,82 @@ public class WeChatPayController {
                 }
             }
         }
+    }
+
+    @PostMapping("/payOrderByMini")
+    @LoggerManage(description = "调用智能柜微信支付接口")
+    public ResultJsonObject payOrderByMini(@RequestBody OrderPay orderPay, HttpServletRequest request) {
+        String openId = orderPay.getOpenId();
+        String orderId = orderPay.getOrderId();
+        float totalPrice = orderPay.getTotalPrice();
+
+        //添加参数验证
+        if (StringUtils.isEmpty(openId) || StringUtils.isEmpty(orderId)) {
+            return ResultJsonObject.getErrorResult(orderPay, "传入的参数有缺失，请核实。");
+        }
+
+
+        //微信支付
+        logger.info("执行微信支付：");
+
+        JSONObject jsonObject = new JSONObject();
+        Map<String, Object> map = new HashMap<>();
+        //微信接口配置
+        String ip = request.getHeader("x-forwarded-for") == null ? request.getRemoteAddr() : request.getHeader("x-forwarded-for");
+        //判断订单
+        ConsumerOrder consumerOrder = consumerOrderRepository.findById(orderId).orElse(null);
+        if (null == consumerOrder) {
+            return ResultJsonObject.getErrorResult(null, "未找到id为：" + orderId + " 的单据信息");
+        }
+        map.put("body", "carService");
+        map.put("out_trade_no", consumerOrder.getId());
+
+
+        map.put("appid", config.getMiniAppId());
+
+        map.put("device_info", "WEB");
+        map.put("mch_id", WechatConfig.MCH_ID);// 商户号，微信商户平台里获取
+        //随机32位
+        map.put("nonce_str", RandomStringGenerator.getRandomStringByLength(32));
+
+        //返回结果	自己调用自己的接口
+        String notifyUrl = WechatConfig.API_URL + "wechat/pay/wechatPayResult";
+        logger.info(notifyUrl);
+        map.put("notify_url", notifyUrl);
+
+        map.put("openid", openId);
+        map.put("spbill_create_ip", ip);
+        map.put("total_fee", (int) (totalPrice * 100));
+        map.put("trade_type", "JSAPI");
+        // 签名
+        String sig = WeChatSignatureUtil.getSig(map);
+        map.put("sign", sig);
+
+        HttpEntity entity = HttpRequest.getEntity(XMLParser.getXmlFromMap(map));
+        logger.info("entity: " + XMLParser.getXmlFromMap(map));
+        String result = HttpRequest.postCall(WechatConfig.ORDER_URL, entity, null);
+        //第一步请求完成
+        logger.info("请求微信支付结果：" + result);
+
+        Map<String, Object> resultMap = XMLParser.getMapFromXML(result);
+        if (!resultMap.isEmpty()) {
+            if (resultMap.get("return_code").toString().equals("SUCCESS")) {
+                // 预支付id
+                String prepareId = resultMap.get("prepay_id").toString();
+                Map<String, Object> payMap = new HashMap<String, Object>();
+                payMap.put("appId", config.getMiniAppId());
+                payMap.put("timeStamp", Long.toString(System.currentTimeMillis()));
+                payMap.put("nonceStr", RandomStringGenerator.getRandomStringByLength(32));
+                payMap.put("package", "prepay_id=" + prepareId);
+                payMap.put("signType", "MD5");
+                // 签名
+                String pagSign = WeChatSignatureUtil.getSig(payMap);
+                payMap.put("paySign", pagSign);
+                return ResultJsonObject.getDefaultResult(payMap);
+            }
+        }
+        logger.error(result);
+        return ResultJsonObject.getCustomResult(result, ResultCode.CALL_PORT_ERROR.code(), ResultCode.ORDER_ERROR.message());
     }
 
     /**

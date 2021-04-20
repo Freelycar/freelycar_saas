@@ -149,6 +149,22 @@ public class WechatConfig {
         return obj;
     }
 
+    public static JSONObject getWXUserInfo(String openId) {
+        String wxUserInfoUrl = getWechatUserInfoUrl(getAccessTokenForInteface().getString("access_token"), openId);
+        String userInfo = HttpRequest.getCall(wxUserInfoUrl, null, null);
+
+        JSONObject obj;
+        try {
+            obj = JSONObject.parseObject(userInfo);
+        } catch (JSONException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            throw new JSONException("获取userInfo的json字符串解析失败", e);
+        }
+
+        return obj;
+    }
+
     /**
      * 微信普通的access_token 调用各接口时都需使用access_token
      * https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421140183&token=&lang=zh_CN

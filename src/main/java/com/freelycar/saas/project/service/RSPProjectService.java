@@ -219,6 +219,10 @@ public class RSPProjectService {
         return rspProjectRepository.findIdByDelStatusAndRspId(Constants.DelStatus.NORMAL.isValue(), rspId);
     }
 
+    public List<RSPProject> listByRspId(String rspId) {
+        return rspProjectRepository.findIdByRspId(rspId);
+    }
+
     /**
      * 网点下项目列表
      */

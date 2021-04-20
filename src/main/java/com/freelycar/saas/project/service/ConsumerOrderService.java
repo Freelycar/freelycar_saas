@@ -324,10 +324,13 @@ public class ConsumerOrderService {
 
     public List<BaseOrderInfo> findAllOrdersByClientId(String clientId) {
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, " +
-                "( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, " +
+        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.parkingLocation,co.comment,co.staffKeyLocation,co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, " +
+                "( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames," +
+                " (SELECT GROUP_CONCAT(rsp.phone) FROM realserviceprovider rsp WHERE rsp.id IN (SELECT p.rspId FROM rspproject p WHERE p.id IN (SELECT cpi.projectId FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0)) GROUP BY rsp.name) AS rspPhone," +
                 "(SELECT GROUP_CONCAT(rsp.name) FROM realserviceprovider rsp WHERE rsp.id IN (SELECT p.rspId FROM rspproject p WHERE p.id IN (SELECT cpi.projectId FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0)) GROUP BY rsp.name) AS rspName," +
-                "co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select GROUP_CONCAT(url) from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0) as staffOrderImgUrl FROM consumerOrder co WHERE co.delStatus = 0 ");
+                "co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select GROUP_CONCAT(url) from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0) as staffOrderImgUrl," +
+                "( select GROUP_CONCAT(url) from clientorderimg coi where coi.orderId = co.id and coi.delStatus = 0) as clientOrderImgUrl" +
+                " FROM consumerOrder co WHERE co.delStatus = 0 ");
         sql.append("AND co.clientId = '").append(clientId).append("' ORDER BY co.state ASC ,co.payState ASC,co.createTime desc");
 
         EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
@@ -1233,6 +1236,7 @@ public class ConsumerOrderService {
         logger.info("arkOrderLog:前端提交过来的订单表单数据对象：" + consumerOrder);
         //订单项目
         List<ConsumerProjectInfo> consumerProjectInfos = orderObject.getConsumerProjectInfos();
+        logger.info("arkOrderLog:前端提交过来的项目数：" + consumerProjectInfos.size());
 
         if (StringUtils.isEmpty(doorId)) {
             throw new ArgumentMissingException("参数中的doorId对象为空");

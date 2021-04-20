@@ -1,11 +1,13 @@
 package com.freelycar.saas.project.service;
 
+import com.alibaba.fastjson.JSONObject;
 import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.basic.wrapper.PageableTools;
 import com.freelycar.saas.basic.wrapper.ResultJsonObject;
 import com.freelycar.saas.exception.BatchDeleteException;
 import com.freelycar.saas.exception.DataIsExistException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
+import com.freelycar.saas.project.entity.RSPProject;
 import com.freelycar.saas.project.entity.RSPStoreSort;
 import com.freelycar.saas.project.entity.RealServiceProvider;
 import com.freelycar.saas.project.model.RealServiceProviderModel;
@@ -43,6 +45,13 @@ public class RealServiceProviderService {
 
     private RSPStoreSortRepository rspStoreSortRepository;
 
+    private RSPProjectService rspProjectService;
+
+    @Autowired
+    public void setRspProjectService(RSPProjectService rspProjectService) {
+        this.rspProjectService = rspProjectService;
+    }
+
     @Autowired
     public void setRspStoreSortRepository(RSPStoreSortRepository rspStoreSortRepository) {
         this.rspStoreSortRepository = rspStoreSortRepository;
@@ -54,6 +63,15 @@ public class RealServiceProviderService {
     @Autowired
     public void setRealServiceProviderRepository(RealServiceProviderRepository realServiceProviderRepository) {
         this.realServiceProviderRepository = realServiceProviderRepository;
+    }
+
+    public JSONObject findById(String rspId) {
+        RealServiceProvider realServiceProvider = realServiceProviderRepository.findById(rspId).orElse(null);
+        List<RSPProject> projectList = rspProjectService.listByRspId(rspId);
+        JSONObject result = new JSONObject();
+        result.put("serviceProvider", realServiceProvider);
+        result.put("projectList", projectList);
+        return result;
     }
 
     /**

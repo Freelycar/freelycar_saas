@@ -32,6 +32,12 @@ public class RealServiceProviderController {
         this.realServiceProviderService = realServiceProviderService;
     }
 
+    @ApiOperation(value = "查找服务商", produces = "application/json")
+    @GetMapping(value = "/findById")
+    public ResultJsonObject findById(String rspId) {
+        return ResultJsonObject.getDefaultResult(realServiceProviderService.findById(rspId));
+    }
+
     @ApiOperation(value = "新增/修改服务商", produces = "application/json")
     @PostMapping(value = "/modify")
     @LoggerManage(description = "调用方法：服务商新增/修改")
@@ -63,7 +69,7 @@ public class RealServiceProviderController {
             @RequestParam String storeId,
             @RequestBody Map<String, BigInteger> map
     ) {
-        boolean result = realServiceProviderService.switchLocation(storeId,map);
+        boolean result = realServiceProviderService.switchLocation(storeId, map);
         if (result) {
             return ResultJsonObject.getDefaultResult(null);
         } else {

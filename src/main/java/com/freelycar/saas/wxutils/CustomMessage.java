@@ -55,6 +55,6 @@ public class CustomMessage {
         news.put("articles", articles);
         params.put("news", news);
         String result = invokeTemplateMessage(params);
-        log.info("微信订单更新模版消息结果：" + result);
+        log.info("用户扫码客服消息推送：" + result);
     }
 }

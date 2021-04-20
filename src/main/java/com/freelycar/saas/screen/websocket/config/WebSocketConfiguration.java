@@ -10,7 +10,7 @@ import org.springframework.web.socket.server.standard.ServerEndpointExporter;
  * @email 2630451673@qq.com
  * @desc
  */
-//@Configuration
+@Configuration
 public class WebSocketConfiguration {
     @Bean
     public ServerEndpointExporter serverEndpointExporter() {
