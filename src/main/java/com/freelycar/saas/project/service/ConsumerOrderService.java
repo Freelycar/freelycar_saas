@@ -344,6 +344,62 @@ public class ConsumerOrderService {
         return baseOrderInfos;
     }
 
+    /**
+     * 首页订单查询接口
+     *
+     * @param clientId   客户id
+     * @param employeeId 技师id
+     * @param name       订单id或车牌号
+     * @return
+     */
+    public List<QueryOrder> listOrdersByIdAndName(String clientId, String employeeId, String name) throws ObjectNotFoundException {
+        StringBuilder sql = new StringBuilder();
+        if (StringUtils.hasText(clientId)) {
+            sql.append("SELECT id,state,licensePlate,createTime," +
+                    "(SELECT GROUP_CONCAT(cpi.projectName) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ) AS projectNames\n" +
+                    "FROM `consumerorder` co  WHERE delStatus = FALSE ");
+            sql.append(" AND clientId = '").append(clientId).append("' ");
+            sql.append(" AND (licensePlate LIKE '%").append(name).append("%' ");
+            sql.append(" or id LIKE '%").append(name).append("%') ");
+            sql.append(" ORDER BY createTime desc");
+        }
+        if (StringUtils.hasText(employeeId)) {
+            Employee employee = employeeRepository.findById(employeeId).orElse(null);
+            if (null == employee) {
+                throw new ObjectNotFoundException("未找到id为：" + employeeId + " 的技师信息");
+            }
+            String phone = employee.getPhone();
+            List<Staff> staffList = staffService.findByPhone(phone);
+            String staffIdStr = "";
+            if (staffList.size()>0){
+                StringBuilder staffIdsb = new StringBuilder();
+                for (Staff staff :
+                        staffList) {
+                    staffIdsb.append(",").append("'").append(staff.getId()).append("'");
+                }
+                staffIdStr = staffIdsb.toString();
+                staffIdStr = staffIdStr.substring(1);
+            }
+            sql.append("SELECT id,state,licensePlate,createTime," +
+                    "(SELECT GROUP_CONCAT(cpi.projectName) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ) AS projectNames\n" +
+                    "FROM `consumerorder` co  WHERE delStatus = FALSE ");
+            sql.append(" AND pickCarStaffId IN (").append(staffIdStr).append(")");
+            sql.append(" AND (licensePlate LIKE '%").append(name).append("%' ");
+            sql.append(" or id LIKE '%").append(name).append("%') ");
+            sql.append(" ORDER BY createTime desc");
+        }
+
+        EntityManager em = entityManagerFactory.getNativeEntityManagerFactory().createEntityManager();
+        Query nativeQuery = em.createNativeQuery(sql.toString());
+        nativeQuery.unwrap(NativeQuery.class).setResultTransformer(Transformers.aliasToBean(QueryOrder.class));
+        @SuppressWarnings({"unused", "unchecked"})
+        List<QueryOrder> queryOrderList = nativeQuery.getResultList();
+
+        //关闭entityManagerFactory
+        em.close();
+        return queryOrderList;
+    }
+
     public List<BaseOrderInfo> findAllOrdersByClientId(String clientId, String type) throws IllegalArgumentException {
         StringBuilder sql = new StringBuilder();
         sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames, co.createTime AS createTime, co.pickTime AS pickTime, co.finishTime AS finishTime, co.state, co.actualPrice as actualPrice, co.totalPrice as totalPrice, co.payState AS payState, ( select url from stafforderimg soi where soi.orderId = co.id and soi.delStatus = 0 order by soi.createTime desc limit 0,1) as staffOrderImgUrl FROM consumerOrder co WHERE co.delStatus = 0 ");

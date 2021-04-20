@@ -8,6 +8,7 @@ import com.freelycar.saas.exception.ArgumentMissingException;
 import com.freelycar.saas.exception.NoEmptyArkException;
 import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.project.entity.Door;
+import com.freelycar.saas.project.model.QueryOrder;
 import com.freelycar.saas.project.repository.DoorRepository;
 import com.freelycar.saas.project.service.ArkService;
 import com.freelycar.saas.project.service.ConsumerOrderService;
@@ -16,6 +17,7 @@ import com.freelycar.saas.wechat.model.FinishOrderInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -50,6 +52,27 @@ public class WeChatOrderController {
     public ResultJsonObject ListOrdersByClientId(@RequestParam String clientId) {
         List<BaseOrderInfo> res = consumerOrderService.findAllOrdersByClientId(clientId);
         return ResultJsonObject.getDefaultResult(res);
+    }
+
+    @GetMapping("/listOrdersByIdAndName")
+    public ResultJsonObject listOrdersByIdAndName(
+            @RequestParam(required = false) String clientId,
+            @RequestParam(required = false) String employeeId,
+            @RequestParam(required = false) String name//订单号或车牌号
+    ) {
+        if (StringUtils.isEmpty(clientId) && StringUtils.isEmpty(employeeId)) {
+            return ResultJsonObject.getErrorResult(null, ResultCode.PARAM_NOT_COMPLETE.message());
+        }
+        List<QueryOrder> res = null;
+        try {
+            res = consumerOrderService.listOrdersByIdAndName(clientId, employeeId, name);
+            return ResultJsonObject.getDefaultResult(res);
+        } catch (ObjectNotFoundException e) {
+            logger.error(e.getMessage(), e);
+            e.printStackTrace();
+            return ResultJsonObject.getErrorResult(null, e.getMessage());
+        }
+
     }
 
     @GetMapping("/listOrders")
