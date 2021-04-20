@@ -47,7 +47,7 @@ public class CustomMessage {
         JSONObject news = new JSONObject();
         JSONArray articles = new JSONArray();
         JSONObject article = new JSONObject();
-        article.put("title", "点击下单");
+        article.put("title", "点击开柜");
         article.put("description", arkLocation);
         article.put("url", url);
         article.put("picurl", "https://www.freelycar.com/upload/headimg/logo.jpg");
