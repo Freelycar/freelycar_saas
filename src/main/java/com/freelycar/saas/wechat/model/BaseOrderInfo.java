@@ -58,7 +58,11 @@ public class BaseOrderInfo {
     private String staffOrderImgUrl;
     private String clientOrderImgUrl;
     /**
-     * 钥匙位置
+     * 用户存放钥匙位置
+     */
+    private String userKeyLocation;
+    /**
+     * 技师存放钥匙位置
      */
     private String staffKeyLocation;
     /**

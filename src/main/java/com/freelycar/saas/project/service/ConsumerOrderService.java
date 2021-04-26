@@ -130,6 +130,9 @@ public class ConsumerOrderService {
     @Autowired
     private RealServiceProviderRepository realServiceProviderRepository;
 
+    @Autowired
+    private ReminderRepository reminderRepository;
+
     public JSONObject getDoorState(String orderId) {
         JSONObject jsonObject = new JSONObject();
         boolean isBuffer = false;
@@ -324,7 +327,7 @@ public class ConsumerOrderService {
 
     public List<BaseOrderInfo> findAllOrdersByClientId(String clientId) {
         StringBuilder sql = new StringBuilder();
-        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.parkingLocation,co.comment,co.staffKeyLocation,co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, " +
+        sql.append(" SELECT co.id, co.licensePlate AS licensePlate, co.parkingLocation,co.userKeyLocation,co.comment,co.staffKeyLocation,co.carBrand AS carBrand, co.carType AS carType, co.clientName AS clientName, " +
                 "( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0 GROUP BY cpi.consumerOrderId ) AS projectNames," +
                 " (SELECT GROUP_CONCAT(rsp.phone) FROM realserviceprovider rsp WHERE rsp.id IN (SELECT p.rspId FROM rspproject p WHERE p.id IN (SELECT cpi.projectId FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0)) GROUP BY rsp.name) AS rspPhone," +
                 "(SELECT GROUP_CONCAT(rsp.name) FROM realserviceprovider rsp WHERE rsp.id IN (SELECT p.rspId FROM rspproject p WHERE p.id IN (SELECT cpi.projectId FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0)) GROUP BY rsp.name) AS rspName," +
@@ -357,7 +360,7 @@ public class ConsumerOrderService {
         if (StringUtils.hasText(clientId)) {
             sql.append("SELECT id,state,licensePlate,createTime," +
                     "(SELECT GROUP_CONCAT(cpi.projectName) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ) AS projectNames\n" +
-                    "FROM `consumerorder` co  WHERE delStatus = FALSE ");
+                    "FROM `consumerorder` co  WHERE delStatus = FALSE and state <4 ");
             sql.append(" AND clientId = '").append(clientId).append("' ");
             sql.append(" AND (licensePlate LIKE '%").append(name).append("%' ");
             sql.append(" or id LIKE '%").append(name).append("%') ");
@@ -371,7 +374,7 @@ public class ConsumerOrderService {
             String phone = employee.getPhone();
             List<Staff> staffList = staffService.findByPhone(phone);
             String staffIdStr = "";
-            if (staffList.size()>0){
+            if (staffList.size() > 0) {
                 StringBuilder staffIdsb = new StringBuilder();
                 for (Staff staff :
                         staffList) {
@@ -382,7 +385,7 @@ public class ConsumerOrderService {
             }
             sql.append("SELECT id,state,licensePlate,createTime," +
                     "(SELECT GROUP_CONCAT(cpi.projectName) FROM consumerprojectinfo cpi WHERE cpi.consumerOrderId = co.id ) AS projectNames\n" +
-                    "FROM `consumerorder` co  WHERE delStatus = FALSE ");
+                    "FROM `consumerorder` co  WHERE delStatus = FALSE and state<4 ");
             sql.append(" AND pickCarStaffId IN (").append(staffIdStr).append(")");
             sql.append(" AND (licensePlate LIKE '%").append(name).append("%' ");
             sql.append(" or id LIKE '%").append(name).append("%') ");
@@ -662,7 +665,7 @@ public class ConsumerOrderService {
             String staffStr = staffIdSb.toString();
             staffStr = staffStr.substring(1);
             StringBuilder sql = new StringBuilder();
-            sql.append(" SELECT co.id,co.state,co.orderTakingTime, co.parkingLocation,co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, " +
+            sql.append(" SELECT co.id,co.comment,co.state,co.orderTakingTime, co.parkingLocation,co.clientName AS clientName,(select c.phone from client c where c.id = co.clientId) as phone, co.licensePlate as licensePlate, co.carBrand as carBrand, co.carType as carType, co.carColor, co.carImageUrl, ( SELECT GROUP_CONCAT( cpi.projectName ) FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id GROUP BY cpi.consumerOrderId ) projectNames, " +
                     "(SELECT GROUP_CONCAT(rsp.name) FROM realserviceprovider rsp WHERE rsp.id IN (SELECT p.rspId FROM rspproject p WHERE p.id IN (SELECT cpi.projectId FROM consumerProjectInfo cpi WHERE cpi.consumerOrderId = co.id AND cpi.delStatus=0)) GROUP BY rsp.name) AS rspName," +
                     "co.pickTime as pickTime, co.userKeyLocationSn, co.userKeyLocation FROM consumerOrder co WHERE co.delStatus = 0 AND co.orderType = 2 AND (co.state = -1 or co.state = 1) ")
                     // 添加staffId条件筛选，技师只能还自己接单的订单，不能其他技师代还
@@ -745,10 +748,20 @@ public class ConsumerOrderService {
 
         //获取服务项目
         List<ConsumerProjectInfo> consumerProjectInfos = consumerProjectInfoService.getAllProjectInfoByOrderId(id);
-
+        if (consumerProjectInfos.size() > 0) {
+            ConsumerProjectInfo projectInfo = consumerProjectInfos.get(0);
+            String projectId = projectInfo.getProjectId();
+            RSPProject rspProject = rspProjectRepository.findById(projectId).orElse(null);
+            if (null != rspProject) {
+                RealServiceProvider realServiceProvider = realServiceProviderRepository.findById(rspProject.getRspId()).orElse(null);
+                if (null != realServiceProvider) {
+                    orderObject.setRspName(realServiceProvider.getName());
+                    orderObject.setRspPhone(realServiceProvider.getPhone());
+                }
+            }
+        }
         //获取配件
 //        List<AutoParts> autoPartsList = autoPartsService.getAllAutoPartsByOrderId(id);
-
         //获取用户上传的智能柜订单图片
 //        ClientOrderImg clientOrderImg = clientOrderImgRepository.findTopByOrderIdAndDelStatusOrderByCreateTimeDesc(id, Constants.DelStatus.NORMAL.isValue());
         List<ClientOrderImg> clientOrderImgs = clientOrderImgRepository.findByOrderIdAndDelStatusOrderByCreateTimeDesc(id, Constants.DelStatus.NORMAL.isValue());
@@ -808,7 +821,7 @@ public class ConsumerOrderService {
             Store store = storeRepository.findById(storeId).orElse(null);
             orderObject.setStore(store);
         }
-        orderObject.setRspName(getRspNameByConsumerOrderId(id));
+//        orderObject.setRspName(getRspNameByConsumerOrderId(id));
         return ResultJsonObject.getDefaultResult(orderObject);
     }
 
@@ -1448,8 +1461,8 @@ public class ConsumerOrderService {
             logger.error("开门失败，失败原因：{}", e.getMessage());
             throw e;
         }
+        //更新door表的数据状态
         this.changeDoorState(emptyDoor, orderId, Constants.DoorState.EMPTY.getValue());
-
         logger.info("执行智能柜开单操作---end---：" + orderId);
         return ResultJsonObject.getDefaultResult(consumerOrderRes.getId(), "订单生成成功！");
     }
@@ -1623,7 +1636,12 @@ public class ConsumerOrderService {
 
         //推送微信公众号消息，通知用户服务完全结束
         sendWeChatMsg(res);
-
+        //消息通知：用户：订单完成
+        Reminder reminder = new Reminder();
+        reminder.setToClient(res.getClientId());
+        reminder.setType(Constants.MessageType.CLIENT_FINISH_REMINDER.getType());
+        reminder.setMessage(Constants.MessageType.CLIENT_FINISH_REMINDER.getMessage());
+        reminderRepository.saveAndFlush(reminder);
         logger.info("执行用户开柜取车操作：---end---" + orderId);
         return ResultJsonObject.getDefaultResult(orderId);
     }
@@ -1683,7 +1701,14 @@ public class ConsumerOrderService {
         logger.info("arkOrderLog:智能柜柜门door信息：" + door);
         //推送微信公众号消息，通知用户已开始受理服务
         sendWeChatMsg(orderRes);
-        //通知其他技师，该订单已经受理
+        Reminder reminder = new Reminder();
+        reminder.setToClient(orderRes.getClientId());
+        reminder.setType(Constants.MessageType.CLIENT_ORDER_TAKING_REMINDER.getType());
+        reminder.setMessage(Constants.MessageType.CLIENT_ORDER_TAKING_REMINDER.getMessage());
+        reminderRepository.saveAndFlush(reminder);
+
+        //通知其他技师，该订单已经受理，
+        // 消息通知：接单技师：还车提醒
         String staffOpenId = staff.getOpenId();
         staffService.sendWeChatMessageToStaff(orderRes, door, staffOpenId, rspId);
         logger.info("执行技师接单操作：---end---" + orderId);
@@ -1738,11 +1763,17 @@ public class ConsumerOrderService {
         consumerOrder.setPickCarStaffName(null);
         ConsumerOrder orderRes = this.updateOrder(consumerOrder);
 
+        Reminder reminder = new Reminder();
+        reminder.setToEmployee(employeeId);
+        reminder.setType(Constants.MessageType.EMPLOYEE_CANCEL_REMINDER.getType());
+        reminder.setMessage(Constants.MessageType.EMPLOYEE_CANCEL_REMINDER.getMessage());
+        reminderRepository.saveAndFlush(reminder);
+
         Door door = doorRepository.findTopByOrderId(orderId);
         logger.info("arkOrderLog:智能柜柜门door信息：" + door);
         //推送微信公众号消息，通知用户
 //        sendWeChatMsg(orderRes);
-        //通知其他技师，该订单已经取消
+        //该订单已经取消，通知技师接单
         String staffOpenId = staff.getOpenId();
         staffService.sendWeChatMessageToStaff(orderRes, door, staffOpenId, rspId);
         logger.info("执行技师取消接单操作：---end---" + orderId);
@@ -1825,9 +1856,15 @@ public class ConsumerOrderService {
         //推送微信公众号消息，通知用户已开始受理服务
         sendWeChatMsg(orderRes);
 
+        //消息通知：还车提醒
+        Reminder reminder = new Reminder();
+        reminder.setToEmployee(employeeId);
+        reminder.setType(Constants.MessageType.EMPLOYEE_CAR_RETURN_REMINDER.getType());
+        reminder.setMessage(Constants.MessageType.EMPLOYEE_CAR_RETURN_REMINDER.getMessage());
+        reminderRepository.saveAndFlush(reminder);
         //通知其他技师，该订单已经受理
-        String staffOpenId = staff.getOpenId();
-        staffService.sendWeChatMessageToStaff(orderRes, door, staffOpenId, rspId);
+        /*String staffOpenId = staff.getOpenId();
+        staffService.sendWeChatMessageToStaff(orderRes, door, staffOpenId, rspId);*/
 
         logger.info("执行技师接车操作：---end---" + orderId);
         return ResultJsonObject.getDefaultResult(orderId);
@@ -1995,6 +2032,13 @@ public class ConsumerOrderService {
         consumerOrder.setFirstActualPrice(consumerOrder.getActualPrice());
 
         updateOrder(consumerOrder);
+
+        //消息通知:用户：取车提醒
+        Reminder reminder = new Reminder();
+        reminder.setToClient(consumerOrder.getClientId());
+        reminder.setType(Constants.MessageType.CLIENT_PICK_UP_REMINDER.getType());
+        reminder.setMessage(Constants.MessageType.CLIENT_PICK_UP_REMINDER.getMessage());
+        reminderRepository.saveAndFlush(reminder);
         return ResultJsonObject.getDefaultResult(orderId);
     }
 
@@ -3277,7 +3321,7 @@ public class ConsumerOrderService {
 
         StringBuilder sql = new StringBuilder();
 
-        sql.append(" select co.id, co.clientName,\n" +
+        sql.append(" select co.id, co.clientName,co.phone,co.comment,\n" +
                 "co.licensePlate,\n" +
                 "co.carColor,\n" +
                 "co.carImageUrl, \n" +

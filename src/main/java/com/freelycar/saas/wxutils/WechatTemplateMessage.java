@@ -5,6 +5,7 @@ import com.freelycar.saas.basic.wrapper.Constants;
 import com.freelycar.saas.project.entity.Ark;
 import com.freelycar.saas.project.entity.ConsumerOrder;
 import com.freelycar.saas.project.entity.Door;
+import com.freelycar.saas.project.entity.Reminder;
 import com.freelycar.saas.util.RoundTool;
 import org.apache.http.entity.StringEntity;
 import org.apache.logging.log4j.LogManager;
@@ -38,6 +39,20 @@ public class WechatTemplateMessage {
         return result;
     }
 
+    /**
+     * 用于测试
+     *
+     * @return
+     */
+    /*private static String invokeTemplateMessage(JSONObject params) {
+        //解决中文乱码问题
+        StringEntity entity = new StringEntity(params.toString(), "utf-8");
+        String result = HttpRequest.postCall(WechatConfig.WECHAT_TEMPLATE_MESSAGE_URL +
+                        "44_codqUWLdwjQP-opxh8Qa4FB6LSUTAqi2dIrzfAHZBkTUaDkpIEeYoi5mVm8nDyAKNJfGYgUIVTcRv4iYc6bxm8AhDbxJQ8dIQtA2YmMl1Is5TJHw8VbvwNGGf7t9bhhHlypYdWhwU7E9P5ICNQNcACAQTQ",
+                entity, null);
+        log.debug("微信模版消息结果：" + result);
+        return result;
+    }*/
     private static JSONObject keywordFactory(String value) {
         JSONObject keyword = new JSONObject();
         keyword.put("value", value);
@@ -60,17 +75,17 @@ public class WechatTemplateMessage {
      */
     public static void orderChanged(ConsumerOrder consumerOrder, String openId) {
         log.info("准备订单更新模版消息……（推送给用户）");
-        String staffName = consumerOrder.getPickCarStaffName();
-        Integer state = consumerOrder.getState();
         String first;
         String stateString;
-        String parkingLocation = consumerOrder.getParkingLocation();
         String remark = "";
+        Integer state = consumerOrder.getState();
+        //根据订单状态判断提示语
+        String staffName = consumerOrder.getPickCarStaffName();
+        String parkingLocation = consumerOrder.getParkingLocation();
         String remarkSuffix = "小易爱车竭诚为您服务！";
         String licensePlate = consumerOrder.getLicensePlate();
-
-        String userKeyLocationSn = consumerOrder.getUserKeyLocationSn();
         String url = WechatConfig.APP_DOMAIN + "payOrder?orderId=" + consumerOrder.getId();
+
         switch (state) {
             case -1:
                 stateString = "待接车";
@@ -99,9 +114,6 @@ public class WechatTemplateMessage {
                 if (StringUtils.hasText(parkingLocation)) {
                     remark += "停车位置：" + parkingLocation + "\n";
                 }
-                /*if (StringUtils.hasText(userKeyLocationSn)) {
-                    url = WechatConfig.APP_DOMAIN + "role-select/" + userKeyLocationSn.split(Constants.HYPHEN)[0];
-                }*/
                 break;
             case 3:
                 stateString = "已交车";
@@ -192,7 +204,7 @@ public class WechatTemplateMessage {
     public static void orderChangedFailureForStaff(ConsumerOrder consumerOrder, String openId, Door door, Ark ark) {
         log.info("准备订单更新失败模版消息……（推送给技师）");
         Integer state = consumerOrder.getState();
-        if (state == Constants.OrderState.SERVICE_FINISH.getValue()) {
+        if (state.equals(Constants.OrderState.SERVICE_FINISH.getValue())) {
             String clientName = consumerOrder.getClientName();
             String staffName = consumerOrder.getPickCarStaffName();
             String first = "完工操作失败";
@@ -219,26 +231,6 @@ public class WechatTemplateMessage {
         }
     }
 
-    /*public static void main(String[] args) {
-        ConsumerOrder consumerOrder = new ConsumerOrder();
-        consumerOrder.setState(Constants.OrderState.SERVICE_FINISH.getValue());
-        consumerOrder.setClientName("测试");
-        consumerOrder.setPickCarStaffName("测试技师");
-        consumerOrder.setLicensePlate("苏A123456");
-        consumerOrder.setId("A00001");
-
-        String openId = "oBaSqs857aKKQB1SSmxBgGtkHsVc";
-
-        Door door = new Door();
-        door.setArkSn("888888888888888");
-        door.setDoorSn(1);
-
-        Ark ark = new Ark();
-        ark.setLocation("测试位置");
-
-        orderChangedFailureForStaff(consumerOrder, openId, door, ark);
-
-    }*/
 
     /**
      * 消息推送：订单生成时告知技师
@@ -256,10 +248,6 @@ public class WechatTemplateMessage {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy年MM月dd日 HH:mm");
         String first = consumerOrder.getClientName() + " 刚刚预约了新的服务订单";
         String createTime = sdf.format(consumerOrder.getCreateTime());
-//        String stateString;
-//        String parkingLocation = consumerOrder.getParkingLocation();
-//        String remark = "";
-//        String remarkSuffix = "小易爱车竭诚为您服务！";
         JSONObject params = new JSONObject();
         JSONObject data = new JSONObject();
         params.put("touser", openId);
@@ -282,6 +270,38 @@ public class WechatTemplateMessage {
         String result = invokeTemplateMessage(params);
         log.info("微信订单更新模版消息结果：" + result);
     }
+
+    /**
+     * 测试微信模板消息推送
+     *
+     * @param args
+     */
+    /*public static void main(String[] args) {
+        //ToUSer
+        //1.订单创建成功
+        String openId = "oBaSqs857aKKQB1SSmxBgGtkHsVc";
+        ConsumerOrder consumerOrder = new ConsumerOrder();
+
+
+
+
+        *//*ConsumerOrder consumerOrder = new ConsumerOrder();
+        consumerOrder.setState(Constants.OrderState.SERVICE_FINISH.getValue());
+        consumerOrder.setClientName("测试");
+        consumerOrder.setPickCarStaffName("测试技师");
+        consumerOrder.setLicensePlate("苏A123456");
+        consumerOrder.setId("A00001");
+
+        String openId = "oBaSqs857aKKQB1SSmxBgGtkHsVc";
+
+        Door door = new Door();
+        door.setArkSn("888888888888888");
+        door.setDoorSn(1);
+
+        Ark ark = new Ark();
+        ark.setLocation("测试位置");
+        orderChangedFailureForStaff(consumerOrder, openId, door, ark);*//*
+    }*/
 
 
 }

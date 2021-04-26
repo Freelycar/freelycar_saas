@@ -329,13 +329,11 @@ public class RSPProjectService {
         for (RealServiceProviderModel model :
                 rspList) {
             String rspId = model.getId();
-            /*Optional<RealServiceProvider> optional =
-                    realServiceProviderRepository.findByIdAndDelStatusAndServiceStatus(rspId, Constants.DelStatus.NORMAL.isValue(), true);*/
-//            RealServiceProvider realServiceProvider = optional.get();
             JSONObject rspData = new JSONObject();
             rspData.put("rspId", rspId);
             rspData.put("name", model.getName());
             rspData.put("phone", model.getPhone());
+            rspData.put("address", model.getAddress());
             //项目的可接单状态判断
             boolean staffReady = staffReadyHandler(rspId, storeId);
             rspData.put("staffReady", staffReady);

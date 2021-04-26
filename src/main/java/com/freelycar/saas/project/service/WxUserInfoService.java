@@ -434,7 +434,8 @@ public class WxUserInfoService {
      * @return
      */
     public ResultJsonObject wechatLogin(
-            String phone, String openId, String unionid,
+            String phone, String openId,
+            String miniOpenId,String unionid,
             String headimgurl, String nickName) {
         nickName = NicknameFilter.filter4BytesUTF8(nickName);
         //根据phone查询微信用户是否已存在

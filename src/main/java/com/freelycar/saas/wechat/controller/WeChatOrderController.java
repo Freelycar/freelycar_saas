@@ -63,9 +63,8 @@ public class WeChatOrderController {
         if (StringUtils.isEmpty(clientId) && StringUtils.isEmpty(employeeId)) {
             return ResultJsonObject.getErrorResult(null, ResultCode.PARAM_NOT_COMPLETE.message());
         }
-        List<QueryOrder> res = null;
         try {
-            res = consumerOrderService.listOrdersByIdAndName(clientId, employeeId, name);
+            List<QueryOrder> res = consumerOrderService.listOrdersByIdAndName(clientId, employeeId, name);
             return ResultJsonObject.getDefaultResult(res);
         } catch (ObjectNotFoundException e) {
             logger.error(e.getMessage(), e);

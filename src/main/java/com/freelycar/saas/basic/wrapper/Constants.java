@@ -284,7 +284,7 @@ public class Constants {
         }
     }
 
-    public enum FeedBackType{
+    public enum FeedBackType {
         ABNORMAL_FUNCTION("功能异常"),
         PRODUCT_SUGGESTION("产品建议"),
         PAYMENT_ISSUE("支付问题"),
@@ -293,6 +293,37 @@ public class Constants {
 
         FeedBackType(String value) {
             this.value = value;
+        }
+    }
+
+    public enum MessageType {
+        EMPLOYEE_ORDER_RECEIVING_REMINDER("接单提醒", "您有一个新的订单，请尽快接单哦！"),
+        EMPLOYEE_PICK_UP_REMINDER("取车提醒", "您接了一个新订单，请及时到正确的地点取车哦！"),
+        EMPLOYEE_CAR_RETURN_REMINDER("还车提醒", "您已取到车钥匙，请服务完成之后准确归还车辆哦！"),
+        EMPLOYEE_CANCEL_REMINDER("取消成功", "您已成功取消接单，如有问题请及时反馈哦！"),
+        EMPLOYEE_FINISH_REMINDER("服务完成", "您已成功完成订单，感谢您的细心服务！"),
+
+        CLIENT_PLACE_ORDER_REMINDER("下单成功", "欢迎使用小易爱车，您的订单已成功生成！"),
+        CLIENT_ORDER_TAKING_REMINDER("接单成功", "技师已接到您的订单，并将尽快为您的爱车服务！"),
+        CLIENT_PAYMENT_REMINDER("支付提醒", "您的爱车已服务完成，请您尽快支付噢！"),
+        CLIENT_PICK_UP_REMINDER("取车提醒", "您已支付成功，请及时去正确的智能柜前取回钥匙噢！"),
+        CLIENT_CANCEL_REMINDER("取消成功", "您已成功取消订单，如有问题请及时与我们联系！"),
+        CLIENT_FINISH_REMINDER("订单完成", "您的订单已完成，感谢您的使用！"),
+        ;
+        private String type;
+        private String message;
+
+        MessageType(String type, String message) {
+            this.type = type;
+            this.message = message;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getMessage() {
+            return message;
         }
     }
 }

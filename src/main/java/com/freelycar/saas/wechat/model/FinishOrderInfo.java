@@ -54,4 +54,6 @@ public class FinishOrderInfo {
     private String parkingLocation;
 
     private String clientOrderImgUrl;
+
+    private String comment;
 }

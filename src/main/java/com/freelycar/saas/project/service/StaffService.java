@@ -39,6 +39,9 @@ public class StaffService {
     @Autowired
     private ConsumerProjectInfoService consumerProjectInfoService;
 
+    @Autowired
+    private ReminderRepository reminderRepository;
+
     private RspStaffStoreRepository rspStaffStoreRepository;
     private StoreRepository storeRepository;
 
@@ -694,8 +697,8 @@ public class StaffService {
 
     /**
      * 给所有技师推送微信消息(新)
-     * （0：有用户预约了订单，通知该智能柜所有技师）
-     * （1：有技师接单了，通知其余所有技师）
+     * （0：有用户预约了订单，通知该智能柜所有技师），所有技师：接单提醒
+     * （1：有技师接单了，通知其余所有技师）,单个接单技师取车提醒
      * （4：有用户取消了订单，通知所有技师）
      *
      * @param consumerOrder
@@ -732,11 +735,16 @@ public class StaffService {
         List<Staff> staffList = staffReady(rspId, storeId);
         logger.info("包含项目：" + projects + "的技师有：" + staffList.size() + "个");
         // 遍历符合条件的技师，给他们发送信息
+        //更新：添加消息提醒
+        List<Reminder> reminderList = new ArrayList<>();
+        Set<String> employeeIds = new HashSet<>();
         for (Staff staff : staffList) {
             //openId来源变更，采用employee表中的openId
             String phone = staff.getPhone();
             if (StringUtils.hasText(phone)) {
                 Employee employee = getEmployeeByPhone(phone);
+                String employeeId = employee.getId();
+
                 if (null != employee) {
                     boolean notification = employee.getNotification();
                     String openId = employee.getOpenId();
@@ -744,16 +752,46 @@ public class StaffService {
                     if (notification && StringUtils.hasText(openId)) {
                         if (state == Constants.OrderState.RESERVATION.getValue()) {
                             WechatTemplateMessage.orderCreated(consumerOrder, projects, openId, door, ark);
+
+                            //添加消息提醒：技师：接单提醒
+                            Reminder reminder = new Reminder();
+                            reminder.setToEmployee(employeeId);
+                            reminder.setType(Constants.MessageType.EMPLOYEE_ORDER_RECEIVING_REMINDER.getType());
+                            reminder.setMessage(Constants.MessageType.EMPLOYEE_ORDER_RECEIVING_REMINDER.getMessage());
+
+                            if (!employeeIds.contains(employeeId)) {
+                                reminderList.add(reminder);
+                                employeeIds.add(employeeId);
+                            }
                         }
                         if (state == Constants.OrderState.CANCEL.getValue()) {
+                            Reminder reminder = new Reminder();
+                            reminder.setToEmployee(employeeId);
+                            reminder.setType(Constants.MessageType.CLIENT_CANCEL_REMINDER.getType());
+                            reminder.setMessage(Constants.MessageType.CLIENT_CANCEL_REMINDER.getMessage());
+                            reminderList.add(reminder);
                             WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
                         }
-                        if (state == Constants.OrderState.ORDER_TAKING.getValue() && !openId.equals(exceptOpenId)) {
-                            WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
+                        if (state == Constants.OrderState.ORDER_TAKING.getValue()) {
+                            //添加消息提醒：技师：取车提醒
+                            if (staff.getId().equals(consumerOrder.getPickCarStaffId())) {
+                                Reminder reminder = new Reminder();
+                                reminder.setToEmployee(employeeId);
+                                reminder.setType(Constants.MessageType.EMPLOYEE_PICK_UP_REMINDER.getType());
+                                reminder.setMessage(Constants.MessageType.EMPLOYEE_PICK_UP_REMINDER.getMessage());
+                                reminderList.add(reminder);
+                            }
+                            if (!openId.equals(exceptOpenId)) {
+                                WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
+                            }
                         }
                     }
                 }
             }
+        }
+
+        if (reminderList.size() > 0) {
+            reminderRepository.saveAll(reminderList);
         }
     }
 

@@ -6,13 +6,8 @@ import com.freelycar.saas.exception.ObjectNotFoundException;
 import com.freelycar.saas.iotcloudcn.ArkOperation;
 import com.freelycar.saas.iotcloudcn.util.ArkThread;
 import com.freelycar.saas.iotcloudcn.util.BoxCommandResponse;
-import com.freelycar.saas.project.entity.Ark;
-import com.freelycar.saas.project.entity.ConsumerOrder;
-import com.freelycar.saas.project.entity.Door;
-import com.freelycar.saas.project.entity.Staff;
-import com.freelycar.saas.project.repository.ArkRepository;
-import com.freelycar.saas.project.repository.ConsumerOrderRepository;
-import com.freelycar.saas.project.repository.DoorRepository;
+import com.freelycar.saas.project.entity.*;
+import com.freelycar.saas.project.repository.*;
 import com.freelycar.saas.project.service.EdaijiaService;
 import com.freelycar.saas.project.service.StaffService;
 import com.freelycar.saas.project.service.WxUserInfoService;
@@ -25,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * Created with IntelliJ IDEA.
@@ -42,6 +39,8 @@ public class CloseDoorThread implements Runnable {
     private StaffService staffService;
     private WxUserInfoService wxUserInfoService;
     private ArkRepository arkRepository;
+    private ReminderRepository reminderRepository;
+    private EmployeeRepository employeeRepository;
 
     private Door door;
     private Boolean orderType;
@@ -66,6 +65,8 @@ public class CloseDoorThread implements Runnable {
         this.staffService = SpringBeanUtil.getBean(StaffService.class);
         this.wxUserInfoService = SpringBeanUtil.getBean(WxUserInfoService.class);
         this.arkRepository = SpringBeanUtil.getBean(ArkRepository.class);
+        this.reminderRepository = SpringBeanUtil.getBean(ReminderRepository.class);
+        this.employeeRepository = SpringBeanUtil.getBean(EmployeeRepository.class);
     }
 
     @Transactional
@@ -86,18 +87,28 @@ public class CloseDoorThread implements Runnable {
                         door.setState(Constants.DoorState.USER_RESERVATION.getValue());
                         doorRepository.saveAndFlush(door);
 
-                        if (orderType) {//1.代驾订单：向e代驾下单，发送短信给代驾师傅
+                        if (orderType) {
+                            //1.代驾订单：向e代驾下单，发送短信给代驾师傅
                             log.info("订单：" + orderId + "为代驾订单");
                             Integer EorderId = edaijiaService.createOrder(consumerOrder, door, serviceProviderId);
                             // 推送微信公众号消息，通知用户订单生成成功
                             sendWeChatMsg(consumerOrder);
                             // 向接单司机发送短信链接
                             edaijiaService.sendTemplate(EorderId);
-                        } else {//2.普通订单：推送微信消息给技师 需要给这个柜子相关的技师都推送
+                        } else {
+                            //2.普通订单：
+                            // 推送微信消息给技师 需要给这个柜子相关的技师都推送
                             //更新:给项目相关的技师推送微信消息模板
                             staffService.sendWeChatMessageToStaff(consumerOrder, door, null, rspId);
                             // 推送微信公众号消息，通知用户订单生成成功
                             sendWeChatMsg(consumerOrder);
+
+                            //消息通知：用户：下单成功
+                            Reminder reminder = new Reminder();
+                            reminder.setToClient(consumerOrder.getClientId());
+                            reminder.setType(Constants.MessageType.CLIENT_PLACE_ORDER_REMINDER.getType());
+                            reminder.setMessage(Constants.MessageType.CLIENT_PLACE_ORDER_REMINDER.getMessage());
+                            reminderRepository.saveAndFlush(reminder);
                         }
                     } else {
                         //柜门关闭超时,释放柜门,取消订单并通知用户和技师
@@ -125,8 +136,20 @@ public class CloseDoorThread implements Runnable {
                         consumerOrderRepository.saveAndFlush(consumerOrder);
                         //通知用户
                         sendWeChatMsg(consumerOrder);
+                        //消息通知:用户：支付提醒
+                        Reminder reminder1 = new Reminder();
+                        reminder1.setType(Constants.MessageType.CLIENT_PAYMENT_REMINDER.getType());
+                        reminder1.setMessage(Constants.MessageType.CLIENT_PAYMENT_REMINDER.getMessage());
+                        reminder1.setToClient(consumerOrder.getClientId());
                         //通知技师
                         WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
+                        //消息通知:技师：服务完成
+                        Reminder reminder2 = new Reminder();
+                        String employeeId = getEmployeeIdByStaffId(staffId);
+                        reminder2.setType(Constants.MessageType.EMPLOYEE_FINISH_REMINDER.getType());
+                        reminder2.setMessage(Constants.MessageType.EMPLOYEE_FINISH_REMINDER.getMessage());
+                        reminder2.setToEmployee(employeeId);
+                        reminderRepository.saveAll(Arrays.asList(reminder1, reminder2));
                     } else {
                         ConcurrentHashMapCacheUtils.deleteCache(door.getId());
                         door.setState(Constants.DoorState.EMPTY.getValue());
@@ -135,8 +158,8 @@ public class CloseDoorThread implements Runnable {
                         WechatTemplateMessage.orderChangedFailureForStaff(consumerOrder, openId, door, ark);
                     }
                 }
-
             }
+
         }
     }
 
@@ -164,6 +187,17 @@ public class CloseDoorThread implements Runnable {
             String phone = staff.getPhone();
             String openId = wxUserInfoService.getOpenId(phone);
             return openId;
+        }
+    }
+
+    private String getEmployeeIdByStaffId(String staffId) {
+        Staff staff = staffService.findById(staffId);
+        if (null == staff) {
+            return null;
+        } else {
+            Employee employee = employeeRepository.findTopByPhoneAndDelStatus(staff.getPhone(), Constants.DelStatus.NORMAL.isValue());
+            if (null == employee) return null;
+            return employee.getId();
         }
     }
 

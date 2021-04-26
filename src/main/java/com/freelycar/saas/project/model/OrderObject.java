@@ -15,6 +15,7 @@ public class OrderObject {
     private ConsumerOrder consumerOrder;
 
     private String rspName;
+    private String rspPhone;
 
     private List<ConsumerProjectInfo> consumerProjectInfos;
 
@@ -41,6 +42,14 @@ public class OrderObject {
     private Ark ark;
 
     public OrderObject() {
+    }
+
+    public String getRspPhone() {
+        return rspPhone;
+    }
+
+    public void setRspPhone(String rspPhone) {
+        this.rspPhone = rspPhone;
     }
 
     public ConsumerOrder getConsumerOrder() {

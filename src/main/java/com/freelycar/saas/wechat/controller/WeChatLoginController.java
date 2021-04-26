@@ -144,11 +144,15 @@ public class WeChatLoginController {
             @RequestParam String phone,
             @RequestParam String smscode,
             @RequestParam String openId,
+            @RequestParam(required = false) String miniOpenId,
             @RequestParam(required = false) String unionid,
             @RequestParam(required = false) String headimgurl,
             @RequestParam(required = false) String nickName) {
         log.info("验证短信码方法接收到的微信用户信息：");
         log.info("openId:" + openId);
+        if (null != miniOpenId) {
+            log.info("miniOpenId:" + miniOpenId);
+        }
         if (null != unionid) {
             log.info("unionid:" + unionid);
         }
@@ -171,7 +175,7 @@ public class WeChatLoginController {
             log.error(phone + ";code:" + smscode + " 验证失败。。。");
             return ResultJsonObject.getErrorResult(json, json.getString("error"));
         } else {
-            return wxUserInfoService.wechatLogin(phone, openId, unionid, headimgurl, nickName);
+            return wxUserInfoService.wechatLogin(phone, openId, miniOpenId, unionid, headimgurl, nickName);
         }
     }
 

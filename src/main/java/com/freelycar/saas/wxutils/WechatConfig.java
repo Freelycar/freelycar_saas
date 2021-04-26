@@ -23,6 +23,8 @@ public class WechatConfig {
     public static final String TOKEN = "freelycar-saas";
     //公众号-开发者ID
     public static final String APP_ID = "wxfd188f8284ee297b";
+    //小程序appId
+    public static final String MINI_ID = "wxff9a9bef74f11740";
     //公众号-开发者密码
     public static final String APP_SECRET = "0e4272e26d2802a89aa54f211daf2b9a";
     //商户号-商户ID
@@ -30,7 +32,9 @@ public class WechatConfig {
     //微信前端页面url域名
     public static final String APP_DOMAIN = "https://www.freelycar.com/wechat/";
     //微信后端接口url域名
-    public static final String API_URL = "https://www.freelycar.com/api/";
+//    public static final String API_URL = "https://www.freelycar.com/api/";
+    //todo 修改为线上地址
+    public static final String API_URL = "https://www.freelycar.cn/test/";
     public static final String KEY = "F8B4D84CE5B3FF39A9695FA99B5BC9C3"; //签名秘钥，在微信商户平台里面设置
     public static final String ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
     public final static String REFUND_URL = "https://api.mch.weixin.qq.com/secapi/pay/refund";
