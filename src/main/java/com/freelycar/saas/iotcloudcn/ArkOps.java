@@ -14,7 +14,7 @@ public class ArkOps {
 
     public static void main(String[] args) throws IOException {
         //861230044375815
-        String deviceId = "867190039936340";
+        String deviceId = "862057048894197";
 
         int boxId = 2;
 

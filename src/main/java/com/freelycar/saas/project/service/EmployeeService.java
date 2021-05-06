@@ -115,12 +115,13 @@ public class EmployeeService {
         String account = employee.getAccount();
         String password = employee.getPassword();
         String openId = employee.getOpenId();
+        String miniOpenId = employee.getMiniOpenId();
 
         if (StringUtils.isEmpty(account) || StringUtils.isEmpty(password)) {
             return ResultJsonObject.getErrorResult(null, "登录失败：接收到的参数中，用户名或密码为空");
         }
-        if (StringUtils.isEmpty(openId)) {
-            return ResultJsonObject.getErrorResult(null, "登录失败：接收到的参数中，openId为空。注意：这会影响消息推送");
+        if (StringUtils.isEmpty(openId) && StringUtils.isEmpty(miniOpenId)) {
+            return ResultJsonObject.getErrorResult(null, "登录失败：接收到的参数中，openId与miniOpenId都为空。注意：这会影响消息推送");
         }
 
         // 查询是否有这个账号，没有的话直接返回登录失败
@@ -153,13 +154,18 @@ public class EmployeeService {
         }
         if (StringUtils.hasText(openId)) {
             employeeResult.setOpenId(openId);
+            employeeResult.setUseMini(false);
+        }
+        if (StringUtils.hasText(miniOpenId)) {
+            employeeResult.setMiniOpenId(miniOpenId);
+            employeeResult.setUseMini(true);
         }
 
         employeeRepository.save(employeeResult);
 
 
         //查询staff表中有几个对应的数据，列举出来供用户选择门店
-        List<Staff> staffList = null;
+        //List<Staff> staffList = null;
         /*try {
             staffList = getStaffs(account);
         } catch (ArgumentMissingException | ObjectNotFoundException e) {
@@ -170,7 +176,7 @@ public class EmployeeService {
 
         String jwt = TokenAuthenticationUtil.generateAuthentication(employeeResult.getId());
 
-        return ResultJsonObject.getDefaultResult(new WeChatEmployee(jwt, employeeResult, staffList));
+        return ResultJsonObject.getDefaultResult(new WeChatEmployee(jwt, employeeResult, null));
     }
 
     /**

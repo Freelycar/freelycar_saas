@@ -143,13 +143,15 @@ public class WeChatLoginController {
     public ResultJsonObject verifySmsCode(
             @RequestParam String phone,
             @RequestParam String smscode,
-            @RequestParam String openId,
+            @RequestParam(required = false) String openId,
             @RequestParam(required = false) String miniOpenId,
             @RequestParam(required = false) String unionid,
             @RequestParam(required = false) String headimgurl,
             @RequestParam(required = false) String nickName) {
         log.info("验证短信码方法接收到的微信用户信息：");
-        log.info("openId:" + openId);
+        if (null != openId) {
+            log.info("openId:" + openId);
+        }
         if (null != miniOpenId) {
             log.info("miniOpenId:" + miniOpenId);
         }
@@ -162,9 +164,16 @@ public class WeChatLoginController {
         if (null != nickName) {
             log.info("nickName:" + nickName);
         }
+        //openId、miniOpenId必传一个
+        if (!StringUtils.hasText(openId) && !StringUtils.hasText(miniOpenId)) {
+            String paramMsg = "参数openId和miniOpenId不能同时为空，请重新微信授权后再试。";
+            log.error(paramMsg);
+            return ResultJsonObject.getErrorResult(null, paramMsg);
+        }
         //添加后台验证，阻断前端传送字符串“undefined”到后台
-        if (StringUtils.hasText(openId) && "undefined".equalsIgnoreCase(openId)) {
-            String paramMsg = "接收到参数openId为undefined，请重新微信授权后再试。";
+        if (StringUtils.hasText(openId) && "undefined".equalsIgnoreCase(openId) &&
+                StringUtils.hasText(miniOpenId) && "undefined".equalsIgnoreCase(miniOpenId)) {
+            String paramMsg = "接收到参数openId、miniOpenId为undefined，请重新微信授权后再试。";
             log.error(paramMsg);
             return ResultJsonObject.getErrorResult(null, paramMsg);
         }

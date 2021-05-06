@@ -11,7 +11,10 @@ import com.freelycar.saas.util.*;
 import com.freelycar.saas.util.cache.ConcurrentHashMapCacheUtils;
 import com.freelycar.saas.wechat.model.BaseOrderInfo;
 import com.freelycar.saas.wechat.model.FinishOrderInfo;
+import com.freelycar.saas.wechat.model.OrderChangedMessage;
 import com.freelycar.saas.wechat.model.ReservationOrderInfo;
+import com.freelycar.saas.wxutils.MiniMessage;
+import com.freelycar.saas.wxutils.MiniProgramUtils;
 import com.freelycar.saas.wxutils.WechatTemplateMessage;
 import org.apache.commons.lang3.time.DateUtils;
 import org.hibernate.query.NativeQuery;
@@ -132,6 +135,9 @@ public class ConsumerOrderService {
 
     @Autowired
     private ReminderRepository reminderRepository;
+
+    @Autowired
+    private MiniProgramUtils miniProgramUtils;
 
     public JSONObject getDoorState(String orderId) {
         JSONObject jsonObject = new JSONObject();
@@ -1699,8 +1705,10 @@ public class ConsumerOrderService {
 
         Door door = doorRepository.findTopByOrderId(orderId);
         logger.info("arkOrderLog:智能柜柜门door信息：" + door);
+
         //推送微信公众号消息，通知用户已开始受理服务
         sendWeChatMsg(orderRes);
+
         Reminder reminder = new Reminder();
         reminder.setToClient(orderRes.getClientId());
         reminder.setType(Constants.MessageType.CLIENT_ORDER_TAKING_REMINDER.getType());
@@ -2109,7 +2117,7 @@ public class ConsumerOrderService {
      *
      * @param consumerOrder
      */
-    public void sendWeChatMsg(ConsumerOrder consumerOrder) {
+    /*public void sendWeChatMsg(ConsumerOrder consumerOrder) {
         //推送微信公众号消息，通知用户已开始受理服务
         String phone = consumerOrder.getPhone();
         String openId = wxUserInfoService.getOpenId(phone);
@@ -2117,6 +2125,38 @@ public class ConsumerOrderService {
             logger.error("未获得到对应的openId，微信消息推送失败");
         } else {
             WechatTemplateMessage.orderChanged(consumerOrder, openId);
+        }
+    }*/
+    //更新为小程序openId
+    public void sendWeChatMsg(ConsumerOrder consumerOrder) {
+        //推送微信消息，通知用户已服务状态变化：订单生成成功
+        String phone = consumerOrder.getPhone();
+        WxUserInfo wxUserInfo = wxUserInfoService.getWxUserByPhone(phone);
+        if (StringUtils.isEmpty(wxUserInfo.getOpenId()) && StringUtils.isEmpty(wxUserInfo.getMiniOpenId())) {
+            logger.error("未获得到对应的openId或miniOpenId，微信消息推送失败");
+        } else {
+            //推送统一服务消息或订阅消息，统一服务消息发送失败时推送订阅消息，订阅消息在微信服务通知中
+            OrderChangedMessage message = MiniMessage.genMessageForClient(consumerOrder, wxUserInfo);
+            message.setAccessToken(miniProgramUtils.getAccessTokenForInteface().getString("access_token"));
+            int state = consumerOrder.getState();
+            switch (state) {
+                case -1://已接单
+                    message.setTemplateId(MiniMessage.CLIENT_ORDER_TAKING_ID);
+                    break;
+                case 3://已交车
+                    message.setTemplateId(MiniMessage.CLIENT_ORDER_FINISH_ID);
+                    break;
+                default:
+                    break;
+            }
+            boolean r1 = MiniMessage.sendUniformMessage(message);
+            boolean r2;
+            if (!r1) {
+                r2 = MiniMessage.sendSubscribeMessage(message);
+                if (!r2) {
+                    logger.error("sendWeChatMsg:{}失败", message);
+                }
+            }
         }
     }
 

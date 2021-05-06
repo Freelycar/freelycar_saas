@@ -3,6 +3,8 @@ package com.freelycar.saas.jwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.freelycar.saas.jwt.bean.AccountCredentials;
 import com.freelycar.saas.jwt.bean.JSONResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,6 +24,8 @@ import java.io.IOException;
  * @email toby911115@gmail.com
  */
 class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
+
     public JWTLoginFilter(String url, AuthenticationManager authManager) {
         super(new AntPathRequestMatcher(url));
         setAuthenticationManager(authManager);
@@ -34,7 +38,7 @@ class JWTLoginFilter extends AbstractAuthenticationProcessingFilter {
 
         // JSON反序列化成 AccountCredentials
         AccountCredentials creds = new ObjectMapper().readValue(req.getInputStream(), AccountCredentials.class);
-
+        logger.info("用户名密码：{}", creds);
         // 返回一个验证令牌
         return getAuthenticationManager().authenticate(
                 new UsernamePasswordAuthenticationToken(

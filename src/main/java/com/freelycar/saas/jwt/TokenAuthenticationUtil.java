@@ -36,7 +36,7 @@ public class TokenAuthenticationUtil {
     private static final String HEADER_STRING = "Authorization";// 存放Token的Header Key
 
     public static String generateAuthentication(String username) {
-        return Jwts.builder()
+        String jwt = Jwts.builder()
                 // 保存权限（角色）
                 .claim("authorities", "ROLE_ADMIN,AUTH_WRITE")
                 // 用户名写入标题
@@ -46,6 +46,8 @@ public class TokenAuthenticationUtil {
                 // 签名设置
                 .signWith(SignatureAlgorithm.HS512, SECRET)
                 .compact();
+//        logger.info("生成jwt：{}，长度为：{}", jwt, jwt.length());
+        return jwt;
     }
 
     // JWT生成方法
@@ -75,8 +77,9 @@ public class TokenAuthenticationUtil {
             logger.info("{}:{}", headerName, content);
         }*/
         String token = request.getHeader(HEADER_STRING);
-//        logger.info("token:{}", token);
+
         if (token != null) {
+//            logger.info("token:{},长度为：{}", token, token.length());
             // 解析 Token
             Claims claims = Jwts.parser()
                     // 验签
@@ -87,9 +90,12 @@ public class TokenAuthenticationUtil {
 
             // 拿用户名
             String user = claims.getSubject();
+            logger.info("获取用户名：{}", null == user ? "" : user);
 
             // 得到 权限（角色）
             List<GrantedAuthority> authorities = AuthorityUtils.commaSeparatedStringToAuthorityList((String) claims.get("authorities"));
+            logger.info("用户权限：");
+            authorities.stream().forEach(auth -> logger.info(auth.getAuthority()));
 
             // 返回验证令牌
             return user != null ?

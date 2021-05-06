@@ -74,6 +74,14 @@ public class WxUserInfo implements Serializable {
     @Column
     private String openId;
 
+    @Column
+    private String miniOpenId;
+    /**
+     * 推送消息是否使用miniOpenId，否则使用openId
+     */
+    @Column(nullable = false, columnDefinition = "bit default 0")
+    private Boolean useMini = false;
+
     /**
      * unionid
      */
@@ -203,12 +211,28 @@ public class WxUserInfo implements Serializable {
         this.openId = openId;
     }
 
+    public void setMiniOpenId(String miniOpenId) {
+        this.miniOpenId = miniOpenId;
+    }
+
+    public String getMiniOpenId() {
+        return miniOpenId;
+    }
+
     public String getUnionid() {
         return unionid;
     }
 
     public void setUnionid(String unionid) {
         this.unionid = unionid;
+    }
+
+    public Boolean getUseMini() {
+        return useMini;
+    }
+
+    public void setUseMini(Boolean useMini) {
+        this.useMini = useMini;
     }
 
     public String getPhone() {

@@ -108,6 +108,19 @@ public class Employee {
     private String openId;
 
     /**
+     * 小程序openId
+     */
+    @Column
+    private String miniOpenId;
+
+    /**
+     * 推送消息是否使用miniOpenId，否则使用openId
+     */
+    @Column(nullable = false, columnDefinition = "bit default 0")
+    private Boolean useMini = false;
+
+
+    /**
      * 手机号（作为与staff表数据对应的唯一凭证）
      */
     @Column(length = 20)

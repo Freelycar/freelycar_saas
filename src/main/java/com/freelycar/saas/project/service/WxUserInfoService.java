@@ -426,6 +426,7 @@ public class WxUserInfoService {
 
     /**
      * 微信登录（手机验证码登录）
+     * 添加openId和miniOpenId优先级
      *
      * @param phone
      * @param openId
@@ -435,7 +436,7 @@ public class WxUserInfoService {
      */
     public ResultJsonObject wechatLogin(
             String phone, String openId,
-            String miniOpenId,String unionid,
+            String miniOpenId, String unionid,
             String headimgurl, String nickName) {
         nickName = NicknameFilter.filter4BytesUTF8(nickName);
         //根据phone查询微信用户是否已存在
@@ -451,7 +452,14 @@ public class WxUserInfoService {
             if (!StringUtils.isEmpty(nickName)) {
                 wxUserNew.setNickName(nickName);
             }
-            wxUserNew.setOpenId(openId);
+            if (!StringUtils.isEmpty(openId)) {
+                wxUserNew.setOpenId(openId);
+                wxUserNew.setUseMini(false);
+            }
+            if (!StringUtils.isEmpty(miniOpenId)) {
+                wxUserNew.setMiniOpenId(miniOpenId);
+                wxUserNew.setUseMini(true);
+            }
             wxUserNew.setUnionid(unionid);
             res = this.modify(wxUserNew);
         } else {
@@ -462,7 +470,14 @@ public class WxUserInfoService {
             if (!StringUtils.isEmpty(nickName)) {
                 wxUser.setNickName(nickName);
             }
-            wxUser.setOpenId(openId);
+            if (!StringUtils.isEmpty(openId)) {
+                wxUser.setOpenId(openId);
+                wxUser.setUseMini(false);
+            }
+            if (!StringUtils.isEmpty(miniOpenId)) {
+                wxUser.setMiniOpenId(miniOpenId);
+                wxUser.setUseMini(true);
+            }
             wxUser.setUnionid(unionid);
             res = wxUserInfoRepository.save(wxUser);
             try {
@@ -486,7 +501,7 @@ public class WxUserInfoService {
         }
 
         // 去获取jwt
-        String jwt = TokenAuthenticationUtil.generateAuthentication(openId);
+        String jwt = TokenAuthenticationUtil.generateAuthentication(null == openId ? miniOpenId : openId);
 
         return ResultJsonObject.getDefaultResult(new WeChatUser(jwt, res));
     }
@@ -549,6 +564,34 @@ public class WxUserInfoService {
             return null;
         }
         return wxUserInfo.getOpenId();
+    }
+
+    /**
+     * 根据手机号获取小程序openId
+     *
+     * @param phone
+     * @return
+     */
+    public String getMiniOpenId(String phone) {
+        if (StringUtils.isEmpty(phone)) {
+            return null;
+        }
+        WxUserInfo wxUserInfo = wxUserInfoRepository.findWxUserInfoByDelStatusAndPhone(Constants.DelStatus.NORMAL.isValue(), phone);
+        if (null == wxUserInfo) {
+            return null;
+        }
+        return wxUserInfo.getMiniOpenId();
+    }
+
+    public WxUserInfo getWxUserByPhone(String phone) {
+        if (StringUtils.isEmpty(phone)) {
+            return null;
+        }
+        WxUserInfo wxUserInfo = wxUserInfoRepository.findWxUserInfoByDelStatusAndPhone(Constants.DelStatus.NORMAL.isValue(), phone);
+        if (null == wxUserInfo) {
+            return null;
+        }
+        return wxUserInfo;
     }
 
 

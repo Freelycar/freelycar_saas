@@ -7,7 +7,9 @@ import com.freelycar.saas.project.entity.*;
 import com.freelycar.saas.project.model.StaffInfo;
 import com.freelycar.saas.project.repository.*;
 import com.freelycar.saas.util.UpdateTool;
+import com.freelycar.saas.wechat.model.OrderChangedMessage;
 import com.freelycar.saas.wechat.model.WeChatStaff;
+import com.freelycar.saas.wxutils.MiniMessage;
 import com.freelycar.saas.wxutils.WechatTemplateMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -743,16 +745,24 @@ public class StaffService {
             String phone = staff.getPhone();
             if (StringUtils.hasText(phone)) {
                 Employee employee = getEmployeeByPhone(phone);
-                String employeeId = employee.getId();
 
+                String employeeId = employee.getId();
                 if (null != employee) {
                     boolean notification = employee.getNotification();
                     String openId = employee.getOpenId();
-                    logger.info("技师openId：" + openId);
-                    if (notification && StringUtils.hasText(openId)) {
+                    if (notification &&
+                            (StringUtils.hasText(employee.getMiniOpenId()) || StringUtils.hasText(employee.getOpenId()))) {
+                        OrderChangedMessage message = MiniMessage.genMessageForStaff(consumerOrder, ark, employee, false);
                         if (state == Constants.OrderState.RESERVATION.getValue()) {
-                            WechatTemplateMessage.orderCreated(consumerOrder, projects, openId, door, ark);
+                            //WechatTemplateMessage.orderCreated(consumerOrder, projects, openId, door, ark);
 
+                            Boolean r1 = MiniMessage.sendUniformMessage(message);
+                            if (!r1) {
+                                boolean r2 = MiniMessage.sendSubscribeMessage(message);
+                                if (!r2) {
+                                    logger.error("通知技师接单失败");
+                                }
+                            }
                             //添加消息提醒：技师：接单提醒
                             Reminder reminder = new Reminder();
                             reminder.setToEmployee(employeeId);
@@ -770,7 +780,14 @@ public class StaffService {
                             reminder.setType(Constants.MessageType.CLIENT_CANCEL_REMINDER.getType());
                             reminder.setMessage(Constants.MessageType.CLIENT_CANCEL_REMINDER.getMessage());
                             reminderList.add(reminder);
-                            WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
+//                            WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
+                            Boolean r1 = MiniMessage.sendUniformMessage(message);
+                            if (!r1) {
+                                boolean r2 = MiniMessage.sendSubscribeMessage(message);
+                                if (!r2) {
+                                    logger.error("通知技师用户取消订单失败");
+                                }
+                            }
                         }
                         if (state == Constants.OrderState.ORDER_TAKING.getValue()) {
                             //添加消息提醒：技师：取车提醒
@@ -780,11 +797,28 @@ public class StaffService {
                                 reminder.setType(Constants.MessageType.EMPLOYEE_PICK_UP_REMINDER.getType());
                                 reminder.setMessage(Constants.MessageType.EMPLOYEE_PICK_UP_REMINDER.getMessage());
                                 reminderList.add(reminder);
+
+                                message.setTemplateId(MiniMessage.STAFF_ORDER_TAKING_ID);
+                                Boolean r1 = MiniMessage.sendUniformMessage(message);
+                                if (!r1) {
+                                    boolean r2 = MiniMessage.sendSubscribeMessage(message);
+                                    if (!r2) {
+                                        logger.error("通知技师接单失败");
+                                    }
+                                }
                             }
                             if (!openId.equals(exceptOpenId)) {
-                                WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
+//                                WechatTemplateMessage.orderChangedForStaff(consumerOrder, openId, door, ark);
+                                Boolean r1 = MiniMessage.sendUniformMessage(message);
+                                if (!r1) {
+                                    boolean r2 = MiniMessage.sendSubscribeMessage(message);
+                                    if (!r2) {
+                                        logger.error("通知技师接单失败");
+                                    }
+                                }
                             }
                         }
+
                     }
                 }
             }
